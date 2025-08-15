@@ -1,0 +1,108 @@
+import {
+  BlockComponentPlayerInteractEvent,
+  BlockPermutation,
+  Block,
+  EquipmentSlot,
+  ItemStack,
+  CustomComponentParameters,
+  BlockComponentTickEvent,
+  system,
+} from "@minecraft/server";
+import { BlockStateSuperset } from "@minecraft/vanilla-data";
+import { CANDLES } from "../constants";
+import { TextUtils } from "../TextUtils";
+import { ItemUtils } from "../item/ItemUtils";
+import { BlockBaseComponent } from "./BlockBase";
+import { Vector3Utils } from "@minecraft/math";
+
+// TODO: Use block permutation for "BLOCK" instead of slice_state
+export interface CandleCakeOptions {
+  candle: string;
+  block: string;
+  lit_state: keyof BlockStateSuperset;
+  slice_state: keyof BlockStateSuperset;
+  flame_position?: number[];
+  flame_particle?: string;
+}
+
+// TODO: Add flame particles
+export class CandleCakeComponent extends BlockBaseComponent {
+  static typeId = "mcutils:candle_cake";
+
+  /**
+   * Vanilla candle cake block behavior.
+   */
+  constructor() {
+    super();
+    this.onPlayerInteract = this.onPlayerInteract.bind(this);
+    this.onTick = this.onTick.bind(this);
+  }
+
+  // TODO: Remove the "color" parts.
+  getCakeBlock(block: Block, options: CandleCakeOptions): string {
+    return options.block ?? TextUtils.stripAll(block.typeId, CANDLES, undefined, "_");
+  }
+
+  setLit(
+    event: BlockComponentPlayerInteractEvent,
+    value: boolean = true,
+    options: CandleCakeOptions
+  ): void {
+    event.block.setPermutation(event.block.permutation.withState(options.lit_state, value));
+  }
+
+  eat(event: BlockComponentPlayerInteractEvent, options: CandleCakeOptions): void {
+    if (!event.player) return;
+    event.player.addEffect("saturation", 100, {
+      amplifier: 0,
+      showParticles: false,
+    });
+    event.block.dimension.spawnItem(new ItemStack(options.candle), event.block.center());
+    const BLOCK = BlockPermutation.resolve(this.getCakeBlock(event.block, options));
+    event.block.setPermutation(BLOCK.withState(options.slice_state, 1));
+  }
+
+  hasLight(event: BlockComponentPlayerInteractEvent): boolean {
+    if (!event.player) return false;
+    const equ = event.player.getComponent("equippable");
+    if (!equ) return false;
+    const mainhand = equ.getEquipment(EquipmentSlot.Mainhand);
+    return ItemUtils.isIgnitable(mainhand);
+  }
+
+  // EVENTS
+
+  onPlayerInteract(
+    event: BlockComponentPlayerInteractEvent,
+    args: CustomComponentParameters
+  ): boolean | void {
+    const options = args.params as CandleCakeOptions;
+    const LIT = event.block.permutation.getState(options.lit_state);
+    if (this.hasLight(event)) {
+      this.setLit(event, true, options);
+      return true;
+    }
+    if (LIT && !this.hasLight(event)) {
+      this.setLit(event, false, options);
+    } else {
+      this.eat(event, options);
+    }
+  }
+
+  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
+    const options = args.params as CandleCakeOptions;
+    const lit = event.block.permutation.getState(options.lit_state);
+    if (!lit) return;
+    if (system.currentTick % 40 === 0) {
+      const pos = options.flame_position ?? [0, 16, 0];
+      event.dimension.spawnParticle(
+        options.flame_particle ?? "minecraft:candle_flame_particle",
+        Vector3Utils.add(event.block.location, {
+          x: 0.5 + pos[0] / 16,
+          y: pos[1] / 16,
+          z: 0.5 + pos[2] / 16,
+        })
+      );
+    }
+  }
+}

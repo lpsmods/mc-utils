@@ -1,0 +1,273 @@
+import {
+  Block,
+  Entity,
+  EntityInventoryComponent,
+  EntityQueryOptions,
+  InvalidEntityError,
+  PlayerInteractWithEntityAfterEvent,
+  system,
+  Vector3,
+  world,
+} from "@minecraft/server";
+import { EventSignal } from ".";
+import { forAllDimensions } from "../utils";
+import { Vector3Utils } from "@minecraft/math";
+import { Hasher } from "../type";
+
+export class EntityEvent {
+  constructor(entity: Entity) {
+    this.entity = entity;
+  }
+
+  readonly entity: Entity;
+}
+
+export class EntityInventoryChangedEvent extends EntityEvent {}
+
+export class EntityTickEvent extends EntityEvent {}
+
+export class EntityMountEvent extends EntityEvent {
+  constructor(entity: Entity, rider: Entity) {
+    super(entity);
+    this.rider = rider;
+  }
+
+  readonly rider: Entity;
+}
+
+export class EntityDismountEvent extends EntityEvent {
+  constructor(entity: Entity, rider: Entity) {
+    super(entity);
+    this.rider = rider;
+  }
+
+  readonly rider: Entity;
+}
+
+export class EntityMovedEvent extends EntityEvent {
+  constructor(entity: Entity, prevLocation: Vector3) {
+    super(entity);
+    this.prevLocation = prevLocation;
+  }
+
+  readonly prevLocation: Vector3;
+}
+
+export class EntityFallOnEvent extends EntityEvent {
+  constructor(entity: Entity, distance: number) {
+    super(entity);
+    this.distance = distance;
+  }
+
+  readonly distance: number;
+}
+
+export class EntityStepOnEvent extends EntityEvent {
+  constructor(entity: Entity, block: Block) {
+    super(entity);
+    this.block = block;
+  }
+  readonly block: Block;
+}
+
+export class EntityStepOffEvent extends EntityEvent {
+  constructor(entity: Entity, block: Block) {
+    super(entity);
+    this.block = block;
+  }
+  readonly block: Block;
+}
+
+export class EntityEventSignal<T extends EntityEvent> extends EventSignal<T, EntityQueryOptions> {
+  apply(event: T): void {
+    for (const fn of this.listeners) {
+      if (fn.options && !event.entity.matches(fn.options)) continue;
+      try {
+        fn.callback(event);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+}
+
+export class EntityInventoryChangedEventSignal extends EntityEventSignal<EntityInventoryChangedEvent> {}
+
+export class EntityMountEventSignal extends EntityEventSignal<EntityMountEvent> {}
+
+export class EntityDismountEventSignal extends EntityEventSignal<EntityDismountEvent> {}
+
+export class EntityMovedEventSignal extends EntityEventSignal<EntityMovedEvent> {}
+
+export class EntityTickEventSignal extends EntityEventSignal<EntityTickEvent> {}
+
+export class EntityFallOnEventSignal extends EntityEventSignal<EntityFallOnEvent> {}
+
+export class EntityStepOnEventSignal extends EntityEventSignal<EntityStepOnEvent> {}
+
+export class EntityStepOffEventSignal extends EntityEventSignal<EntityStepOffEvent> {}
+
+export class EntityEvents {
+  private constructor() {}
+
+  /**
+   * This event fires when a players inventory has changed.
+   */
+  static readonly playerInventoryChanged = new EntityInventoryChangedEventSignal();
+
+  /**
+   * This event fires when a entity mounts.
+   */
+  static readonly mount = new EntityMountEventSignal();
+
+  /**
+   * This event fires when a entity dismounts.
+   */
+  static readonly dismount = new EntityDismountEventSignal();
+
+  /**
+   * This event fires when a entity moves.
+   */
+  static readonly moved = new EntityMovedEventSignal();
+
+  /**
+   * This event fires every tick.
+   */
+  static readonly tick = new EntityTickEventSignal();
+
+  /**
+   * This event fires when a entity falls on the ground.
+   */
+  static readonly fallOn = new EntityFallOnEventSignal();
+
+  /**
+   * This event fires when a entity steps on a block.
+   */
+  static readonly stepOn = new EntityStepOnEventSignal();
+
+  /**
+   * This event fires when a entity steps off a block.
+   */
+  static readonly stepOff = new EntityStepOffEventSignal();
+}
+
+// INTERNAL LOGIC
+
+function inventoryTick(inv: EntityInventoryComponent, entity: Entity): void {
+  if (!inv.container) return;
+  const currentHash = Hasher.stringify(inv.container);
+  const prevHash = entity.getDynamicProperty("mcutils:prev_inv");
+  if (currentHash !== prevHash) {
+    entity.setDynamicProperty("mcutils:prev_inv", currentHash);
+    const event = new EntityInventoryChangedEvent(entity);
+    EntityEvents.playerInventoryChanged.apply(event);
+  }
+}
+
+function mountEntityTick(entity: Entity): void {
+  const riding = entity.getComponent("riding");
+  if (riding) {
+    let lastMount = entity.getDynamicProperty("mcutils:last_mount");
+    let target = riding.entityRidingOn.id;
+    if (target != lastMount) {
+      entity.setDynamicProperty("mcutils:last_mount", target);
+    }
+    return;
+  }
+  let id = entity.getDynamicProperty("mcutils:last_mount") as string;
+  if (id) {
+    const mountEvent = new EntityDismountEvent(world.getEntity(id) ?? entity, entity);
+    entity.setDynamicProperty("mcutils:last_mount", undefined);
+    entity.removeTag("mcutils_riding");
+    EntityEvents.dismount.apply(mountEvent);
+  }
+}
+
+function mountTick(event: EntityTickEvent): void {
+  forAllDimensions((dim) => {
+    for (const entity of dim.getEntities({ tags: ["mcutils_riding"] })) {
+      mountEntityTick(entity);
+    }
+  });
+}
+
+function movedTick(event: EntityTickEvent): void {
+  const value = (event.entity.getDynamicProperty("mcutils:prev_location") as string) ?? "0,0,0";
+  const prevPos = Hasher.parseVec3(value);
+  const pos = event.entity.location;
+  pos.x = Math.round(pos.x * 100) / 100;
+  pos.y = Math.round(pos.y * 100) / 100;
+  pos.z = Math.round(pos.z * 100) / 100;
+  if (Vector3Utils.equals(prevPos, pos)) return;
+  event.entity.setDynamicProperty("mcutils:prev_location", Hasher.stringify(pos));
+  EntityEvents.moved.apply(new EntityMovedEvent(event.entity, prevPos));
+
+  // Step on/off
+  const newBlock = event.entity.dimension.getBlock(pos)?.below();
+  const prevBlock = event.entity.dimension.getBlock(prevPos)?.below();
+  if (!newBlock || !prevBlock) return;
+  const newHash = Hasher.stringify(newBlock);
+  const prevHash = Hasher.stringify(prevBlock);
+  if (newHash === prevHash) return;
+  EntityEvents.stepOn.apply(new EntityStepOnEvent(event.entity, newBlock));
+  EntityEvents.stepOff.apply(new EntityStepOnEvent(event.entity, prevBlock));
+}
+
+function entityTick(event: EntityTickEvent): void {
+  mountTick(event);
+  EntityEvents.tick.apply(event);
+  const inv = event.entity.getComponent("inventory");
+  if (inv) inventoryTick(inv, event.entity);
+  movedTick(event);
+
+  // Fall
+  let fallingPos = event.entity.getDynamicProperty("mcutils:falling_pos") as Vector3 | undefined;
+  if (fallingPos == undefined && event.entity.isFalling) {
+    // TODO: Save pos
+    fallingPos = event.entity.location;
+    event.entity.setDynamicProperty("mcutils:falling_pos", fallingPos);
+  }
+
+  if (fallingPos && event.entity.isOnGround) {
+    let dif = Vector3Utils.floor(Vector3Utils.subtract(fallingPos, event.entity.location));
+    event.entity.setDynamicProperty("mcutils:falling_pos");
+    EntityEvents.fallOn.apply(new EntityFallOnEvent(event.entity, dif.y));
+  }
+}
+
+function tick(): void {
+  try {
+    forAllDimensions((dim) => {
+      for (const entity of dim.getEntities()) {
+        const event = new EntityTickEvent(entity);
+        entityTick(event);
+      }
+    });
+  } catch (err) {
+    if (err instanceof InvalidEntityError) return;
+    throw err;
+  }
+}
+
+function playerInteract(event: PlayerInteractWithEntityAfterEvent): void {
+  try {
+    // Mountable
+    if (event.player.isSneaking || event.player.hasTag("mcutils_riding")) return;
+    const rideable = event.target.getComponent("rideable");
+    if (!rideable) return;
+    const mountEvent = new EntityMountEvent(event.target, event.player);
+    event.player.addTag("mcutils_riding");
+    EntityEvents.mount.apply(mountEvent);
+  } catch (err) {
+    if (err instanceof InvalidEntityError) return;
+    throw err;
+    
+  }
+}
+
+function setup() {
+  system.runInterval(tick);
+  world.afterEvents.playerInteractWithEntity.subscribe(playerInteract);
+}
+
+setup();
