@@ -4,7 +4,7 @@
   "author": "legopitstop",
   "license": "MIT",
   "description": "Utilities for making Minecraft: Bedrock Edition scripts",
-  "main": "src/main.ts",
+  "main": "src/index.ts",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
