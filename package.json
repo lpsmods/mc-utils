@@ -4,17 +4,17 @@
   "author": "legopitstop",
   "license": "MIT",
   "description": "Utilities for making Minecraft: Bedrock Edition scripts",
-  "main": "dist/index",
+  "main": "src/main.ts",
+  "type": "module",
   "scripts": {
     "build": "node build.mjs",
     "copy": "xcopy \"src\" \"%UserProfile%\\Documents\\GitHub\\Minecraft\\mcutils-example\\scripts\\mc-utils\" /s /y /I",
     "rebuild": "npm run build && npm run copy && echo Done!",
-    "dev": "chokidar \"src/**/*\" -c \"npm run rebuild\" -d",
-    "test": "vitest"
+    "dev": "chokidar \"src/**/*\" -c \"npm run rebuild\" -d"
   },
   "repository": {
     "type": "git",
-    "url": "minecraft-utils"
+    "url": "https://github.com/lpsmods/mc-utils"
   },
   "keywords": [
     "minecraft",
@@ -30,8 +30,7 @@
     "chokidar-cli": "^3.0.0",
     "esbuild": "^0.25.4",
     "glob": "^11.0.2",
-    "molang": "^2.0.1",
-    "vitest": "^3.2.4"
+    "molang": "^2.0.1"
   },
   "devDependencies": {
     "typescript": "^4.0.0"

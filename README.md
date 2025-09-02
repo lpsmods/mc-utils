@@ -13,6 +13,7 @@ Minecraft utility functions and components to help create add-ons.
 ```json
 [
   { "module_name": "@minecraft/server", "version": "2.1.0" },
+  { "module_name": "@minecraft/server-ui", "version": "2.0.0" },
   { "module_name": "@minecraft/math", "version": "2.0.1" }
 ]
 ```
