@@ -1,6 +1,25 @@
-import { Block, BlockPermutation, Entity, ItemStack } from "@minecraft/server";
+import {
+  Block,
+  BlockPermutation,
+  BlockType,
+  Entity,
+  EntityType,
+  ItemStack,
+  ItemType,
+} from "@minecraft/server";
+import { Biome } from "../biome/biome";
 
-export type id = string | Identifier | Block | BlockPermutation | ItemStack | Entity;
+export type id =
+  | string
+  | Identifier
+  | Block
+  | BlockPermutation
+  | ItemStack
+  | Entity
+  | Biome
+  | BlockType
+  | EntityType
+  | ItemType;
 
 export class Identifier {
   namespace: string;
@@ -9,6 +28,11 @@ export class Identifier {
   constructor(namespace: string, path: string) {
     this.namespace = namespace;
     this.path = path;
+  }
+
+  matches(identifier: id): boolean {
+    const id = Identifier.parse(identifier);
+    return this.namespace === id.namespace && this.path === id.path;
   }
 
   /**
@@ -55,16 +79,21 @@ export class Identifier {
   static parse(value: id): Identifier {
     if (!value) return new Identifier("minecraft", "unknown");
     if (value instanceof Block) return Identifier.parse(value.typeId);
-    if (value instanceof BlockPermutation) return Identifier.parse(value.type.id);
+    if (value instanceof BlockPermutation)
+      return Identifier.parse(value.type.id);
     if (value instanceof ItemStack) return Identifier.parse(value.typeId);
     if (value instanceof Entity) return Identifier.parse(value.typeId);
+    if (value instanceof Biome) return Identifier.parse(value.typeId);
+    if (value instanceof BlockType) return Identifier.parse(value.id);
+    if (value instanceof ItemType) return Identifier.parse(value.id);
+    if (value instanceof EntityType) return Identifier.parse(value.id);
     if (value instanceof Identifier) return value;
     let parts = value.split(":");
     let namespace = "minecraft";
     let path = "";
     if (parts.length >= 2) {
       namespace = parts[0];
-      path = parts.slice(1).join(':');
+      path = parts.slice(1).join(":");
     } else {
       path = parts[0];
     }

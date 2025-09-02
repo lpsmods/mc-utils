@@ -1,3 +1,8 @@
+import {
+  LocationInUnloadedChunkError,
+  LocationOutOfWorldBoundariesError,
+} from "@minecraft/server";
+
 export class ErrorUtils {
   /**
    * Wraps the callback in a try-catch statement, making the error silent.
@@ -5,8 +10,13 @@ export class ErrorUtils {
    * @param callback
    * @returns
    */
-  static wrapCatchSingle(error: typeof Error, callback: () => void): boolean {
-    return ErrorUtils.wrapCatch([error], callback);
+  static wrapCatch<T>(error: Function, callback: () => T): T | undefined {
+    try {
+      return callback();
+    } catch (err) {
+      if (err instanceof (error as any)) return;
+      throw err;
+    }
   }
 
   /**
@@ -15,17 +25,24 @@ export class ErrorUtils {
    * @param callback
    * @returns
    */
-  static wrapCatch(errors: (typeof Error)[], callback: () => void): boolean {
+  static wrapCatchAll<T>(errors: Function[], callback: () => T): T | undefined {
     try {
-      callback();
-      return true;
+      return callback();
     } catch (err) {
-      if (!err) return false;
+      if (!err) return;
       for (const error of errors) {
-        if (error && typeof error === "function" && err instanceof error) return false;
+        if (error && typeof error === "function" && err instanceof error)
+          return;
       }
       throw err;
     }
+  }
+
+  static tryPos<T>(callback: () => T): T | undefined {
+    return this.wrapCatchAll<T>(
+      [LocationInUnloadedChunkError, LocationOutOfWorldBoundariesError],
+      callback,
+    );
   }
 }
 
@@ -47,7 +64,9 @@ export class ValidationError extends Error {
   }
 
   toString(): string {
-    return this.issues.map((issue) => `• ${issue.path}: ${issue.message}`).join("\n");
+    return this.issues
+      .map((issue) => `• ${issue.path}: ${issue.message}`)
+      .join("\n");
   }
 
   toJSON(): object {
@@ -58,10 +77,18 @@ export class ValidationError extends Error {
     };
   }
 
-  static valueError(issues: ValidationIssue[], path: string, value: any, types: string[]): boolean {
+  static valueError(
+    issues: ValidationIssue[],
+    path: string,
+    value: any,
+    types: string[],
+  ): boolean {
     const type = typeof value;
     if (types.includes(type)) return true;
-    issues.push({ path: path, message: `Must be a ${types.join(", ")} not "${type}".` });
+    issues.push({
+      path: path,
+      message: `Must be a ${types.join(", ")} not "${type}".`,
+    });
     return false;
   }
 
@@ -69,7 +96,7 @@ export class ValidationError extends Error {
     issues: ValidationIssue[],
     path: string,
     value: any,
-    types: string[]
+    types: string[],
   ): boolean {
     types.push("undefined");
     return this.valueError(issues, path, value, types);

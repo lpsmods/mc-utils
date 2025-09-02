@@ -2,8 +2,16 @@
  * Generic types.
  */
 
-import { Block, Container, ItemStack, Vector2, Vector3, VectorXZ, world } from "@minecraft/server";
-import { Chunk } from "./world/Chunk";
+import {
+  Block,
+  Container,
+  ItemStack,
+  Vector2,
+  Vector3,
+  VectorXZ,
+  world,
+} from "@minecraft/server";
+import { Chunk } from "./world/chunk";
 
 export enum TypingTypes {
   Container = "container",
@@ -17,7 +25,7 @@ export enum TypingTypes {
 
 export class Typing {
   static get(
-    value: Vector3 | Vector2 | VectorXZ | Container | Block | ItemStack | Chunk
+    value: Vector3 | Vector2 | VectorXZ | Container | Block | ItemStack | Chunk,
   ): TypingTypes | undefined {
     if (value instanceof Container) return TypingTypes.Container;
     if (value instanceof Block) return TypingTypes.Block;
@@ -77,7 +85,7 @@ export class Hasher {
   }
 
   static stringify(
-    value: Vector3 | Vector2 | VectorXZ | Container | Block | Chunk | undefined
+    value: Vector3 | Vector2 | VectorXZ | Container | Block | Chunk | undefined,
   ): string | undefined {
     if (!value) return value;
     const t = Typing.get(value);
@@ -95,7 +103,7 @@ export class Hasher {
       case TypingTypes.Chunk:
         return this.hashChunk(value as Chunk);
       default:
-        throw Error(`Unknown type "${t}"`);
+        throw new Error(`Unknown type "${t}"`);
     }
   }
 
@@ -113,7 +121,6 @@ export class Hasher {
 
   static hashChunk(chunk: Chunk): string {
     return `${chunk.dimension.id},${this.hashVecXZ(chunk.location)}`;
-    
   }
 
   static hashContainer(container: Container): string {

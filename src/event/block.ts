@@ -1,7 +1,7 @@
-// TODO:
+// TODO: Implement
 
-import { Block, Dimension } from "@minecraft/server";
-import { EventSignal } from ".";
+import { Block, Dimension, Entity } from "@minecraft/server";
+import { EventSignal } from "./utils";
 
 export class BlockEvent {
   constructor(block: Block, dimension?: Dimension) {
@@ -17,7 +17,14 @@ export class BlockNearbyEntityTickEvent extends BlockEvent {}
 export class BlockNeighborUpdateEvent extends BlockEvent {}
 export class BlockEnterEvent extends BlockEvent {}
 export class BlockLeaveEvent extends BlockEvent {}
-export class InBlockTickEvent extends BlockEvent {}
+export class InBlockTickEvent extends BlockEvent {
+  constructor(block: Block, source: Entity) {
+    super(block);
+    this.source = source;
+  }
+
+  readonly source: Entity;
+}
 
 export class BlockNearbyEntityTickEventSignal extends EventSignal<BlockNearbyEntityTickEvent> {
   constructor() {

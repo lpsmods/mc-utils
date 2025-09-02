@@ -5,15 +5,20 @@ import {
   CustomComponentParameters,
   BlockPermutation,
 } from "@minecraft/server";
-import { Parser } from "../misc/Parser";
-import { ItemUtils } from "../item/ItemUtils";
+import { Parser } from "../misc/parser";
+import { ItemUtils } from "../item/utils";
+import { AddonUtils } from "../addon";
 
 export interface CauldronOptions {
   interactions?: string[];
 }
 
 export class CauldronInteraction {
-  constructor(item: string, blockPermutation: BlockPermutation, resultItem?: string) {
+  constructor(
+    item: string,
+    blockPermutation: BlockPermutation,
+    resultItem?: string,
+  ) {
     this.item = item;
     this.resultItem = resultItem;
     this.blockPermutation = blockPermutation;
@@ -24,7 +29,9 @@ export class CauldronInteraction {
   readonly blockPermutation: BlockPermutation;
 
   getResultStack(): ItemStack {
-    return this.resultItem ? new ItemStack(this.resultItem) : new ItemStack("air");
+    return this.resultItem
+      ? new ItemStack(this.resultItem)
+      : new ItemStack("air");
   }
 
   static parse(value: string): CauldronInteraction {
@@ -33,7 +40,11 @@ export class CauldronInteraction {
     const perm = Parser.parseBlockPermutation(args[1]);
     const resultItem = args[2];
     if (!perm)
-      return new CauldronInteraction(item, BlockPermutation.resolve("water_cauldron"), resultItem);
+      return new CauldronInteraction(
+        item,
+        BlockPermutation.resolve("water_cauldron"),
+        resultItem,
+      );
     return new CauldronInteraction(item, perm, resultItem);
   }
 
@@ -44,7 +55,7 @@ export class CauldronInteraction {
 }
 
 export class CauldronComponent {
-  static typeId = "mcutils:cauldron";
+  static typeId = AddonUtils.makeId("cauldron");
 
   /**
    * Vanilla cauldron block behavior.
@@ -53,7 +64,10 @@ export class CauldronComponent {
     this.onPlayerInteract = this.onPlayerInteract.bind(this);
   }
 
-  getInteraction(itemStack: ItemStack, options: CauldronOptions): CauldronInteraction | undefined {
+  getInteraction(
+    itemStack: ItemStack,
+    options: CauldronOptions,
+  ): CauldronInteraction | undefined {
     const actions = CauldronInteraction.parseAll(options.interactions);
     for (const action of actions) {
       if (itemStack.matches(action.item)) return action;
@@ -66,7 +80,7 @@ export class CauldronComponent {
 
   onPlayerInteract(
     event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters
+    args: CustomComponentParameters,
   ): void {
     const options = args.params as CauldronOptions;
     if (!event.player) return;
@@ -77,10 +91,13 @@ export class CauldronComponent {
     let interaction = this.getInteraction(mainhand, options);
     if (!interaction) return;
     event.block.setPermutation(interaction.blockPermutation);
-    ItemUtils.convert(event.player, EquipmentSlot.Mainhand, interaction.getResultStack());
+    ItemUtils.convert(
+      event.player,
+      EquipmentSlot.Mainhand,
+      interaction.getResultStack(),
+    );
 
-    // TODO:
-    // - sound
+    // TODO: sound
 
     // const stack = new ItemStack(interaction.output);
     // replaceStack(event.player, EquipmentSlot.Mainhand, stack);

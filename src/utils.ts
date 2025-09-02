@@ -51,7 +51,10 @@ const soundCache = new LRUCache<string, string>();
  * @param {string} defaultSound
  * @returns String
  */
-export function getInteractSound(block: Block, defaultSound: string = "dig.stone"): string {
+export function getInteractSound(
+  block: Block,
+  defaultSound: string = "dig.stone",
+): string {
   if (!block) return "dig.stone";
   const key = block.typeId;
   if (soundCache.has(key)) return soundCache.get(key) ?? defaultSound;
@@ -61,9 +64,14 @@ export function getInteractSound(block: Block, defaultSound: string = "dig.stone
     "dig.stem": ["crimson", "warped"],
     "break.cherry_wood": ["cherry"],
   };
-  if (key.includes("dirt") || key.includes("farmland") || key.includes("gravel"))
+  if (
+    key.includes("dirt") ||
+    key.includes("farmland") ||
+    key.includes("gravel")
+  )
     return soundCache.set(key, "dig.gravel");
-  if (key.includes("crimson") || key.includes("warped")) return soundCache.set(key, "dig.stem");
+  if (key.includes("crimson") || key.includes("warped"))
+    return soundCache.set(key, "dig.stem");
   if (key.includes("cherry")) return soundCache.set(key, "break.cherry_wood");
   return soundCache.set(key, defaultSound);
 }
@@ -76,7 +84,9 @@ export function getInteractSound(block: Block, defaultSound: string = "dig.stone
 export function forDuration(callback: Function, duration?: number): void {
   var delta = 0;
   const o = system.runInterval(() => {
-    callback.call(delta), delta >= (duration ?? 20) && system.clearRun(o), delta++;
+    callback.call(delta),
+      delta >= (duration ?? 20) && system.clearRun(o),
+      delta++;
   });
 }
 
@@ -84,7 +94,9 @@ export function forDuration(callback: Function, duration?: number): void {
  * Run a function for all dimensions.
  * @param callback
  */
-export function forAllDimensions(callback: (dimension: Dimension) => void): void {
+export function forAllDimensions(
+  callback: (dimension: Dimension) => void,
+): void {
   for (const dimType of DimensionTypes.getAll()) {
     callback(world.getDimension(dimType.typeId));
   }
@@ -98,7 +110,7 @@ export function forAllDimensions(callback: (dimension: Dimension) => void): void
  */
 export function offsetVolume<T>(
   offset: Vector3,
-  callback: (pos: Vector3) => T | undefined
+  callback: (pos: Vector3) => T | undefined,
 ): T | undefined {
   for (let x = -offset.x; x < offset.x + 1; x++) {
     for (let y = -offset.y; y < offset.y + 1; y++) {
@@ -186,5 +198,5 @@ export function differenceArray(a: string[], b: string[]): string[] {
 
 export function removeItems<T>(source: T[], itemsToRemove: T[]): T[] {
   const toRemove = new Set(itemsToRemove);
-  return source.filter(item => !toRemove.has(item));
+  return source.filter((item) => !toRemove.has(item));
 }

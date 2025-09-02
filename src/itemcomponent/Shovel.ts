@@ -1,6 +1,11 @@
-import { ItemUseOnEvent, Block, CustomComponentParameters } from "@minecraft/server";
-import { ToolComponent } from "./Tool";
+import {
+  ItemUseOnEvent,
+  Block,
+  CustomComponentParameters,
+} from "@minecraft/server";
+import { ToolComponent } from "./tool";
 import { offsetVolume } from "../utils";
+import { AddonUtils } from "../addon";
 
 export interface ShovelOptions {
   size?: number;
@@ -8,7 +13,7 @@ export interface ShovelOptions {
 }
 
 export class ShovelComponent extends ToolComponent {
-  static typeId = "mcutils:shovel";
+  static typeId = AddonUtils.makeId("shovel");
 
   /**
    * Makes this item flatten dirt like a shovel.
@@ -27,7 +32,11 @@ export class ShovelComponent extends ToolComponent {
    * @param {Block} block The block that should be converted to a dirt path.
    * @param {ItemUseOnEvent} event The item event for context.
    */
-  convertBlock(block: Block, event: ItemUseOnEvent, options: ShovelOptions): boolean | undefined {
+  convertBlock(
+    block: Block,
+    event: ItemUseOnEvent,
+    options: ShovelOptions,
+  ): boolean | undefined {
     if (!this.canBeFlattened(block, options)) return;
     block.setType(this.getBlock(block, options));
   }
@@ -36,13 +45,16 @@ export class ShovelComponent extends ToolComponent {
     event.block.dimension.playSound("use.gravel", event.block.location, {
       volume: 1,
     });
-    offsetVolume<boolean>({ x: options.size ?? 1, y: 0, z: options.size ?? 1 }, (pos) => {
-      try {
-        const target = event.block.offset(pos);
-        if (!target) return;
-        return this.convertBlock(target, event, options);
-      } catch (err) {}
-    });
+    offsetVolume<boolean>(
+      { x: options.size ?? 1, y: 0, z: options.size ?? 1 },
+      (pos) => {
+        try {
+          const target = event.block.offset(pos);
+          if (!target) return;
+          return this.convertBlock(target, event, options);
+        } catch (err) {}
+      },
+    );
   }
 
   canBeFlattened(block: Block, options: ShovelOptions): boolean {

@@ -4,16 +4,17 @@ import {
   Dimension,
   Entity,
   EntityQueryOptions,
+  system,
   Vector3,
   VectorXZ,
 } from "@minecraft/server";
 import { locationToChunk } from "./utils";
-import { ParticleDrawer } from "../misc/Drawer";
-import { Box } from "../misc/Shape";
-import { DataStorage } from "../misc/DataStorage";
+import { ParticleDrawer } from "../misc/drawer";
+import { Box } from "../misc/shape";
+import { DataStorage } from "../misc/data_storage";
 import { Hasher } from "../type";
-import { Random } from "../RandomUtils";
-import { WorldUtils } from "./WorldUtils";
+import { Random } from "../random";
+import { WorldUtils } from "./utils";
 
 export class Chunk {
   dimension: Dimension;
@@ -31,7 +32,11 @@ export class Chunk {
   }
 
   get from(): Vector3 {
-    return { x: this.location.x * 16, y: this.dimension.heightRange.min, z: this.location.z * 16 };
+    return {
+      x: this.location.x * 16,
+      y: this.dimension.heightRange.min,
+      z: this.location.z * 16,
+    };
   }
 
   get to(): Vector3 {
@@ -42,6 +47,13 @@ export class Chunk {
     };
   }
 
+  get x(): number {
+    return this.location.x;
+  }
+
+  get z(): number {
+    return this.location.x;
+  }
 
   // TODO: Test in-game.
   /**
@@ -53,11 +65,12 @@ export class Chunk {
     const { x: chunkX, z: chunkZ } = this.location;
 
     // 64-bit XOR shift mix based on Java's Random implementation
-    const n = BigInt(chunkX * chunkX * 4987142) +
-              BigInt(chunkX * 5947611) +
-              BigInt(chunkZ * chunkZ) * BigInt(4392871) +
-              BigInt(chunkZ * 389711) ^
-              BigInt(seed);
+    const n =
+      (BigInt(chunkX * chunkX * 4987142) +
+        BigInt(chunkX * 5947611) +
+        BigInt(chunkZ * chunkZ) * BigInt(4392871) +
+        BigInt(chunkZ * 389711)) ^
+      BigInt(seed);
 
     const rand = new Random(n);
     return rand.nextInt(10) === 0;
@@ -93,7 +106,9 @@ export class Chunk {
    * property has not been set.
    * @throws This function can throw errors.
    */
-  getDynamicProperty(identifier: string): boolean | number | string | Vector3 | undefined {
+  getDynamicProperty(
+    identifier: string,
+  ): boolean | number | string | Vector3 | undefined {
     return this.store.getItem(identifier);
   }
 
@@ -135,7 +150,10 @@ export class Chunk {
    * Data value of the property to set.
    * @throws This function can throw errors.
    */
-  setDynamicProperty(identifier: string, value?: boolean | number | string | Vector3): void {
+  setDynamicProperty(
+    identifier: string,
+    value?: boolean | number | string | Vector3,
+  ): void {
     this.store.setItem(identifier, value);
   }
 
@@ -230,6 +248,26 @@ export class Chunk {
     shape.totalTimeLeft = 0.1;
     const drawer = new ParticleDrawer(this.dimension, 22, true);
     drawer.addShape(shape);
+  }
+
+  /**
+   * Ensures the chunk containing this location is loaded before continuing.
+   * @param {number} timeout
+   */
+  ensureLoaded(timeout = 40): Promise<Chunk> {
+    return new Promise((resolve, reject) => {
+      let c = 0;
+      const interval = system.runInterval(() => {
+        c++;
+        if (this.isLoaded()) {
+          system.clearRun(interval);
+          resolve(this);
+        } else if (c >= timeout) {
+          system.clearRun(interval);
+          reject(`Chunk ${this.x} ${this.z} timed out!`);
+        }
+      }, 1);
+    });
   }
 
   static fromPos(dimension: Dimension, location: Vector3): Chunk {

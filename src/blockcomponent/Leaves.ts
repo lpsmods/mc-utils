@@ -4,6 +4,7 @@ import {
   CustomComponentParameters,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
+import { AddonUtils } from "../addon";
 
 export interface LeavesOptions {
   distance_state: keyof BlockStateSuperset;
@@ -12,7 +13,7 @@ export interface LeavesOptions {
 }
 
 export class LeavesComponent {
-  static typeId = "mcutils:leaves";
+  static typeId = AddonUtils.makeId("leaves");
 
   constructor() {
     this.onRandomTick = this.onRandomTick.bind(this);
@@ -21,9 +22,15 @@ export class LeavesComponent {
 
   // EVENTS
 
-  onRandomTick(event: BlockComponentRandomTickEvent, args: CustomComponentParameters): void {}
+  onRandomTick(
+    event: BlockComponentRandomTickEvent,
+    args: CustomComponentParameters,
+  ): void {}
 
-  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
+  onTick(
+    event: BlockComponentTickEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as LeavesOptions;
     const blk = event.block;
     const persistent = blk.getState(options.persistent_state) as boolean;

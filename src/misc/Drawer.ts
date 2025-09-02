@@ -4,9 +4,9 @@ import {
   LocationInUnloadedChunkError,
   system,
 } from "@minecraft/server";
-import { Ticking } from "./Ticking";
+import { Ticking } from "./ticking";
 import { Vector3Utils } from "@minecraft/math";
-import { Shape } from "./Shape";
+import { Shape } from "./shape";
 
 export abstract class Drawer extends Ticking {
   dimension: Dimension;
@@ -20,7 +20,11 @@ export abstract class Drawer extends Ticking {
    * @param {Dimension} dimension
    * @param {boolean} removeWhenEmpty Removes this drawer when it has no shapes to draw.
    */
-  constructor(dimension: Dimension, tickInterval?: number, removeWhenEmpty: boolean = true) {
+  constructor(
+    dimension: Dimension,
+    tickInterval?: number,
+    removeWhenEmpty: boolean = true,
+  ) {
     super();
     this.removeWhenEmpty = removeWhenEmpty;
     this.tickInterval = tickInterval;
@@ -68,7 +72,8 @@ export abstract class Drawer extends Ticking {
           shape.remove();
         }
       }
-      if (this.tickInterval && system.currentTick % this.tickInterval === 0) continue;
+      if (this.tickInterval && system.currentTick % this.tickInterval === 0)
+        continue;
       if (shape.onTick) shape.onTick(shape);
       this.drawShape(shape);
     }

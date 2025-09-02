@@ -1,7 +1,13 @@
-import { Block, BlockComponentPlayerInteractEvent, CustomComponentParameters } from "@minecraft/server";
+import {
+  Block,
+  BlockComponentPlayerInteractEvent,
+  BlockComponentTickEvent,
+  CustomComponentParameters,
+} from "@minecraft/server";
 import { LRUCache } from "../cache";
-import { Identifier } from "../misc/Identifier";
-import { BlockUtils } from "../block/BlockUtils";
+import { Identifier } from "../misc/identifier";
+import { BlockUtils } from "../block/utils";
+import { AddonUtils } from "../addon";
 
 export interface CoralOptions {
   delay?: number;
@@ -9,7 +15,7 @@ export interface CoralOptions {
 }
 
 export class CoralComponent {
-  static typeId = "mcutils:coral";
+  static typeId = AddonUtils.makeId("coral");
 
   static CACHE = new LRUCache<string, string>();
 
@@ -21,10 +27,13 @@ export class CoralComponent {
   }
 
   getDeadCoralBlock(block: Block, options: CoralOptions) {
-    return options.block ?? CoralComponent.CACHE.getOrCompute(block.typeId, (key) => {
-      const id = Identifier.parse(key);
-      return id.prefix('dead_').toString();
-    });
+    return (
+      options.block ??
+      CoralComponent.CACHE.getOrCompute(block.typeId, (key) => {
+        const id = Identifier.parse(key);
+        return id.prefix("dead_").toString();
+      })
+    );
   }
 
   hasWater(block: Block): boolean {
@@ -50,7 +59,10 @@ export class CoralComponent {
 
   // EVENTS
 
-  onTick(event: BlockComponentPlayerInteractEvent, args:CustomComponentParameters): void {
+  onTick(
+    event: BlockComponentTickEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as CoralOptions;
     const blk = event.block;
     const water = this.hasWater(blk);

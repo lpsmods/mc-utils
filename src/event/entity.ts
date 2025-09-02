@@ -4,15 +4,18 @@ import {
   EntityInventoryComponent,
   EntityQueryOptions,
   InvalidEntityError,
+  LocationInUnloadedChunkError,
+  LocationOutOfWorldBoundariesError,
   PlayerInteractWithEntityAfterEvent,
   system,
   Vector3,
   world,
 } from "@minecraft/server";
-import { EventSignal } from ".";
+import { EventSignal } from "./utils";
 import { forAllDimensions } from "../utils";
 import { Vector3Utils } from "@minecraft/math";
 import { Hasher } from "../type";
+import { ErrorUtils } from "../error";
 
 export class EntityEvent {
   constructor(entity: Entity) {
@@ -78,7 +81,10 @@ export class EntityStepOffEvent extends EntityEvent {
   readonly block: Block;
 }
 
-export class EntityEventSignal<T extends EntityEvent> extends EventSignal<T, EntityQueryOptions> {
+export class EntityEventSignal<T extends EntityEvent> extends EventSignal<
+  T,
+  EntityQueryOptions
+> {
   apply(event: T): void {
     for (const fn of this.listeners) {
       if (fn.options && !event.entity.matches(fn.options)) continue;
@@ -113,7 +119,8 @@ export class EntityEvents {
   /**
    * This event fires when a players inventory has changed.
    */
-  static readonly playerInventoryChanged = new EntityInventoryChangedEventSignal();
+  static readonly playerInventoryChanged =
+    new EntityInventoryChangedEventSignal();
 
   /**
    * This event fires when a entity mounts.
@@ -176,7 +183,10 @@ function mountEntityTick(entity: Entity): void {
   }
   let id = entity.getDynamicProperty("mcutils:last_mount") as string;
   if (id) {
-    const mountEvent = new EntityDismountEvent(world.getEntity(id) ?? entity, entity);
+    const mountEvent = new EntityDismountEvent(
+      world.getEntity(id) ?? entity,
+      entity,
+    );
     entity.setDynamicProperty("mcutils:last_mount", undefined);
     entity.removeTag("mcutils_riding");
     EntityEvents.dismount.apply(mountEvent);
@@ -192,25 +202,33 @@ function mountTick(event: EntityTickEvent): void {
 }
 
 function movedTick(event: EntityTickEvent): void {
-  const value = (event.entity.getDynamicProperty("mcutils:prev_location") as string) ?? "0,0,0";
+  const dim = event.entity.dimension;
+  const value =
+    (event.entity.getDynamicProperty("mcutils:prev_location") as string) ??
+    "0,0,0";
   const prevPos = Hasher.parseVec3(value);
   const pos = event.entity.location;
   pos.x = Math.round(pos.x * 100) / 100;
   pos.y = Math.round(pos.y * 100) / 100;
   pos.z = Math.round(pos.z * 100) / 100;
   if (Vector3Utils.equals(prevPos, pos)) return;
-  event.entity.setDynamicProperty("mcutils:prev_location", Hasher.stringify(pos));
+  event.entity.setDynamicProperty(
+    "mcutils:prev_location",
+    Hasher.stringify(pos),
+  );
   EntityEvents.moved.apply(new EntityMovedEvent(event.entity, prevPos));
 
   // Step on/off
-  const newBlock = event.entity.dimension.getBlock(pos)?.below();
-  const prevBlock = event.entity.dimension.getBlock(prevPos)?.below();
-  if (!newBlock || !prevBlock) return;
-  const newHash = Hasher.stringify(newBlock);
-  const prevHash = Hasher.stringify(prevBlock);
-  if (newHash === prevHash) return;
-  EntityEvents.stepOn.apply(new EntityStepOnEvent(event.entity, newBlock));
-  EntityEvents.stepOff.apply(new EntityStepOnEvent(event.entity, prevBlock));
+  ErrorUtils.wrapCatch(LocationOutOfWorldBoundariesError, () => {
+    const newBlock = dim.getBlock(pos)?.below();
+    const prevBlock = dim.getBlock(prevPos)?.below();
+    if (!newBlock || !prevBlock) return;
+    const newHash = Hasher.stringify(newBlock);
+    const prevHash = Hasher.stringify(prevBlock);
+    if (newHash === prevHash) return;
+    EntityEvents.stepOn.apply(new EntityStepOnEvent(event.entity, newBlock));
+    EntityEvents.stepOff.apply(new EntityStepOnEvent(event.entity, prevBlock));
+  });
 }
 
 function entityTick(event: EntityTickEvent): void {
@@ -221,15 +239,18 @@ function entityTick(event: EntityTickEvent): void {
   movedTick(event);
 
   // Fall
-  let fallingPos = event.entity.getDynamicProperty("mcutils:falling_pos") as Vector3 | undefined;
+  let fallingPos = event.entity.getDynamicProperty("mcutils:falling_pos") as
+    | Vector3
+    | undefined;
   if (fallingPos == undefined && event.entity.isFalling) {
-    // TODO: Save pos
     fallingPos = event.entity.location;
     event.entity.setDynamicProperty("mcutils:falling_pos", fallingPos);
   }
 
   if (fallingPos && event.entity.isOnGround) {
-    let dif = Vector3Utils.floor(Vector3Utils.subtract(fallingPos, event.entity.location));
+    let dif = Vector3Utils.floor(
+      Vector3Utils.subtract(fallingPos, event.entity.location),
+    );
     event.entity.setDynamicProperty("mcutils:falling_pos");
     EntityEvents.fallOn.apply(new EntityFallOnEvent(event.entity, dif.y));
   }
@@ -252,7 +273,8 @@ function tick(): void {
 function playerInteract(event: PlayerInteractWithEntityAfterEvent): void {
   try {
     // Mountable
-    if (event.player.isSneaking || event.player.hasTag("mcutils_riding")) return;
+    if (event.player.isSneaking || event.player.hasTag("mcutils_riding"))
+      return;
     const rideable = event.target.getComponent("rideable");
     if (!rideable) return;
     const mountEvent = new EntityMountEvent(event.target, event.player);
@@ -261,7 +283,6 @@ function playerInteract(event: PlayerInteractWithEntityAfterEvent): void {
   } catch (err) {
     if (err instanceof InvalidEntityError) return;
     throw err;
-    
   }
 }
 

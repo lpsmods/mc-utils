@@ -8,9 +8,10 @@ import {
   Vector2,
   Vector3,
 } from "@minecraft/server";
-import { BlockBaseComponent } from "./BlockBase";
+import { BlockBaseComponent } from "./base";
 import { Vector3Utils } from "@minecraft/math";
-import { PlayerUtils } from "../entity/PlayerUtils";
+import { PlayerUtils } from "../entity/player_utils";
+import { AddonUtils } from "../addon";
 
 export interface SittableOptions {
   seat_position?: number[];
@@ -30,10 +31,8 @@ export class SittableBlockEvent {
   cancel: boolean = false;
 }
 
-// TODO:
-// - May need to make this a tile entity. (entity for mount)
 export class SittableComponent extends BlockBaseComponent {
-  static typeId = "mcutils:sittable";
+  static typeId = AddonUtils.makeId("sittable");
 
   constructor() {
     super();
@@ -46,11 +45,14 @@ export class SittableComponent extends BlockBaseComponent {
 
   getPos(block: Block, options: SittableOptions): Vector3 {
     const pos = options.seat_position ?? [0, 8, 0];
-    return Vector3Utils.add(Vector3Utils.add(block.location, { x: 0.5, y: 0, z: 0.5 }), {
-      x: pos[0] / 16,
-      y: pos[1] / 16,
-      z: pos[2] / 16,
-    });
+    return Vector3Utils.add(
+      Vector3Utils.add(block.location, { x: 0.5, y: 0, z: 0.5 }),
+      {
+        x: pos[0] / 16,
+        y: pos[1] / 16,
+        z: pos[2] / 16,
+      },
+    );
   }
 
   getRot(block: Block, options: SittableOptions): Vector2 | undefined {
@@ -63,12 +65,20 @@ export class SittableComponent extends BlockBaseComponent {
     if (sitEvent.cancel) return;
     let pos = this.getPos(block, options);
     let rot = this.getRot(block, options);
-    PlayerUtils.sit(player, pos, rot, (cancel) => {
-      const sitEvent = new SittableBlockEvent(block, block.dimension, player);
-      if (this.onMountExit) this.onMountExit(sitEvent);
-      cancel = sitEvent.cancel;
-    }, options.seat_animations);
-    player.onScreenDisplay.setActionBar({ translate: `action.hint.exit.${block.typeId}` });
+    PlayerUtils.sit(
+      player,
+      pos,
+      rot,
+      (cancel) => {
+        const sitEvent = new SittableBlockEvent(block, block.dimension, player);
+        if (this.onMountExit) this.onMountExit(sitEvent);
+        cancel = sitEvent.cancel;
+      },
+      options.seat_animations,
+    );
+    player.onScreenDisplay.setActionBar({
+      translate: `action.hint.exit.${block.typeId}`,
+    });
   }
 
   // CUSTOM EVENTS
@@ -81,7 +91,7 @@ export class SittableComponent extends BlockBaseComponent {
 
   onPlayerInteract(
     event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters
+    args: CustomComponentParameters,
   ): void {
     const options = args.params as SittableOptions;
     if (!event.player) return;

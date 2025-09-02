@@ -1,14 +1,23 @@
 import {
+  Dimension,
   Entity,
+  LocationInUnloadedChunkError,
+  LocationOutOfWorldBoundariesError,
+  Structure,
   StructurePlaceOptions,
   StructureRotation,
+  system,
   Vector3,
   world,
 } from "@minecraft/server";
-import { FeatureHandler, FeaturePlaceEvent } from "./FeatureHandler";
+import { FeatureHandler, FeaturePlaceEvent } from "./feature_handler";
 import { Hasher } from "../type";
-import { MathUtils } from "../MathUtils";
-import { RandomUtils } from "../RandomUtils";
+import { RandomUtils } from "../random";
+import { Vector3Utils } from "@minecraft/math";
+import { ErrorUtils } from "../error";
+import { BlockUtils } from "../block/utils";
+import { REPLACEABLE_BLOCKS } from "../constants";
+import { FeatureUtils } from "./utils";
 
 export interface FeatureOptions {
   offset?: Vector3;
@@ -17,38 +26,95 @@ export interface FeatureOptions {
 }
 
 export class Feature {
-  typeId: string | null = null;
+  static typeId: string | null = "feature";
+  id: string | null = null;
   handler: FeatureHandler | null = null;
-  options: FeatureOptions;
+  readonly options: FeatureOptions;
 
   constructor(options?: FeatureOptions) {
     this.options = options ?? {};
   }
 
+  /**
+   * Fires before this feature is placed.
+   */
+  beforePlace?(): void;
+
+  #getSupported(dim: Dimension, location: Vector3): Vector3 {
+    const size = this.getSize();
+
+    function isFullySupported(pos: Vector3): boolean {
+      for (let x = 0; x < size.x; x++) {
+        for (let z = 0; z < size.z; z++) {
+          const check = Vector3Utils.add(pos, { x, y: -1, z });
+          if (check.y < dim.heightRange.min) {
+            return true;
+          }
+          const block = dim.getBlock(check);
+          if (!block) continue;
+          if (block.isAir || BlockUtils.matchAny(block, REPLACEABLE_BLOCKS)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    let groundedPos = { ...location };
+    while (!isFullySupported(groundedPos)) {
+      groundedPos = Vector3Utils.add(groundedPos, { x: 0, y: -1, z: 0 });
+      if (groundedPos.y <= dim.heightRange.min) break;
+    }
+    return groundedPos;
+  }
+
+  /**
+   * Transforms the location from options.
+   * @param {Vector3} location
+   * @returns {Vector3}
+   */
+  getPos(dimension: Dimension, location: Vector3): Vector3 {
+    let pos = location;
+
+    // TODO: Optimize getSupported.
+    // if (this.options.grounded) {
+    //   pos = this.#getSupported(dimension, pos);
+    // }
+    // TODO: Apply offset here.
+    return pos;
+  }
+
+  /**
+   * Get the size of this feature.
+   * @returns {Vector3}
+   */
   getSize(): Vector3 {
     return { x: 1, y: 1, z: 1 };
   }
 
   matches(entity: Entity): boolean {
-    return entity.hasTag(this.typeId ?? "unknown");
+    return entity.hasTag(this.id ?? "unknown");
   }
 
   debug(event: FeaturePlaceEvent): void {
     if (!this.options.debug) return;
     event.dimension.setBlockType(event.location, "lime_stained_glass");
-    console.log(`Generated feature '${this.typeId}' at ${Hasher.stringify(event.location)}`);
+    console.log(
+      `Generated feature '${this.id}' at ${Hasher.stringify(event.location)}`,
+    );
   }
 
   /**
    * Generate this feature.
-   * @param {FeaturePlaceEvent} event 
+   * @param {FeaturePlaceEvent} event
    */
   *place(event: FeaturePlaceEvent): Generator<void, void, void> {
+    if (!this.handler)
+      throw new Error(`FeatureHandler not found for feature '${this.id}'`);
     this.debug(event);
   }
 
   toString(): string {
-    return this.typeId ?? "unknown";
+    return this.id ?? "unknown";
   }
 }
 
@@ -66,17 +132,23 @@ export interface StructureTemplateOptions extends FeatureOptions {
 }
 
 export class StructureTemplate extends Feature {
+  static readonly typeId = "structure_template_feature";
   structureName: string;
+  structure?: Structure;
 
   constructor(structureName?: string, options?: StructureTemplateOptions) {
     super(options);
-    this.structureName = structureName ?? this.typeId ?? "unknown";
+    this.structureName = structureName ?? this.id ?? "unknown";
+    system.run(() => {
+      const struct = world.structureManager.get(this.structureName);
+      if (!struct) throw new Error(`${this.structureName} does not exist!`);
+      this.structure = struct;
+    });
   }
 
   getSize(): Vector3 {
-    const structure = world.structureManager.get(this.structureName);
-    if (!structure) return super.getSize();
-    return structure.size;
+    if (!this.structure) return { x: 0, y: 0, z: 0 };
+    return this.structure.size;
   }
 
   *place(event: FeaturePlaceEvent): Generator<void, void, void> {
@@ -110,34 +182,131 @@ export class StructureTemplate extends Feature {
       }
     }
 
-    world.structureManager.place(this.structureName, event.dimension, event.location, sOptions);
+    world.structureManager.place(
+      this.structureName,
+      event.dimension,
+      event.location,
+      sOptions,
+    );
     this.debug(event);
   }
 }
 
-export interface WeightedRandomFeatureOptions extends FeatureOptions {}
-
+// TODO: Return the size of the feature. Choose the feature its going to place before it places it.
 export class WeightedRandomFeature extends Feature {
+  static readonly typeId = "weighted_random_feature";
   features: Set<[string, number]>;
+  nextFeature?: Feature;
 
-  constructor(features?: Array<[string, number]>, options?: WeightedRandomFeatureOptions) {
+  constructor(features?: Array<[string, number]>, options?: FeatureOptions) {
     super(options);
     this.features = new Set<[string, number]>(features ?? []);
   }
 
-  addFeature(identifier: string | Feature, weight: number = 1): WeightedRandomFeature {
+  beforePlace(): void {
+    const id = RandomUtils.weightedChoice<string>([...this.features]);
+    if (!this.handler) return;
+    const feature = this.handler.features.get(id);
+    if (!feature) return;
+    this.nextFeature = feature;
+  }
+
+  getPos(dimension: Dimension, location: Vector3): Vector3 {
+    if (!this.nextFeature) return super.getPos(dimension, location);
+    return this.nextFeature.getPos(dimension, location);
+  }
+
+  getSize(): Vector3 {
+    if (!this.nextFeature) return super.getSize();
+    let res = this.nextFeature.getSize();
+    return res;
+  }
+
+  addFeature(
+    identifier: string | Feature,
+    weight: number = 1,
+  ): WeightedRandomFeature {
     this.features.add([identifier.toString(), weight]);
     return this;
   }
 
-  removeFeature(identifier: string | Feature, weight: number = 1): WeightedRandomFeature {
+  removeFeature(
+    identifier: string | Feature,
+    weight: number = 1,
+  ): WeightedRandomFeature {
     this.features.delete([identifier.toString(), weight]);
     return this;
   }
 
   *place(event: FeaturePlaceEvent): Generator<void, void, void> {
-    const featureId = RandomUtils.weightedChoice<string>([...this.features]);
     if (!this.handler) return;
-    this.handler.placeFeature(featureId, event.dimension, event.location);
+    if (!this.nextFeature || !this.nextFeature.id) return;
+    this.handler.placeFeature(
+      this.nextFeature.id,
+      event.dimension,
+      event.location,
+    );
+    this.debug(event);
+  }
+}
+
+// TODO:
+// export class ScatterFeature extends Feature {
+//   static readonly typeId = 'scatter_feature';
+// }
+
+// TODO:
+export class ExtendedFeature extends Feature {
+  static readonly typeId = "extended_feature";
+  featureName: string;
+  blockType: string;
+  constructor(
+    featureName: string,
+    blockType?: string,
+    options?: FeatureOptions,
+  ) {
+    super(options);
+    this.featureName = featureName;
+    this.blockType = blockType ?? "cobblestone";
+  }
+
+  getSize(): Vector3 {
+    if (!this.handler) return super.getSize();
+    const feature = this.handler.features.get(this.featureName);
+    if (!feature) return super.getSize();
+    return feature.getSize();
+  }
+
+  private buildSupport(event: FeaturePlaceEvent): void {
+    const dim = event.dimension;
+    const size = this.getSize();
+    const blockType = this.blockType;
+    function isFullySupported(pos: Vector3): boolean {
+      for (let x = 0; x < size.x; x++) {
+        for (let z = 0; z < size.z; z++) {
+          const check = Vector3Utils.add(pos, { x, y: -1, z });
+          ErrorUtils.wrapCatch(LocationInUnloadedChunkError, () => {
+            const block = dim.getBlock(check);
+            if (block && block.isAir) {
+              block.setType(blockType);
+            }
+          });
+        }
+      }
+      return true;
+    }
+    let groundedPos = { ...event.location };
+    while (!isFullySupported(groundedPos)) {
+      groundedPos = Vector3Utils.add(groundedPos, { x: 0, y: -1, z: 0 });
+      if (groundedPos.y <= dim.heightRange.min) break;
+    }
+  }
+
+  *place(event: FeaturePlaceEvent): Generator<void, void, void> {
+    if (!this.handler) return;
+    const feature = this.handler.features.get(this.featureName);
+    if (!feature) return;
+    system.runJob(feature.place(event));
+    this.buildSupport(event);
   }
 }

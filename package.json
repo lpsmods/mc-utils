@@ -1,16 +1,16 @@
 {
   "name": "@lpsmods/mc-utils",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "author": "legopitstop",
   "license": "MIT",
   "description": "Utilities for making Minecraft: Bedrock Edition scripts",
   "main": "dist/index",
   "scripts": {
     "build": "node build.mjs",
-    "copy": "xcopy \"dist\" \"%localappdata%\\Packages\\Microsoft.MinecraftUWP_8wekyb3d8bbwe\\LocalState\\games\\com.mojang\\development_behavior_packs\\mcutils_BP\\scripts\\mc-utils\" /s /y /I",
-    "copy_test": "xcopy \"dist\" \"%localappdata%\\Packages\\Microsoft.MinecraftUWP_8wekyb3d8bbwe\\LocalState\\games\\com.mojang\\development_behavior_packs\\mcutils_test_BP\\scripts\\mc-utils\" /s /y /I",
-    "rebuild": "npm run build && npm run copy && npm run copy_test && echo Done!",
-    "dev": "chokidar \"src/**/*\" -c \"npm run rebuild\" -d"
+    "copy": "xcopy \"src\" \"%UserProfile%\\Documents\\GitHub\\Minecraft\\mcutils-example\\scripts\\mc-utils\" /s /y /I",
+    "rebuild": "npm run build && npm run copy && echo Done!",
+    "dev": "chokidar \"src/**/*\" -c \"npm run rebuild\" -d",
+    "test": "vitest"
   },
   "repository": {
     "type": "git",
@@ -29,7 +29,9 @@
     "@minecraft/server-ui": "^2.0.0",
     "chokidar-cli": "^3.0.0",
     "esbuild": "^0.25.4",
-    "glob": "^11.0.2"
+    "glob": "^11.0.2",
+    "molang": "^2.0.1",
+    "vitest": "^3.2.4"
   },
   "devDependencies": {
     "typescript": "^4.0.0"

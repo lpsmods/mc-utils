@@ -1,19 +1,21 @@
 import {
   Block,
   BlockComponentPlayerInteractEvent,
+  BlockComponentRandomTickEvent,
   CustomComponentParameters,
 } from "@minecraft/server";
-import { Identifier } from "../misc/Identifier";
-import { BlockUtils } from "../block/BlockUtils";
+import { Identifier } from "../misc/identifier";
+import { BlockUtils } from "../block/utils";
 import { Oxidization } from "../constants";
+import { AddonUtils } from "../addon";
 
 export interface OxidizableOptions {
   block?: string;
 }
 
-// TODO: Make waaaay slower.
+// TODO: Make way slower.
 export class OxidizableComponent {
-  static typeId = "mcutils:oxidizable";
+  static typeId = AddonUtils.makeId("oxidizable");
 
   constructor() {
     this.onRandomTick = this.onRandomTick.bind(this);
@@ -38,7 +40,12 @@ export class OxidizableComponent {
     BlockUtils.setType(block, this.getBlock(block, options));
   }
 
-  onRandomTick(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+  // EVENTS
+
+  onRandomTick(
+    event: BlockComponentRandomTickEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as OxidizableOptions;
     this.convertBlock(event.block, options);
   }

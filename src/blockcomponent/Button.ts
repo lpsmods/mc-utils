@@ -5,7 +5,8 @@ import {
   CustomComponentParameters,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
-import { BlockUtils } from "../block/BlockUtils";
+import { BlockUtils } from "../block/utils";
+import { AddonUtils } from "../addon";
 
 export interface ButtonOptions {
   powered_state: keyof BlockStateSuperset;
@@ -14,10 +15,8 @@ export interface ButtonOptions {
   click_off_sound_event?: string;
 }
 
-// TODO:
-// Emit redstone power
 export class ButtonComponent {
-  static typeId = "mcutils:button";
+  static typeId = AddonUtils.makeId("button");
 
   DELAY = 0;
 
@@ -28,30 +27,43 @@ export class ButtonComponent {
 
   getSound(block: Block, powered: boolean): string {
     if (block.hasTag("wood") && block.typeId.includes("cherry")) {
-      return powered ? "click_on.cherry_wood_button" : "click_off.cherry_wood_button";
+      return powered
+        ? "click_on.cherry_wood_button"
+        : "click_off.cherry_wood_button";
     }
     if (block.hasTag("wood") && block.typeId.includes("bamboo")) {
-      return powered ? "click_on.bamboo_wood_button" : "click_off.bamboo_wood_button";
+      return powered
+        ? "click_on.bamboo_wood_button"
+        : "click_off.bamboo_wood_button";
     }
     if (
       (block.hasTag("wood") && block.typeId.includes("crimson")) ||
       block.typeId.includes("warped")
     ) {
-      return powered ? "click_on.nether_wood_button" : "click_off.nether_wood_button";
+      return powered
+        ? "click_on.nether_wood_button"
+        : "click_off.nether_wood_button";
     }
     return "random.wood_click";
   }
 
   // EVENTS
 
-  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
+  onTick(
+    event: BlockComponentTickEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as ButtonOptions;
-    const delay = (event.block.getDynamicProperty("mcutils:delay") as number) ?? 0;
+    const delay =
+      (event.block.getDynamicProperty("mcutils:delay") as number) ?? 0;
     if (delay > 0) {
       let v = delay - 1;
       event.block.setDynamicProperty("mcutils:delay", v);
       if (v == 0) {
-        event.dimension.playSound(this.getSound(event.block, false), event.block.location);
+        event.dimension.playSound(
+          this.getSound(event.block, false),
+          event.block.location,
+        );
         BlockUtils.setState(event.block, options.powered_state, false);
       }
     }
@@ -59,29 +71,40 @@ export class ButtonComponent {
 
   onPlayerInteract(
     event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters
+    args: CustomComponentParameters,
   ): void {
     const options = args.params as ButtonOptions;
-    const powered = event.block.permutation.getState(options.powered_state) as boolean;
+    const powered = event.block.permutation.getState(
+      options.powered_state,
+    ) as boolean;
     if (!powered) {
-      event.block.setDynamicProperty("mcutils:delay", options.delay ?? this.DELAY);
-      event.dimension.playSound(this.getSound(event.block, true), event.block.location);
+      event.block.setDynamicProperty(
+        "mcutils:delay",
+        options.delay ?? this.DELAY,
+      );
+      event.dimension.playSound(
+        this.getSound(event.block, true),
+        event.block.location,
+      );
       return BlockUtils.setState(event.block, options.powered_state, true);
     }
     if (powered) {
-      event.block.setDynamicProperty("mcutils:delay", options.delay ?? this.DELAY);
+      event.block.setDynamicProperty(
+        "mcutils:delay",
+        options.delay ?? this.DELAY,
+      );
     }
   }
 }
 
 export class WoodenButtonComponent extends ButtonComponent {
-  static typeId = "mcutils:wooden_button";
+  static typeId = AddonUtils.makeId("wooden_button");
 
   DELAY = 30;
 }
 
 export class StoneButtonComponent extends ButtonComponent {
-  static typeId = "mcutils:stone_button";
+  static typeId = AddonUtils.makeId("stone_button");
 
   DELAY = 20;
 }

@@ -3,7 +3,7 @@ import {
   ItemComponentHitEntityEvent,
   CustomComponentParameters,
 } from "@minecraft/server";
-import { ItemUtils } from "../item/ItemUtils";
+import { ItemUtils } from "../item/utils";
 
 export interface ToolOptions {
   damage_when_mined?: boolean;
@@ -11,7 +11,7 @@ export interface ToolOptions {
 }
 
 export class ToolComponent {
-  static typeId = 'mcutils:tool';
+  static typeId = "mcutils:tool";
 
   /**
    * Deals damage to the item when you break a block or hit an entity.
@@ -21,16 +21,24 @@ export class ToolComponent {
     this.onHitEntity = this.onHitEntity.bind(this);
   }
 
-  onMineBlock(event: ItemComponentMineBlockEvent, args: CustomComponentParameters): void {
+  onMineBlock(
+    event: ItemComponentMineBlockEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as ToolOptions;
-    if (options.damage_when_mined != undefined && !options.damage_when_mined) return;
+    if (options.damage_when_mined != undefined && !options.damage_when_mined)
+      return;
     if (!event.itemStack) return;
     ItemUtils.applyDamage(event.source, event.itemStack, 1);
   }
 
-  onHitEntity(event: ItemComponentHitEntityEvent, args: CustomComponentParameters): void {
+  onHitEntity(
+    event: ItemComponentHitEntityEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as ToolOptions;
-    if (options.damage_when_hit != undefined && !options.damage_when_hit) return;
+    if (options.damage_when_hit != undefined && !options.damage_when_hit)
+      return;
     if (!event.itemStack) return;
     ItemUtils.applyDamage(event.attackingEntity, event.itemStack, 1);
   }

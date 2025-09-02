@@ -4,7 +4,7 @@ import "./mixins";
 export const VERSION = "1.0.0";
 
 function startup(event: StartupEvent): void {
-  console.info("Starting mcutils");
+  console.info("SETUP");
 }
 
 export function setup(): void {

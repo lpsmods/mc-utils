@@ -1,7 +1,7 @@
 import { BlockPermutation, Vector3 } from "@minecraft/server";
-import { MathUtils } from "../MathUtils";
+import { MathUtils } from "../math";
 import { Font, Fonts } from "./font";
-import { Drawer } from "./Drawer";
+import { Drawer } from "./drawer";
 
 export abstract class Shape {
   drawer?: Drawer = undefined;
@@ -120,7 +120,11 @@ export class Box extends Shape {
       points.push({ x: maxX, y: minY, z: z });
       points.push({ x: maxX, y: maxY, z: z });
     }
-    return MathUtils.rotatePoints(points, this.location, this.origin ?? this.rotation);
+    return MathUtils.rotatePoints(
+      points,
+      this.location,
+      this.origin ?? this.rotation,
+    );
   }
 }
 
@@ -208,7 +212,11 @@ export class Line extends Shape {
     }
 
     points.push({ x: x2, y: y2, z: z2 });
-    return MathUtils.rotatePoints(points, this.location, this.origin ?? this.rotation);
+    return MathUtils.rotatePoints(
+      points,
+      this.location,
+      this.origin ?? this.rotation,
+    );
   }
 }
 
@@ -239,7 +247,11 @@ export class Circle extends Shape {
         points.push({ x: px, y: cy, z: pz });
       }
     }
-    return MathUtils.rotatePoints(points, this.location, this.origin ?? this.rotation);
+    return MathUtils.rotatePoints(
+      points,
+      this.location,
+      this.origin ?? this.rotation,
+    );
   }
 }
 
@@ -262,7 +274,11 @@ export class Sphere extends Shape {
         }
       }
     }
-    return MathUtils.rotatePoints(points, this.location, this.origin ?? this.rotation);
+    return MathUtils.rotatePoints(
+      points,
+      this.location,
+      this.origin ?? this.rotation,
+    );
   }
 }
 
@@ -307,7 +323,11 @@ export class Text extends Shape {
       }
       offsetX += (glyph[0].length + 1) * scale;
     }
-    return MathUtils.rotatePoints(points, this.location, this.origin ?? this.rotation);
+    return MathUtils.rotatePoints(
+      points,
+      this.location,
+      this.origin ?? this.rotation,
+    );
   }
 }
 
@@ -332,7 +352,10 @@ export class Cone extends Shape {
       const currentRadius = this.radius * (1 - t);
       const currentY = cy + t * this.height;
       const circumference = 2 * Math.PI * currentRadius;
-      const horizontalSteps = Math.max(8, Math.floor(circumference * stepsPerBlock));
+      const horizontalSteps = Math.max(
+        8,
+        Math.floor(circumference * stepsPerBlock),
+      );
       for (let i = 0; i < horizontalSteps; i++) {
         const theta = (i / horizontalSteps) * Math.PI * 2;
         const px = Math.cos(theta) * currentRadius;
@@ -368,7 +391,10 @@ export class Cylinder extends Shape {
 
     // Precompute circumference resolution
     const circumference = 2 * Math.PI * this.radius;
-    const horizontalSteps = Math.max(8, Math.floor(circumference * stepsPerBlock));
+    const horizontalSteps = Math.max(
+      8,
+      Math.floor(circumference * stepsPerBlock),
+    );
 
     for (let step = 0; step <= verticalSteps; step++) {
       const currentY = cy + (step / verticalSteps) * this.height;

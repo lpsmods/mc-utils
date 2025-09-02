@@ -1,7 +1,7 @@
 import { Dimension, system, world } from "@minecraft/server";
-import { EventSignal } from ".";
-import { Chunk } from "../world/Chunk";
-import { PlayerUtils } from "../entity/PlayerUtils";
+import { EventSignal } from "./utils";
+import { Chunk } from "../world/chunk";
+import { PlayerUtils } from "../entity/player_utils";
 import { Hasher } from "../type";
 import { differenceArray, removeItems } from "../utils";
 
@@ -28,19 +28,25 @@ export class ChunkUnloadEvent extends ChunkEvent {}
 export class ChunkTickEvent extends ChunkEvent {}
 
 export class ChunkLoadEventSignal extends EventSignal<ChunkLoadEvent> {
-  subscribe(callback: (event: ChunkLoadEvent) => void): (event: ChunkLoadEvent) => void {
+  subscribe(
+    callback: (event: ChunkLoadEvent) => void,
+  ): (event: ChunkLoadEvent) => void {
     return super.subscribe(callback);
   }
 }
 
 export class ChunkUnloadEventSignal extends EventSignal<ChunkUnloadEvent> {
-  subscribe(callback: (event: ChunkUnloadEvent) => void): (event: ChunkUnloadEvent) => void {
+  subscribe(
+    callback: (event: ChunkUnloadEvent) => void,
+  ): (event: ChunkUnloadEvent) => void {
     return super.subscribe(callback);
   }
 }
 
 export class ChunkTickEventSignal extends EventSignal<ChunkTickEvent> {
-  subscribe(callback: (event: ChunkTickEvent) => void): (event: ChunkTickEvent) => void {
+  subscribe(
+    callback: (event: ChunkTickEvent) => void,
+  ): (event: ChunkTickEvent) => void {
     return super.subscribe(callback);
   }
 }
@@ -79,10 +85,13 @@ function tick() {
       if (loadedChunks.has(key)) continue;
       loadedChunks.add(key);
       const gen = chunk.getDynamicProperty("mcutils:has_generated") ?? false;
-      ChunkEvents.load.apply(new ChunkLoadEvent(chunk, !gen));
-      if (!gen) {
-        chunk.setDynamicProperty("mcutils:has_generated", true);
-      }
+      chunk.ensureLoaded().then((loaded) => {
+        if (!loaded) return;
+        if (!gen) {
+          chunk.setDynamicProperty("mcutils:has_generated", true);
+        }
+        ChunkEvents.load.apply(new ChunkLoadEvent(chunk, !gen));
+      });
     }
   }
 

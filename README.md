@@ -6,16 +6,24 @@
 
 Minecraft utility functions and components to help create add-ons.
 
+> NOTE: This project is still under heavy development. Features may be removed or changed in future releases.
+
 ## Dependencies
 
 ```json
 [
-  { "module_name": "@minecraft/server", "version": "1.16.0" },
+  { "module_name": "@minecraft/server", "version": "2.1.0" },
   { "module_name": "@minecraft/math", "version": "2.0.1" }
 ]
 ```
 
-## How to use @lpsmods/mc-utils in your project
+## Features
 
-1. Download `@lpsmods/mc-utils` from NPM by running `npm install @lpsmods/mc-utils` within your scripts pack.
-2. ...
+- Vanilla item components.
+- Vanilla block components.
+- Entity handlers for custom entity mechanics.
+- Custom block, item, entity, and chunk events.
+- Rectangle and sphere area detectors.
+- State controllers.
+- Block, item, and entity molang contexts.
+- Custom progress bar.

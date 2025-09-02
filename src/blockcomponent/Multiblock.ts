@@ -11,11 +11,11 @@ import {
   Vector3,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
-import { BlockBaseComponent } from "./BlockBase";
-import { BlockUtils } from "../block/BlockUtils";
-import { WorldUtils } from "../world/WorldUtils";
+import { BlockBaseComponent } from "./base";
+import { BlockUtils } from "../block/utils";
+import { WorldUtils } from "../world/utils";
 import { Vector3Utils } from "@minecraft/math";
-import { PacketEvents, Packet, PacketData } from "../misc/Packet";
+import { AddonUtils } from "../addon";
 
 export interface MultiblockOptions {
   part_state: keyof BlockStateSuperset;
@@ -78,7 +78,12 @@ export class Part {
 }
 
 export class MultiBlockReceiveEvent {
-  constructor(block: Block, sourceBlock: Block, id: string, data?: { [key: string]: any }) {
+  constructor(
+    block: Block,
+    sourceBlock: Block,
+    id: string,
+    data?: { [key: string]: any },
+  ) {
     this.block = block;
     this.dimension = block.dimension;
     this.sourceBlock = sourceBlock;
@@ -109,9 +114,8 @@ export class MultiBlockReceiveEvent {
   readonly data: { [key: string]: any };
 }
 
-// TODO: Use rotation for offset.
 export class MultiblockComponent extends BlockBaseComponent {
-  static typeId = "mcutils:multiblock";
+  static typeId = AddonUtils.makeId("multiblock");
 
   constructor() {
     super();
@@ -139,7 +143,12 @@ export class MultiblockComponent extends BlockBaseComponent {
 
   syncStates(block: Block, options: MultiblockOptions): void {
     if (!options.sync_states) return;
-    const blocks = this.getOtherParts(block.permutation, block.dimension, block.location, options);
+    const blocks = this.getOtherParts(
+      block.permutation,
+      block.dimension,
+      block.location,
+      options,
+    );
     for (const block2 of blocks) {
       if (!block2) continue;
       const part = block2.permutation.getState(options.part_state);
@@ -152,7 +161,7 @@ export class MultiblockComponent extends BlockBaseComponent {
     permutation: BlockPermutation,
     dimension: Dimension,
     location: Vector3,
-    options: MultiblockOptions
+    options: MultiblockOptions,
   ): Block | undefined {
     const parts = Part.parseAll(options.parts);
     const basePart = parts.find((part) => part.isBase());
@@ -179,7 +188,7 @@ export class MultiblockComponent extends BlockBaseComponent {
     permutation: BlockPermutation,
     dimension: Dimension,
     location: Vector3,
-    options: MultiblockOptions
+    options: MultiblockOptions,
   ): Block[] {
     const base = this.findBase(permutation, dimension, location, options);
     if (!base) return [];
@@ -204,12 +213,25 @@ export class MultiblockComponent extends BlockBaseComponent {
    * @param {any} data
    * @returns
    */
-  sendPart(block: Block, args: CustomComponentParameters, id: string, data?: any): void {
+  sendPart(
+    block: Block,
+    args: CustomComponentParameters,
+    id: string,
+    data?: any,
+  ): void {
     if (!this.onReceivePart) return;
     const options = args.params as MultiblockOptions;
-    const blocks = this.getOtherParts(block.permutation, block.dimension, block.location, options);
+    const blocks = this.getOtherParts(
+      block.permutation,
+      block.dimension,
+      block.location,
+      options,
+    );
     for (const target of blocks) {
-      this.onReceivePart(new MultiBlockReceiveEvent(target, block, id, data), args);
+      this.onReceivePart(
+        new MultiBlockReceiveEvent(target, block, id, data),
+        args,
+      );
     }
   }
 
@@ -217,14 +239,16 @@ export class MultiblockComponent extends BlockBaseComponent {
 
   beforeOnPlayerPlace(
     event: BlockComponentPlayerPlaceBeforeEvent,
-    args: CustomComponentParameters
+    args: CustomComponentParameters,
   ): void {
     const options = args.params as MultiblockOptions;
     const parts = Part.parseAll(options.parts);
     for (const part of parts) {
       var block = event.block.offset(part.offset);
       if (options.direction_state) {
-        const dir = event.permutationToPlace.getState(options.direction_state) as Direction;
+        const dir = event.permutationToPlace.getState(
+          options.direction_state,
+        ) as Direction;
         block = event.block.offset(part.fromDir(dir));
       }
       if (!block || !block.isAir) {
@@ -234,7 +258,10 @@ export class MultiblockComponent extends BlockBaseComponent {
     }
   }
 
-  onPlace(event: BlockComponentOnPlaceEvent, args: CustomComponentParameters): void {
+  onPlace(
+    event: BlockComponentOnPlaceEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as MultiblockOptions;
     if (!this.isBase(event.block.permutation, options)) return;
     const parts = Part.parseAll(options.parts);
@@ -245,22 +272,30 @@ export class MultiblockComponent extends BlockBaseComponent {
       }
       var block = event.block.offset(part.offset);
       if (options.direction_state) {
-        const dir = event.block.permutation.getState(options.direction_state) as Direction;
+        const dir = event.block.permutation.getState(
+          options.direction_state,
+        ) as Direction;
         block = event.block.offset(part.fromDir(dir));
       }
       if (!block) continue;
-      const perm = event.block.permutation.withState(options.part_state, part.name);
+      const perm = event.block.permutation.withState(
+        options.part_state,
+        part.name,
+      );
       block.setPermutation(perm);
     }
   }
 
-  onPlayerBreak(event: BlockComponentPlayerBreakEvent, args: CustomComponentParameters): void {
+  onPlayerBreak(
+    event: BlockComponentPlayerBreakEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as MultiblockOptions;
     const blocks = this.getOtherParts(
       event.brokenBlockPermutation,
       event.dimension,
       event.block.location,
-      options
+      options,
     );
     for (const block of blocks) {
       this.destroy(block, event.player);
@@ -273,13 +308,8 @@ export class MultiblockComponent extends BlockBaseComponent {
    * Receive data from the other parts of the block.
    * @param {MultiBlockReceiveEvent} event
    */
-  onReceivePart?(event: MultiBlockReceiveEvent, args: CustomComponentParameters): void;
+  onReceivePart?(
+    event: MultiBlockReceiveEvent,
+    args: CustomComponentParameters,
+  ): void;
 }
-
-PacketEvents.receive.subscribe(
-  (event) => {
-    if (event.id !== "mcutils:block_update") return;
-    console.warn("BLOCK UPDATE!");
-  }
-  // { namespaces: ["mcutils"] }
-);

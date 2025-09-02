@@ -1,6 +1,11 @@
-import { Block, BlockComponentOnPlaceEvent, CustomComponentParameters } from "@minecraft/server";
-import { Identifier } from "../misc/Identifier";
-import { MathUtils } from "../MathUtils";
+import {
+  Block,
+  BlockComponentOnPlaceEvent,
+  CustomComponentParameters,
+} from "@minecraft/server";
+import { Identifier } from "../misc/identifier";
+import { MathUtils } from "../math";
+import { AddonUtils } from "../addon";
 
 export interface SpongeOptions {
   block?: string;
@@ -9,9 +14,8 @@ export interface SpongeOptions {
   size?: number;
 }
 
-// TODO:
 export class SpongeComponent {
-  static typeId = "mcutils:sponge";
+  static typeId = AddonUtils.makeId("sponge");
 
   constructor() {
     this.onPlace = this.onPlace.bind(this);
@@ -24,19 +28,26 @@ export class SpongeComponent {
 
   // Replace water with air
   absorbLiquid(block: Block, options: SpongeOptions): boolean | undefined {
-    return MathUtils.taxicabDistance<boolean>(block.location, options.size ?? 7, (pos) => {
-      const blk = block.dimension.getBlock(pos);
-      if (blk?.matches(options.liquid_block ?? "water")) {
-        blk.setType(options.air_block ?? "air");
-        return true;
-      }
-      return undefined;
-    });
+    return MathUtils.taxicabDistance<boolean>(
+      block.location,
+      options.size ?? 7,
+      (pos) => {
+        const blk = block.dimension.getBlock(pos);
+        if (blk?.matches(options.liquid_block ?? "water")) {
+          blk.setType(options.air_block ?? "air");
+          return true;
+        }
+        return undefined;
+      },
+    );
   }
 
   // EVENTS
 
-  onPlace(event: BlockComponentOnPlaceEvent, args: CustomComponentParameters): void {
+  onPlace(
+    event: BlockComponentOnPlaceEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as SpongeOptions;
     const bool = this.absorbLiquid(event.block, options);
     if (bool) event.block.setType(this.getWetBlock(event.block, options));

@@ -1,6 +1,11 @@
-import { ItemUseOnEvent, Block, CustomComponentParameters } from "@minecraft/server";
-import { ToolComponent } from "./Tool";
+import {
+  ItemUseOnEvent,
+  Block,
+  CustomComponentParameters,
+} from "@minecraft/server";
+import { ToolComponent } from "./tool";
 import { offsetVolume } from "../utils";
+import { AddonUtils } from "../addon";
 
 export interface HoeOptions {
   size?: number;
@@ -8,7 +13,7 @@ export interface HoeOptions {
 }
 
 export class HoeComponent extends ToolComponent {
-  static typeId = "mcutils:hoe";
+  static typeId = AddonUtils.makeId("hoe");
 
   /**
    * Makes this item till dirt like a hoe.
@@ -27,7 +32,11 @@ export class HoeComponent extends ToolComponent {
    * @param {Block} block The block that should be converted to farmland.
    * @param {ItemUseOnEvent} event The item event for context.
    */
-  convertBlock(block: Block, event: ItemUseOnEvent, options: HoeOptions): boolean | undefined {
+  convertBlock(
+    block: Block,
+    event: ItemUseOnEvent,
+    options: HoeOptions,
+  ): boolean | undefined {
     if (!this.canBeTilled(block, options)) return;
     block.setType(this.getBlock(block, options));
   }
@@ -36,18 +45,24 @@ export class HoeComponent extends ToolComponent {
     event.block.dimension.playSound("use.gravel", event.block.location, {
       volume: 1,
     });
-    offsetVolume<boolean>({ x: options.size ?? 1, y: 0, z: options.size ?? 1 }, (pos) => {
-      try {
-        const target = event.block.offset(pos);
-        if (!target) return;
-        return this.convertBlock(target, event, options);
-      } catch (err) {}
-    });
+    offsetVolume<boolean>(
+      { x: options.size ?? 1, y: 0, z: options.size ?? 1 },
+      (pos) => {
+        try {
+          const target = event.block.offset(pos);
+          if (!target) return;
+          return this.convertBlock(target, event, options);
+        } catch (err) {}
+      },
+    );
   }
 
   canBeTilled(block: Block, options: HoeOptions): boolean {
     const target = this.getBlock(block, options);
-    return (block.hasTag("dirt") && !block.matches(target)) || block.matches("grass_path");
+    return (
+      (block.hasTag("dirt") && !block.matches(target)) ||
+      block.matches("grass_path")
+    );
   }
 
   // EVENTS

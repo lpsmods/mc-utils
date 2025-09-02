@@ -4,17 +4,19 @@ import {
   Block,
   CustomComponentParameters,
 } from "@minecraft/server";
-import { BlockBaseComponent } from "./BlockBase";
+import { BlockBaseComponent } from "./base";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
-import { BlockUtils } from "../block/BlockUtils";
+import { BlockUtils } from "../block/utils";
+import { AddonUtils } from "../addon";
 
 export interface SaplingOptions {
   growth_state: keyof BlockStateSuperset;
+  max_stage: number;
   feature?: string;
 }
 
 export class SaplingComponent extends BlockBaseComponent {
-  static typeId = "mcutils:sapling";
+  static typeId = AddonUtils.makeId("sapling");
 
   /**
    * Vanilla sapling block behavior.
@@ -32,7 +34,9 @@ export class SaplingComponent extends BlockBaseComponent {
 
   grow(event: BlockEvent, args: CustomComponentParameters): void {
     const options = args.params as SaplingOptions;
-    const STAGE = event.block.permutation.getState(options.growth_state) as number;
+    const STAGE = event.block.permutation.getState(
+      options.growth_state,
+    ) as number;
     if (STAGE == 0) {
       BlockUtils.incrementState(event.block, options.growth_state);
       this.update(event.block, args);
@@ -43,14 +47,17 @@ export class SaplingComponent extends BlockBaseComponent {
     let bool = event.dimension.placeFeature(
       this.getFeature(event.block, options),
       event.block.location,
-      false
+      false,
     );
     if (!bool) {
       event.block.setPermutation(perm);
     }
   }
 
-  onRandomTick(event: BlockComponentRandomTickEvent, args: CustomComponentParameters): void {
+  onRandomTick(
+    event: BlockComponentRandomTickEvent,
+    args: CustomComponentParameters,
+  ): void {
     // this.grow(event, args);
   }
 }

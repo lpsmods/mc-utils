@@ -1,4 +1,4 @@
-import { CustomCommandParamType } from "@minecraft/server";
+import { CustomCommandOrigin, CustomCommandResult } from "@minecraft/server";
 
 // feature
 // featurerule
@@ -10,6 +10,9 @@ export const placeCommand = {
   //   optionalParameters: [{ type: CustomCommandParamType.Integer, name: "celebrationSize" }],
 };
 
-export function executePlaceCommand(): void {
+export function executePlaceCommand(
+  ctx: CustomCommandOrigin,
+): CustomCommandResult | undefined {
   console.warn("PLACE");
+  return undefined;
 }

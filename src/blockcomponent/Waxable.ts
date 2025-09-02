@@ -4,9 +4,10 @@ import {
   CustomComponentParameters,
   MolangVariableMap,
 } from "@minecraft/server";
-import { ItemUtils } from "../item/ItemUtils";
-import { BlockUtils } from "../block/BlockUtils";
-import { Identifier } from "../misc/Identifier";
+import { ItemUtils } from "../item/utils";
+import { BlockUtils } from "../block/utils";
+import { Identifier } from "../misc/identifier";
+import { AddonUtils } from "../addon";
 
 export interface WaxableOptions {
   block?: string;
@@ -16,7 +17,7 @@ export interface WaxableOptions {
 }
 
 export class WaxableComponent {
-  static typeId = "mcutils:waxable";
+  static typeId = AddonUtils.makeId("waxable");
 
   constructor() {
     this.onPlayerInteract = this.onPlayerInteract.bind(this);
@@ -33,7 +34,7 @@ export class WaxableComponent {
 
   onPlayerInteract(
     event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters
+    args: CustomComponentParameters,
   ): void {
     const options = args.params as WaxableOptions;
     if (!ItemUtils.isHolding(event.player, options.items ?? [])) return;
@@ -44,8 +45,11 @@ export class WaxableComponent {
     event.block.dimension.spawnParticle(
       options.particle_effect ?? "minecraft:wax_particle",
       event.block.location,
-      variables
+      variables,
     );
-    event.block.dimension.playSound(options.sound_effect ?? "copper.wax.on", event.block.location);
+    event.block.dimension.playSound(
+      options.sound_effect ?? "copper.wax.on",
+      event.block.location,
+    );
   }
 }

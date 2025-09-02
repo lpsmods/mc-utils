@@ -1,6 +1,6 @@
 import { Entity } from "@minecraft/server";
-import { EventSignal } from ".";
-import { AreaDetector } from "../misc/AreaDetector";
+import { EventSignal } from "./utils";
+import { AreaDetector } from "../misc/area_detector";
 
 export class AreaEvent {
   readonly entity: Entity;

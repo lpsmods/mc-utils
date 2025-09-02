@@ -5,7 +5,8 @@ import {
   CustomComponentParameters,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
-import { BlockUtils } from "../block/BlockUtils";
+import { BlockUtils } from "../block/utils";
+import { AddonUtils } from "../addon";
 
 export interface FarmlandOptions {
   moisture_state: keyof BlockStateSuperset;
@@ -13,7 +14,7 @@ export interface FarmlandOptions {
 }
 
 export class FarmlandComponent {
-  static typeId = "mcutils:farmland";
+  static typeId = AddonUtils.makeId("farmland");
 
   delay = 0;
 
@@ -39,14 +40,22 @@ export class FarmlandComponent {
   }
 
   convertToDirt(block: Block, options: FarmlandOptions): void {
-    BlockUtils.setType(block, options.block ?? block.typeId.replace("farmland", "dirt"));
+    BlockUtils.setType(
+      block,
+      options.block ?? block.typeId.replace("farmland", "dirt"),
+    );
   }
 
   // EVENTS
 
-  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
+  onTick(
+    event: BlockComponentTickEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as FarmlandOptions;
-    const moisture = event.block.permutation.getState(options.moisture_state) as number;
+    const moisture = event.block.permutation.getState(
+      options.moisture_state,
+    ) as number;
     const water = this.hasWater(event.block);
     if (water && moisture < 7) {
       if (this.delay == 0) {
@@ -54,7 +63,11 @@ export class FarmlandComponent {
       } else {
         this.delay--;
         if (this.delay == 0) {
-          BlockUtils.setState(event.block, options.moisture_state, moisture + 1);
+          BlockUtils.setState(
+            event.block,
+            options.moisture_state,
+            moisture + 1,
+          );
         }
       }
       return;
@@ -66,7 +79,11 @@ export class FarmlandComponent {
       } else {
         this.delay--;
         if (this.delay == 0) {
-          BlockUtils.setState(event.block, options.moisture_state, moisture - 1);
+          BlockUtils.setState(
+            event.block,
+            options.moisture_state,
+            moisture - 1,
+          );
         }
       }
       return;
@@ -85,7 +102,10 @@ export class FarmlandComponent {
     }
   }
 
-  onEntityFallOn(event: BlockComponentEntityFallOnEvent, args: CustomComponentParameters): void {
+  onEntityFallOn(
+    event: BlockComponentEntityFallOnEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as FarmlandOptions;
     if (event.fallDistance > 1) {
       this.convertToDirt(event.block, options);

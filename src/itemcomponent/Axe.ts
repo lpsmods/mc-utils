@@ -1,6 +1,11 @@
-import { ItemUseOnEvent, Block, CustomComponentParameters } from "@minecraft/server";
-import { ToolComponent } from "./Tool";
+import {
+  ItemUseOnEvent,
+  Block,
+  CustomComponentParameters,
+} from "@minecraft/server";
+import { ToolComponent } from "./tool";
 import { offsetVolume } from "../utils";
+import { AddonUtils } from "../addon";
 
 export interface AxeInteraction {
   block: string;
@@ -13,8 +18,8 @@ export interface AxeOptions {
 }
 
 export class AxeComponent extends ToolComponent {
-  static typeId = "mcutils:axe";
-  
+  static typeId = AddonUtils.makeId("axe");
+
   interactions: { [key: string]: string } = AxeComponent.#defaultInteractions();
 
   /**
@@ -109,7 +114,10 @@ export class AxeComponent extends ToolComponent {
     };
   }
 
-  getInteraction(block: Block, options:AxeOptions): AxeInteraction | undefined {
+  getInteraction(
+    block: Block,
+    options: AxeOptions,
+  ): AxeInteraction | undefined {
     for (const interaction of options.interactions ?? []) {
       if (block.matches(interaction.block)) {
         return interaction;
@@ -123,7 +131,11 @@ export class AxeComponent extends ToolComponent {
    * @param {Block} block The block that should be converted.
    * @param {ItemUseOnEvent} event The item event for context.
    */
-  convertBlock(block: Block, event: ItemUseOnEvent, options:AxeOptions): boolean | undefined {
+  convertBlock(
+    block: Block,
+    event: ItemUseOnEvent,
+    options: AxeOptions,
+  ): boolean | undefined {
     let result;
     if (!(result = this.getInteraction(block, options))) return;
     block.setType(result.block);
@@ -146,7 +158,7 @@ export class AxeComponent extends ToolComponent {
   }
 
   // EVENTS
-  
+
   onUseOn(event: ItemUseOnEvent, args: CustomComponentParameters): void {
     const options = args.params as AxeOptions;
     if (!this.getInteraction(event.block, options)) return;

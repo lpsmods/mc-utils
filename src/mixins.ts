@@ -1,18 +1,34 @@
-import { ItemStack, Block, ScoreboardObjective, Vector3, Player, Dimension } from "@minecraft/server";
+import {
+  ItemStack,
+  Block,
+  ScoreboardObjective,
+  Vector3,
+  Player,
+  Dimension,
+  Entity,
+} from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
-import { DataStorage } from "./misc/DataStorage";
-import { PlayerUtils, ArmorSet, ArmorSetEvent } from "./entity/PlayerUtils";
-import { ItemUtils } from "./item/ItemUtils";
-import { WorldUtils } from "./world/WorldUtils";
-import { BlockUtils } from "./block/BlockUtils";
+import { DataStorage } from "./misc/data_storage";
+import { PlayerUtils, ArmorSet, ArmorSetEvent } from "./entity/player_utils";
+import { ItemUtils } from "./item/utils";
+import { WorldUtils } from "./world/utils";
+import { BlockUtils } from "./block/utils";
+import { Biome } from "./biome/biome";
+import { MolangUtils } from "./molang";
+import { TextUtils } from "./text";
 
 declare module "@minecraft/server" {
   interface ItemStack {
     startCooldown(player: Player): void;
+    executeMolang(expression: string): unknown;
   }
 
   interface Dimension {
-    getBiomeType(location: Vector3, entityId?: string, propertyName?:string): string;
+    getBiome(
+      location: Vector3,
+      entityId?: string,
+      propertyName?: string,
+    ): Biome | undefined;
   }
 
   interface ScoreboardObjective {
@@ -20,6 +36,8 @@ declare module "@minecraft/server" {
   }
 
   interface Block {
+    executeMolang(expression: string): unknown;
+
     /**
      * @remarks
      * Clears all dynamic properties that have been set on this
@@ -40,7 +58,9 @@ declare module "@minecraft/server" {
      * property has not been set.
      * @throws This function can throw errors.
      */
-    getDynamicProperty(identifier: string): boolean | number | string | Vector3 | undefined;
+    getDynamicProperty(
+      identifier: string,
+    ): boolean | number | string | Vector3 | undefined;
 
     /**
      * @remarks
@@ -76,12 +96,26 @@ declare module "@minecraft/server" {
      * Data value of the property to set.
      * @throws This function can throw errors.
      */
-    setDynamicProperty(identifier: string, value?: boolean | number | string | Vector3): void;
+    setDynamicProperty(
+      identifier: string,
+      value?: boolean | number | string | Vector3,
+    ): void;
 
-    getState<T extends keyof BlockStateSuperset>(stateName: T): BlockStateSuperset[T] | undefined;
-    setState<T extends keyof BlockStateSuperset>(stateName: T, value: any): void;
-    incrementState<T extends keyof BlockStateSuperset>(stateName: T, amount?: number): number;
-    decrementState<T extends keyof BlockStateSuperset>(stateName: T, amount?: number): number;
+    getState<T extends keyof BlockStateSuperset>(
+      stateName: T,
+    ): BlockStateSuperset[T] | undefined;
+    setState<T extends keyof BlockStateSuperset>(
+      stateName: T,
+      value: any,
+    ): void;
+    incrementState<T extends keyof BlockStateSuperset>(
+      stateName: T,
+      amount?: number,
+    ): number;
+    decrementState<T extends keyof BlockStateSuperset>(
+      stateName: T,
+      amount?: number,
+    ): number;
 
     /**
      * Get this blocks energy level.
@@ -108,55 +142,76 @@ declare module "@minecraft/server" {
   }
 
   interface Player {
-    applyArmor(armorSet: ArmorSet, condition?: (event: ArmorSetEvent) => boolean): void;
+    applyArmor(
+      armorSet: ArmorSet,
+      condition?: (event: ArmorSetEvent) => boolean,
+    ): void;
+  }
+
+  interface Entity {
+    executeMolang(expression: string): unknown;
   }
 }
+
+declare global {
+  interface String {
+    toTitleCase(): string;
+  }
+}
+
+// ITEM STACK
 
 // TODO: Port some common item stack data like "damage"
 ItemStack.prototype.startCooldown = function (player) {
   ItemUtils.startCooldown(this, player);
 };
 
-ScoreboardObjective.prototype.tryGetScore = function (name, defaultValue) {
-  return WorldUtils.tryGetScore(this, name, defaultValue ?? 0);
+ItemStack.prototype.executeMolang = function (expression) {
+  return MolangUtils.item(this, expression);
+};
+
+// BLOCK
+
+Block.prototype.executeMolang = function (expression) {
+  return MolangUtils.block(this, expression);
 };
 
 Block.prototype.clearDynamicProperties = function (): void {
   const store = new DataStorage(
-    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`
+    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`,
   );
   store.clear();
 };
 
 Block.prototype.getDynamicProperty = function (
-  identifier: string
+  identifier: string,
 ): boolean | number | string | Vector3 | undefined {
   const store = new DataStorage(
-    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`
+    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`,
   );
   return store.getItem(identifier);
 };
 
 Block.prototype.getDynamicPropertyIds = function (): string[] {
   const store = new DataStorage(
-    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`
+    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`,
   );
   return store.keys();
 };
 
 Block.prototype.getDynamicPropertyTotalByteCount = function (): number {
   const store = new DataStorage(
-    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`
+    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`,
   );
   return store.getSize();
 };
 
 Block.prototype.setDynamicProperty = function (
   identifier: string,
-  value?: boolean | number | string | Vector3
+  value?: boolean | number | string | Vector3,
 ): void {
   const store = new DataStorage(
-    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`
+    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`,
   );
   store.setItem(identifier, value);
 };
@@ -199,10 +254,28 @@ Block.prototype.decreaseEnergyLevel = function (amount) {
   return value;
 };
 
+// ENTITY
+
+Entity.prototype.executeMolang = function (expression) {
+  return MolangUtils.entity(this, expression);
+};
+
+// MISC
+
 Player.prototype.applyArmor = function (armorSet, condition) {
   PlayerUtils.applyArmor(this, armorSet, condition);
 };
 
-Dimension.prototype.getBiomeType = function (location, entityId, propertyName) {
-  return WorldUtils.getBiomeType(this, location, entityId, propertyName);
+Dimension.prototype.getBiome = function (location, entityId, propertyName) {
+  return WorldUtils.getBiome(this, location, entityId, propertyName);
+};
+
+ScoreboardObjective.prototype.tryGetScore = function (name, defaultValue) {
+  return WorldUtils.tryGetScore(this, name, defaultValue ?? 0);
+};
+
+// Global
+
+String.prototype.toTitleCase = function () {
+  return TextUtils.titleCase(this);
 };

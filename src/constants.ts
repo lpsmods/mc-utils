@@ -1,3 +1,34 @@
+export enum ChatColor {
+  Aqua = `§b`,
+  Black = `§0`,
+  Blue = `§9`,
+  DarkAqua = `§3`,
+  DarkBlue = `§1`,
+  DarkGray = `§8`,
+  DarkGreen = `§2`,
+  DarkPurple = `§5`,
+  DarkRed = `§4`,
+  Gold = `§6`,
+  Gray = `§7`,
+  Green = `§a`,
+  LightPurple = `§d`,
+  MaterialAmethyst = `§u`,
+  MaterialCopper = `§n`,
+  MaterialDiamond = `§s`,
+  MaterialEmerald = `§q`,
+  MaterialGold = `§p`,
+  MaterialIron = `§i`,
+  MaterialLapis = `§t`,
+  MaterialNetherite = `§j`,
+  MaterialQuartz = `§h`,
+  MaterialRedstone = `§m`,
+  MaterialResin = `§v`,
+  MinecoinGold = `§g`,
+  Red = `§c`,
+  White = `§f`,
+  Yellow = `§e`,
+}
+
 /**
  * A biome tag -> number (Same values for biome checker)
  */
@@ -89,7 +120,21 @@ export const BIOME_MAP = {
   "minecraft:warm_ocean": 86,
   "minecraft:warped_forest": 87,
 };
-
+export const REPLACEABLE_BLOCKS = [
+  "vine",
+  "fern",
+  "large_fern",
+  "short_grass",
+  "tall_grass",
+  "short_dry_grass",
+  "tall_dry_grass",
+  "nether_sprouts",
+  "bush",
+  "glow_lichen",
+  "deadbush",
+  "seagrass",
+  "snow_layer",
+];
 export const CANDLES = [
   "candle",
   "white_candle",
@@ -108,6 +153,38 @@ export const CANDLES = [
   "purple_candle",
   "magenta_candle",
   "pink_candle",
+];
+export const COLORS = [
+  "white",
+  "light_gray",
+  "gray",
+  "black",
+  "brown",
+  "red",
+  "orange",
+  "yellow",
+  "lime",
+  "green",
+  "cyan",
+  "light_blue",
+  "blue",
+  "purple",
+  "magenta",
+  "pink",
+];
+export const WOOD_TYPES = [
+  "oak",
+  "spruce",
+  "birch",
+  "jungle",
+  "acacia",
+  "dark_oak",
+  "mangrove",
+  "cherry",
+  "pale_oak",
+  "bamboo",
+  "crimson",
+  "warped",
 ];
 export const UP = {
   x: 0,

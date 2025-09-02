@@ -1,5 +1,10 @@
-import { CustomComponentParameters, ItemComponentUseOnEvent, ItemStack } from "@minecraft/server";
-import { Identifier } from "../misc/Identifier";
+import {
+  CustomComponentParameters,
+  ItemComponentUseOnEvent,
+  ItemStack,
+} from "@minecraft/server";
+import { Identifier } from "../misc/identifier";
+import { AddonUtils } from "../addon";
 
 export interface PottableOptions {
   block?: string;
@@ -7,7 +12,7 @@ export interface PottableOptions {
 }
 
 export class PottableComponent {
-  static typeId = "mcutils:pottable";
+  static typeId = AddonUtils.makeId("pottable");
 
   /**
    * Makes this item pottable.
@@ -21,7 +26,10 @@ export class PottableComponent {
     return options.block ?? id.prefix("potted_").toString();
   }
 
-  onUseOn(event: ItemComponentUseOnEvent, args: CustomComponentParameters): void {
+  onUseOn(
+    event: ItemComponentUseOnEvent,
+    args: CustomComponentParameters,
+  ): void {
     const options = args.params as PottableOptions;
     if (event.usedOnBlockPermutation.type.id != options.flower_pot) return;
     event.source
