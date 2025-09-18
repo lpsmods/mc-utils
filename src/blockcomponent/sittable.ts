@@ -12,10 +12,13 @@ import { BlockBaseComponent } from "./base";
 import { Vector3Utils } from "@minecraft/math";
 import { PlayerUtils } from "../entity/player_utils";
 import { AddonUtils } from "../addon";
+import { array, create, defaulted, object, string, Struct } from "superstruct";
+import { vec3 } from "../validation";
+import { CENTER_ENTITY } from "../constants";
 
 export interface SittableOptions {
-  seat_position?: number[];
-  seat_animations?: string[];
+  seat_position: number[];
+  seat_animations: string[];
 }
 
 export class SittableBlockEvent {
@@ -32,8 +35,15 @@ export class SittableBlockEvent {
 }
 
 export class SittableComponent extends BlockBaseComponent {
-  static typeId = AddonUtils.makeId("sittable");
+  static readonly componentId = AddonUtils.makeId("sittable");
+  struct: Struct<any, any> = object({
+    seat_position: defaulted(vec3, [0, 8, 0]),
+    seat_animations: defaulted(array(string()), []),
+  });
 
+  /**
+   * Sittable block behavior.
+   */
   constructor() {
     super();
     this.onPlayerInteract = this.onPlayerInteract.bind(this);
@@ -44,15 +54,12 @@ export class SittableComponent extends BlockBaseComponent {
   }
 
   getPos(block: Block, options: SittableOptions): Vector3 {
-    const pos = options.seat_position ?? [0, 8, 0];
-    return Vector3Utils.add(
-      Vector3Utils.add(block.location, { x: 0.5, y: 0, z: 0.5 }),
-      {
-        x: pos[0] / 16,
-        y: pos[1] / 16,
-        z: pos[2] / 16,
-      },
-    );
+    const pos = options.seat_position;
+    return Vector3Utils.add(Vector3Utils.add(block.location, CENTER_ENTITY), {
+      x: pos[0] / 16,
+      y: pos[1] / 16,
+      z: pos[2] / 16,
+    });
   }
 
   getRot(block: Block, options: SittableOptions): Vector2 | undefined {
@@ -89,11 +96,8 @@ export class SittableComponent extends BlockBaseComponent {
 
   // EVENTS
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as SittableOptions;
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as SittableOptions;
     if (!event.player) return;
     if (!this.canSit()) return;
     this.sit(event.block, event.player, options);

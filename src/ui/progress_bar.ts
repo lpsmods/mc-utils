@@ -1,6 +1,6 @@
 import { Player, RawMessage, world } from "@minecraft/server";
 import { clampNumber } from "@minecraft/math";
-import { Ticking } from "../misc/ticking";
+import { Ticking } from "../ticking";
 import { ChatColor } from "../constants";
 
 export interface ProgressBarStyle {
@@ -118,16 +118,11 @@ export class ProgressBar extends Ticking {
   }
 
   set value(v: number) {
-    world.setDynamicProperty(
-      `progressbar:${this.id}`,
-      clampNumber(v, 0, this.maxValue),
-    );
+    world.setDynamicProperty(`progressbar:${this.id}`, clampNumber(v, 0, this.maxValue));
   }
 
   getPlayers() {
-    return world
-      .getAllPlayers()
-      .filter((player) => (this.condition ? this.condition(player) : true));
+    return world.getAllPlayers().filter((player) => (this.condition ? this.condition(player) : true));
   }
 
   tick(): void {
@@ -144,27 +139,18 @@ export class ProgressBar extends Ticking {
     let sw = (this.style.scale ?? 1.0) * 20; // TODO: Change 20 depending on isMobile.
     let slc = this.style.leftCap ?? "";
     let src = this.style.rightCap ?? "";
-    const ratio =
-      this.maxValue > 0
-        ? clampNumber(this.value / this.maxValue, 0, 1)
-        : this.value > 0
-          ? 1
-          : 0;
+    const ratio = this.maxValue > 0 ? clampNumber(this.value / this.maxValue, 0, 1) : this.value > 0 ? 1 : 0;
     const filledCells = Math.round(ratio * sw);
     const fillStr = sf.repeat(sw).slice(0, filledCells * sf.length);
     const emptyStr = se.repeat(sw).slice(0, (sw - filledCells) * se.length);
     const bar = `${this.color.leftCap}${slc}§r${this.color.fill}${fillStr}§r${this.color.empty}${emptyStr}§r${this.color.rightCap}${src}§r`;
-    const per = Math.round(
-      clampNumber((this.value / this.maxValue) * 100, 0, 100),
-    );
+    const per = Math.round(clampNumber((this.value / this.maxValue) * 100, 0, 100));
     return this.style.showPercent ? `${bar} ${per}%` : bar;
   }
 
   render(player: Player): void {
     const bar = this.getBar(player);
-    player.onScreenDisplay.setActionBar(
-      this.name ? { rawtext: [this.name, { text: "\n" }, { text: bar }] } : bar,
-    );
+    player.onScreenDisplay.setActionBar(this.name ? { rawtext: [this.name, { text: "\n" }, { text: bar }] } : bar);
   }
 
   remove(): void {

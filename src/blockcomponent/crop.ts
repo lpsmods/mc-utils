@@ -1,21 +1,22 @@
-import {
-  BlockComponentRandomTickEvent,
-  CustomComponentParameters,
-} from "@minecraft/server";
-import { MathUtils } from "../math";
+import { BlockComponentRandomTickEvent, CustomComponentParameters } from "@minecraft/server";
 import { RandomUtils } from "../random";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockBaseComponent } from "./base";
 import { clampNumber } from "@minecraft/math";
 import { AddonUtils } from "../addon";
+import { create, defaulted, number, object, string, Struct } from "superstruct";
 
 export interface CropOptions {
   growth_state: keyof BlockStateSuperset;
-  max_stage?: number;
+  max_stage: number;
 }
 
 export class CropComponent extends BlockBaseComponent {
-  static typeId = AddonUtils.makeId("crop");
+  static readonly componentId = AddonUtils.makeId("crop");
+  struct: Struct<any, any> = object({
+    growth_state: string(),
+    max_stage: defaulted(number(), 7),
+  });
 
   /**
    * Vanilla crop block behavior.
@@ -29,20 +30,12 @@ export class CropComponent extends BlockBaseComponent {
     return RandomUtils.int(2, 5);
   }
 
-  applyGrowth(
-    event: BlockComponentRandomTickEvent,
-    args: CustomComponentParameters,
-  ) {
-    const options = args.params as CropOptions;
-    var state = event.block.permutation.getState(
-      options.growth_state,
-    ) as number;
+  applyGrowth(event: BlockComponentRandomTickEvent, args: CustomComponentParameters) {
+    const options = create(args.params, this.struct) as CropOptions;
+    var state = event.block.permutation.getState(options.growth_state) as number;
     var i = state + this.getGrowthAmount(event);
     event.block.setPermutation(
-      event.block.permutation.withState(
-        options.growth_state,
-        clampNumber(i, 0, options.max_stage ?? 7),
-      ),
+      event.block.permutation.withState(options.growth_state, clampNumber(i, 0, options.max_stage)),
     );
     this.update(event.block, args);
   }
@@ -53,10 +46,7 @@ export class CropComponent extends BlockBaseComponent {
 
   // EVENTS
 
-  onRandomTick(
-    event: BlockComponentRandomTickEvent,
-    args: CustomComponentParameters,
-  ): void {
+  onRandomTick(event: BlockComponentRandomTickEvent, args: CustomComponentParameters): void {
     // this.grow(event, args);
   }
 }

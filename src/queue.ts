@@ -13,21 +13,39 @@ export class QueueJob<T> {
 }
 
 export class Queue<T> {
-  private static all = new Map<string, Queue<any>>();
   private static lastId = 0;
+  static all = new Map<string, Queue<any>>();
 
-  private items: T[] = [];
+  items: T[] = [];
   lock: boolean = false;
-  maxSize: number | undefined;
+  size: number | undefined;
   persistent: boolean;
   readonly id: string;
 
-  constructor(maxSize?: number, id?: string, persistent?: boolean) {
-    this.maxSize = maxSize;
+  constructor(size?: number, id?: string, persistent?: boolean) {
+    this.size = size;
     this.id = id ?? (Queue.lastId++).toString();
     this.persistent = persistent ?? false;
     Queue.all.set(this.id, this);
     this.load();
+  }
+
+  /**
+   * Clear all jobs.
+   */
+  clear(): void {
+    this.items = [];
+    this.save();
+  }
+
+  /**
+   * Remove the item.
+   */
+  remove(item: T): void {
+    const index = this.items.indexOf(item);
+    delete this.items[index];
+    this.lock = false;
+    this.save();
   }
 
   /**
@@ -75,7 +93,7 @@ export class Queue<T> {
    * @returns {boolean}
    */
   full(): boolean {
-    return this.maxSize !== undefined && this.items.length >= this.maxSize;
+    return this.size !== undefined && this.items.length >= this.size;
   }
 
   /**
@@ -98,8 +116,7 @@ export class Queue<T> {
    * Remove the current item.
    */
   done(): void {
-    if (this.items[0] === undefined) return;
-    delete this.items[0];
+    this.items.shift();
     this.lock = false;
     this.save();
   }
@@ -144,7 +161,7 @@ export class Queue<T> {
    */
   load(): void {
     if (!this.persistent) return;
-    const data = world.getDynamicProperty(`mcutils:queue.${this.id}`) as string;
+    const data = (world.getDynamicProperty(`mcutils:queue.${this.id}`) as string) ?? "[]";
     this.items = this.parse(data);
   }
 

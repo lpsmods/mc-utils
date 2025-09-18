@@ -1,29 +1,21 @@
-import { Dimension, Entity, Vector3, world } from "@minecraft/server";
+import { Entity, Vector3, world } from "@minecraft/server";
 import { Ticking } from "./ticking";
-import { MathUtils } from "../math";
-import {
-  AreaEnterEvent,
-  AreaEvents,
-  AreaLeaveEvent,
-  AreaTickEvent,
-} from "../event/area";
+import { MathUtils } from "./math";
+import { AreaEnterEvent, AreaEvents, AreaLeaveEvent, AreaTickEvent } from "./event/area";
 
 export abstract class AreaDetector extends Ticking {
+  static readonly typeId: string;
+
   static areas: Map<string, AreaDetector> = new Map<string, AreaDetector>();
   static #lastId: number = 0;
   enabled: boolean = true;
   padding: number = 1;
   readonly areaId: string;
-  readonly dimension: Dimension;
+  readonly dimensionId: string;
 
-  constructor(
-    dimension?: Dimension,
-    prefix?: string,
-    id?: string,
-    tickInterval?: number,
-  ) {
+  constructor(dimensionId?: string, prefix?: string, id?: string, tickInterval?: number) {
     super(tickInterval);
-    this.dimension = dimension ?? world.getDimension("overworld");
+    this.dimensionId = dimensionId ?? "overworld";
     this.areaId = `${prefix ?? "area"}.${id ?? (AreaDetector.#lastId++).toString()}`;
     AreaDetector.areas.set(this.areaId, this);
   }
@@ -35,19 +27,19 @@ export abstract class AreaDetector extends Ticking {
   _enter(entity: Entity): void {
     const event = new AreaEnterEvent(entity, this);
     if (this.onEnter) this.onEnter(event);
-    AreaEvents.enter.apply(event);
+    AreaEvents.entityEnter.apply(event);
   }
 
   _leave(entity: Entity): void {
     const event = new AreaLeaveEvent(entity, this);
     if (this.onLeave) this.onLeave(event);
-    AreaEvents.leave.apply(event);
+    AreaEvents.entityLeave.apply(event);
   }
 
   _tick(entity: Entity): void {
     const event = new AreaTickEvent(entity, this);
     if (this.onTick) this.onTick(event);
-    AreaEvents.tick.apply(event);
+    AreaEvents.entityTick.apply(event);
   }
 
   /**
@@ -97,9 +89,11 @@ export abstract class AreaDetector extends Ticking {
 }
 
 /**
- * Detects if a player enters and exits a rectangle area.
+ * Detects if an entity enters and exits a rectangle area.
  */
-export class RectDetector extends AreaDetector {
+export class RectangleAreaDetector extends AreaDetector {
+  static readonly typeId = "rectangle";
+
   /**
    * @param {Vector3} location1 The first location.
    * @param {Vector3} location2 The second location.
@@ -108,14 +102,8 @@ export class RectDetector extends AreaDetector {
   location1: Vector3;
   location2: Vector3;
 
-  constructor(
-    location1: Vector3,
-    location2: Vector3,
-    dimension?: Dimension,
-    prefix?: string,
-    id?: string,
-  ) {
-    super(dimension, prefix, id);
+  constructor(location1: Vector3, location2: Vector3, dimensionId?: string, prefix?: string, id?: string) {
+    super(dimensionId, prefix, id);
     this.location1 = location1;
     this.location2 = location2;
   }
@@ -139,15 +127,12 @@ export class RectDetector extends AreaDetector {
   }
 
   getEntities(): Entity[] {
+    const dim = world.getDimension(this.dimensionId);
     const results = [];
-    for (const entity of this.dimension.getEntities()) {
+    for (const entity of dim.getEntities()) {
       if (!entity) continue;
       if (!this.condition(entity)) continue;
-      const { from, to } = MathUtils.expandRegion(
-        this.location1,
-        this.location2,
-        this.padding,
-      );
+      const { from, to } = MathUtils.expandRegion(this.location1, this.location2, this.padding);
       if (!MathUtils.isInRect(entity, from, to)) continue;
       results.push(entity);
     }
@@ -159,6 +144,7 @@ export class RectDetector extends AreaDetector {
    * @param {string} particle The particle to show.
    */
   show(particle: string = "minecraft:endrod", steps: number = 32): void {
+    const dim = world.getDimension(this.dimensionId);
     const { x: x1, y: y1, z: z1 } = this.location1;
     const { x: x2, y: y2, z: z2 } = this.location2;
 
@@ -177,28 +163,28 @@ export class RectDetector extends AreaDetector {
     // Bottom and top edges (x-z plane)
     for (let x = minX; x <= maxX; x += stepX) {
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: x + 0.5,
           y: minY + 0.5,
           z: minZ + 0.5,
         });
       } catch (err) {}
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: x + 0.5,
           y: minY + 0.5,
           z: maxZ + 0.5,
         });
       } catch (err) {}
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: x + 0.5,
           y: maxY + 0.5,
           z: minZ + 0.5,
         });
       } catch (err) {}
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: x + 0.5,
           y: maxY + 0.5,
           z: maxZ + 0.5,
@@ -208,28 +194,28 @@ export class RectDetector extends AreaDetector {
 
     for (let z = minZ; z <= maxZ; z += stepZ) {
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: minX + 0.5,
           y: minY + 0.5,
           z: z + 0.5,
         });
       } catch (err) {}
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: maxX + 0.5,
           y: minY + 0.5,
           z: z + 0.5,
         });
       } catch (err) {}
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: minX + 0.5,
           y: maxY + 0.5,
           z: z + 0.5,
         });
       } catch (err) {}
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: maxX + 0.5,
           y: maxY + 0.5,
           z: z + 0.5,
@@ -240,28 +226,28 @@ export class RectDetector extends AreaDetector {
     // Vertical edges (y-axis)
     for (let y = minY; y <= maxY; y += stepY) {
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: minX + 0.5,
           y: y + 0.5,
           z: minZ + 0.5,
         });
       } catch (err) {}
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: minX + 0.5,
           y: y + 0.5,
           z: maxZ + 0.5,
         });
       } catch (err) {}
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: maxX + 0.5,
           y: y + 0.5,
           z: minZ + 0.5,
         });
       } catch (err) {}
       try {
-        this.dimension.spawnParticle(particle, {
+        dim.spawnParticle(particle, {
           x: maxX + 0.5,
           y: y + 0.5,
           z: maxZ + 0.5,
@@ -272,9 +258,11 @@ export class RectDetector extends AreaDetector {
 }
 
 /**
- * Detects if a player enters and exits a spherical area.
+ * Detects if an entity enters and exits a spherical area.
  */
-export class RadiusDetector extends AreaDetector {
+export class SphereAreaDetector extends AreaDetector {
+  static readonly typeId = "radius";
+
   /**
    * @param {Vector3} center The center of the sphere.
    * @param {number} radius The radius (in blocks).
@@ -283,14 +271,8 @@ export class RadiusDetector extends AreaDetector {
   center: Vector3;
   radius: number;
 
-  constructor(
-    center: Vector3,
-    radius: number,
-    dimension?: Dimension,
-    prefix?: string,
-    id?: string,
-  ) {
-    super(dimension, prefix, id);
+  constructor(center: Vector3, radius: number, dimensionId?: string, prefix?: string, id?: string) {
+    super(dimensionId, prefix, id);
     this.center = center;
     this.radius = radius;
   }
@@ -313,8 +295,9 @@ export class RadiusDetector extends AreaDetector {
   }
 
   getEntities(): Entity[] {
+    const dim = world.getDimension(this.dimensionId);
     const results = [];
-    for (const entity of this.dimension.getEntities({
+    for (const entity of dim.getEntities({
       location: this.center,
       maxDistance: this.radius + this.padding,
     })) {
@@ -330,6 +313,7 @@ export class RadiusDetector extends AreaDetector {
    * @param {string} particle The particle to show.
    */
   show(particle: string = "minecraft:endrod", steps: number = 32): void {
+    const dim = world.getDimension(this.dimensionId);
     const { x: cx, y: cy, z: cz } = this.center;
     const radius = this.radius;
 
@@ -340,35 +324,9 @@ export class RadiusDetector extends AreaDetector {
         const z = cz + radius * Math.sin(phi) * Math.sin(theta);
 
         try {
-          this.dimension.spawnParticle(particle, { x, y, z });
+          dim.spawnParticle(particle, { x, y, z });
         } catch (err) {}
       }
     }
   }
 }
-
-// export function test() {
-//   const area0 = new RectDetector({ x: -1, y: 137, z: 0 }, { x: 10, y: 127, z: 10 });
-//   area0.onEnter = (event) => {
-//     world.sendMessage("ENTER 0");
-//   };
-//   area0.onLeave = (event) => {
-//     world.sendMessage("LEAVE 0");
-//   };
-//   area0.onTick = (event) => {
-//     if (!event.entity.matches({ type: "player" })) return;
-//     event.entity.onScreenDisplay.setActionBar("TICK 0");
-//   };
-
-//   const area1 = new RadiusDetector({ x: 5, y: 133, z: 5 }, 5);
-//   area1.onEnter = (event) => {
-//     world.sendMessage("ENTER 1");
-//   };
-//   area1.onLeave = (event) => {
-//     world.sendMessage("LEAVE 1");
-//   };
-//   area1.onTick = (event) => {
-//     if (!event.entity.matches({ type: "player" })) return;
-//     event.entity.onScreenDisplay.setActionBar("TICK 1");
-//   };
-// }

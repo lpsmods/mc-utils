@@ -5,9 +5,10 @@ import {
   CustomComponentParameters,
   BlockPermutation,
 } from "@minecraft/server";
-import { PlayerUtils } from "../entity/player_utils";
 import { ItemUtils } from "../item/utils";
 import { AddonUtils } from "../addon";
+import { array, create, defaulted, object, string, Struct } from "superstruct";
+import { isBlock } from "../validation";
 
 export interface LavaCauldronOptions {
   block: string;
@@ -41,7 +42,11 @@ export class LavaCauldronInteraction {
 }
 
 export class LavaCauldronComponent {
-  static typeId = AddonUtils.makeId("lava_cauldron");
+  static readonly componentId = AddonUtils.makeId("lava_cauldron");
+  struct: Struct<any, any> = object({
+    block: defaulted(isBlock, 'cauldron'),
+    interactions: defaulted(array(string()), []),
+  });
 
   /**
    * Vanilla "lava" cauldron block behavior.
@@ -50,13 +55,8 @@ export class LavaCauldronComponent {
     this.onPlayerInteract = this.onPlayerInteract.bind(this);
   }
 
-  getInteraction(
-    itemStack: ItemStack,
-    options: LavaCauldronOptions,
-  ): LavaCauldronInteraction | undefined {
-    for (const action of LavaCauldronInteraction.parseAll(
-      options.interactions,
-    )) {
+  getInteraction(itemStack: ItemStack, options: LavaCauldronOptions): LavaCauldronInteraction | undefined {
+    for (const action of LavaCauldronInteraction.parseAll(options.interactions)) {
       if (!action) continue;
       if (itemStack.matches(action.item)) {
         return action;
@@ -69,11 +69,8 @@ export class LavaCauldronComponent {
 
   // EVENTS
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as LavaCauldronOptions;
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as LavaCauldronOptions;
     if (!event.player) return;
     const equ = event.player.getComponent("equippable");
     if (!equ) return;
@@ -82,17 +79,8 @@ export class LavaCauldronComponent {
     let interaction = this.getInteraction(mainhand, options);
     if (!interaction) return;
     // TODO: Sound
-    ItemUtils.convert(
-      event.player,
-      EquipmentSlot.Mainhand,
-      interaction.getResultStack(),
-    );
-    event.block.setPermutation(
-      BlockPermutation.resolve(
-        options.block,
-        event.block.permutation.getAllStates(),
-      ),
-    );
+    ItemUtils.convert(event.player, EquipmentSlot.Mainhand, interaction.getResultStack());
+    event.block.setPermutation(BlockPermutation.resolve(options.block, event.block.permutation.getAllStates()));
     this.update(event);
   }
 }

@@ -1,20 +1,11 @@
-import {
-  Block,
-  BlockPermutation,
-  CustomComponentParameters,
-  Entity,
-  ItemStack,
-} from "@minecraft/server";
+import { Block, BlockPermutation, CustomComponentParameters, Entity, ItemStack } from "@minecraft/server";
 import { SpecificEntityHandler } from "./specific_entity_handler";
 import { Vector3Utils } from "@minecraft/math";
 import { EntityFallOnEvent } from "../event/entity";
+import { CENTER_ENTITY } from "../constants";
 
 export class FallingBlockEvent {
-  constructor(
-    block: Block,
-    beforePermutation: BlockPermutation,
-    entity: Entity,
-  ) {
+  constructor(block: Block, beforePermutation: BlockPermutation, entity: Entity) {
     this.block = block;
     this.beforePermutation = beforePermutation;
     this.entity = entity;
@@ -32,12 +23,7 @@ export class FallingBlockHandler extends SpecificEntityHandler {
   component: any;
   args: CustomComponentParameters | undefined;
 
-  constructor(
-    component: any,
-    args: CustomComponentParameters,
-    entity: Entity,
-    blockId: string,
-  ) {
+  constructor(component: any, args: CustomComponentParameters, entity: Entity, blockId: string) {
     super(entity);
     this.component = component;
     this.args = args;
@@ -51,7 +37,7 @@ export class FallingBlockHandler extends SpecificEntityHandler {
     block: Block,
     entityId: string,
   ): FallingBlockHandler | undefined {
-    const pos = Vector3Utils.add(block.location, { x: 0.5, y: 0, z: 0.5 });
+    const pos = Vector3Utils.add(block.location, CENTER_ENTITY);
     const before = block.permutation;
     const blockId = block.typeId;
     block.setType("air");
@@ -63,7 +49,7 @@ export class FallingBlockHandler extends SpecificEntityHandler {
     const fallEvent = new FallingBlockEvent(block, before, entity);
     if (component.onFall) component.onFall(fallEvent, args);
     if (fallEvent.cancel) {
-      handler.remove();
+      handler.delete();
       return undefined;
     }
 
@@ -82,13 +68,13 @@ export class FallingBlockHandler extends SpecificEntityHandler {
       return;
     }
     event.entity.remove();
-    this.remove();
+    this.delete();
   }
 
   drop(event: EntityFallOnEvent): void {
     const stack = new ItemStack(this.blockId);
     event.entity.dimension.spawnItem(stack, event.entity.location);
     event.entity.remove();
-    this.remove();
+    this.delete();
   }
 }

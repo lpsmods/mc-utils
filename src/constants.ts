@@ -1,3 +1,11 @@
+import { Vector3 } from "@minecraft/server";
+
+export type propertyType = string | number | boolean | Vector3 | undefined;
+
+export const MAX_EFFECT = 20000000;
+
+export const CENTER_ENTITY = { x: 0.5, y: 0, z: 0.5 };
+
 export enum ChatColor {
   Aqua = `§b`,
   Black = `§0`,

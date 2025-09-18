@@ -9,13 +9,16 @@ import {
   VectorXZ,
 } from "@minecraft/server";
 import { locationToChunk } from "./utils";
-import { ParticleDrawer } from "../misc/drawer";
-import { Box } from "../misc/shape";
-import { DataStorage } from "../misc/data_storage";
+import { ParticleDrawer } from "../drawer";
+import { Box } from "../shape";
+import { DataStorage } from "../data_storage";
 import { Hasher } from "../type";
 import { Random } from "../random";
 import { WorldUtils } from "./utils";
 
+/**
+ * Defines a chunk the world.
+ */
 export class Chunk {
   dimension: Dimension;
   location: VectorXZ;
@@ -23,7 +26,7 @@ export class Chunk {
 
   constructor(dimension: Dimension, location: VectorXZ) {
     this.dimension = dimension;
-    this.location = location;
+    this.location = { x: Math.floor(location.x), z: Math.floor(location.z) };
     this.store = new DataStorage(Hasher.stringify(location) ?? "unknown");
   }
 
@@ -52,8 +55,23 @@ export class Chunk {
   }
 
   get z(): number {
-    return this.location.x;
+    return this.location.z;
   }
+
+  /**
+   * Tests if this chunk matches another.
+   * @param chunk 
+   * @returns 
+   */
+  matches(chunk: Chunk): boolean {
+    if (!(chunk instanceof Chunk)) return false;
+    return chunk.x === this.x && chunk.z === this.z;
+  }
+
+  /**
+   * @deprecated Use Chunk.matches instead.
+   */
+  equals = this.matches
 
   // TODO: Test in-game.
   /**
@@ -64,7 +82,6 @@ export class Chunk {
     const seed = WorldUtils.getSeed();
     const { x: chunkX, z: chunkZ } = this.location;
 
-    // 64-bit XOR shift mix based on Java's Random implementation
     const n =
       (BigInt(chunkX * chunkX * 4987142) +
         BigInt(chunkX * 5947611) +
@@ -76,11 +93,15 @@ export class Chunk {
     return rand.nextInt(10) === 0;
   }
 
+  /**
+   * The center position in the chunk.
+   * @returns {Vector3}
+   */
   getCenter(): Vector3 {
     return {
-      x: this.from.x + (this.to.x - this.from.x) / 2,
+      x: this.from.x + (this.to.x - this.from.x) / 2 + 0.5,
       y: this.from.y + (this.to.y - this.from.y) / 2,
-      z: this.from.z + (this.to.z - this.from.z) / 2,
+      z: this.from.z + (this.to.z - this.from.z) / 2 + 0.5,
     };
   }
 
@@ -106,9 +127,7 @@ export class Chunk {
    * property has not been set.
    * @throws This function can throw errors.
    */
-  getDynamicProperty(
-    identifier: string,
-  ): boolean | number | string | Vector3 | undefined {
+  getDynamicProperty(identifier: string): boolean | number | string | Vector3 | undefined {
     return this.store.getItem(identifier);
   }
 
@@ -150,19 +169,17 @@ export class Chunk {
    * Data value of the property to set.
    * @throws This function can throw errors.
    */
-  setDynamicProperty(
-    identifier: string,
-    value?: boolean | number | string | Vector3,
-  ): void {
+  setDynamicProperty(identifier: string, value?: boolean | number | string | Vector3): void {
     this.store.setItem(identifier, value);
   }
 
+  /**
+   * Whether or not the chunk is loaded.
+   * @returns {boolean}
+   */
   isLoaded(): boolean {
     try {
-      return (
-        this.dimension.getBlock(this.from) !== undefined &&
-        this.dimension.getBlock(this.to) !== undefined
-      );
+      return this.dimension.getBlock(this.from) !== undefined && this.dimension.getBlock(this.to) !== undefined;
     } catch {
       return false;
     }
@@ -187,6 +204,8 @@ export class Chunk {
   // TODO: Test in-game
   /**
    * Get all entities in this chunk.
+   * @param {EntityQueryOptions} options
+   * @returns {Entity[]}
    */
   getEntities(options: EntityQueryOptions): Entity[] {
     return this.dimension
@@ -199,6 +218,7 @@ export class Chunk {
   // TODO: Test in-game
   /**
    * Get all blocks in this chunk.
+   * @returns {Block[]}
    */
   getBlocks(): Block[] {
     const results = [];
@@ -214,6 +234,10 @@ export class Chunk {
     return results;
   }
 
+  /**
+   * Get all topmost blocks in this chunk.
+   * @returns {Block[]}
+   */
   getTopmostBlocks(): Block[] {
     const results = [];
     for (let x = this.from.x; x <= this.to.x; x++) {
@@ -226,6 +250,10 @@ export class Chunk {
     return results;
   }
 
+  /**
+   * A matrix of all block locations inside this chunk.
+   * @returns {Vector3[][]}
+   */
   getMatrix(): Vector3[][] {
     const matrix: Vector3[][] = [];
     for (let x = this.from.x; x <= this.to.x; x++) {
@@ -238,23 +266,31 @@ export class Chunk {
     return matrix;
   }
 
+  /**
+   * Get this chunk as a BlockVolume.
+   * @returns {BlockVolume}
+   */
   getVolume(): BlockVolume {
     return new BlockVolume(this.from, this.to);
   }
 
+  /**
+   * Show the chunk borders.
+   * @param {string} particle
+   */
   show(particle: string = "minecraft:endrod"): void {
     const shape = new Box(this.from, this.to);
     shape.material = particle;
     shape.totalTimeLeft = 0.1;
-    const drawer = new ParticleDrawer(this.dimension, 22, true);
+    const drawer = new ParticleDrawer(this.dimension.id, 22, true);
     drawer.addShape(shape);
   }
 
   /**
    * Ensures the chunk containing this location is loaded before continuing.
-   * @param {number} timeout
+   * @param {number} timeout Number of ticks before it gives up.
    */
-  ensureLoaded(timeout = 40): Promise<Chunk> {
+  ensureLoaded(timeout: number = 40): Promise<Chunk> {
     return new Promise((resolve, reject) => {
       let c = 0;
       const interval = system.runInterval(() => {
@@ -270,18 +306,32 @@ export class Chunk {
     });
   }
 
+  /**
+   * Get the chunk from a position in the world.
+   * @param {Dimension} dimension
+   * @param {Vector3} location
+   * @returns {Chunk}
+   */
   static fromPos(dimension: Dimension, location: Vector3): Chunk {
     const pos = locationToChunk(location);
     return new Chunk(dimension, pos);
   }
 
+  /**
+   * Get the chunk the block is in.
+   * @param {Block} block
+   * @returns {Chunk}
+   */
   static fromBlock(block: Block): Chunk {
-    const pos = locationToChunk(block.location);
-    return new Chunk(block.dimension, pos);
+    return Chunk.fromPos(block.dimension, block.location);
   }
 
+  /**
+   * Get the chunk the entity is in.
+   * @param {Entity} entity
+   * @returns {Chunk}
+   */
   static fromEntity(entity: Entity): Chunk {
-    const pos = locationToChunk(entity.location);
-    return new Chunk(entity.dimension, pos);
+    return Chunk.fromPos(entity.dimension, entity.location);
   }
 }

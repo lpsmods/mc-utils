@@ -1,11 +1,4 @@
-import {
-  Dimension,
-  Entity,
-  EntityRemoveBeforeEvent,
-  ItemStack,
-  Vector3,
-  world,
-} from "@minecraft/server";
+import { Dimension, Entity, EntityRemoveBeforeEvent, ItemStack, Vector3, world } from "@minecraft/server";
 import { EntityHandler } from "./entity_handler";
 
 export class SpecificEntityHandler extends EntityHandler {
@@ -16,32 +9,24 @@ export class SpecificEntityHandler extends EntityHandler {
   }
 
   onRemove(event: EntityRemoveBeforeEvent): void {
-    super.remove();
+    super.delete();
   }
 
-  remove(): void {
-    super.remove();
+  delete(): void {
+    super.delete();
     const entity = world.getEntity(this.id);
     if (!entity) return;
     entity.remove();
   }
 }
 
-export function spawnEntity(
-  dimension: Dimension,
-  identifier: string,
-  location: Vector3,
-): EntityHandler {
+export function spawnEntity(dimension: Dimension, identifier: string, location: Vector3): EntityHandler {
   const entity = dimension.spawnEntity(identifier, location);
   const handler = new SpecificEntityHandler(entity);
   return handler;
 }
 
-export function spawnItem(
-  dimension: Dimension,
-  itemStack: ItemStack,
-  location: Vector3,
-): EntityHandler {
+export function spawnItem(dimension: Dimension, itemStack: ItemStack, location: Vector3): EntityHandler {
   const entity = dimension.spawnItem(itemStack, location);
   const handler = new SpecificEntityHandler(entity);
   return handler;

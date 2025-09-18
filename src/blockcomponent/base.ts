@@ -13,12 +13,13 @@ import {
   BlockComponentStepOffEvent,
   BlockComponentStepOnEvent,
   Vector3,
-  system,
 } from "@minecraft/server";
 import { WorldUtils } from "../world/utils";
 import { Hasher } from "../type";
 import { BlockUtils } from "../block/utils";
-import { BlockEvent, InBlockTickEvent } from "../event/block";
+import { BlockEvent } from "../event/block";
+import { Struct, object } from "superstruct";
+import { EntityEnterBlockEvent, EntityInBlockTickEvent, EntityLeaveBlockEvent } from "../event";
 
 export class NeighborUpdateEvent extends BlockEvent {
   constructor(block: Block, sourceBlock: Block, direction?: Direction) {
@@ -50,37 +51,10 @@ export class NearbyEntityBlockEvent extends BlockEvent {
   readonly entity: Entity;
 }
 
-export class EnterBlockEvent extends NearbyEntityBlockEvent {
-  constructor(block: Block, source: Entity, sameBlockType: boolean) {
-    super(block, source);
-    this.sameBlockType = sameBlockType;
-  }
-
-  /**
-   * True if the entered block is the same type as the last block.
-   */
-  readonly sameBlockType: boolean;
-}
-
-export class LeaveBlockEvent extends NearbyEntityBlockEvent {
-  constructor(block: Block, source: Entity, sameBlockType: boolean) {
-    super(block, source);
-    this.sameBlockType = sameBlockType;
-  }
-
-  /**
-   * True if the entered block is the same type as the last block.
-   */
-  readonly sameBlockType: boolean;
-}
-
 export class ScheduledBlockEvent extends BlockEvent {}
 
 export interface ScheduledEvent {
-  callback: (
-    event: ScheduledBlockEvent,
-    args: CustomComponentParameters,
-  ) => void;
+  callback: (event: ScheduledBlockEvent, args: CustomComponentParameters) => void;
   timeLeft: number;
   totalTimeLeft: number;
   block: Block;
@@ -90,35 +64,28 @@ export interface ScheduledEvent {
  * Custom block component containing additional block events.
  */
 export abstract class BlockBaseComponent {
+  static readonly componentId: string;
+
   static components: BlockBaseComponent[] = [];
   private scheduledEvents = new Set<ScheduledEvent>();
+  struct: Struct<any, any> = object({});
 
   constructor() {}
 
   destroy = BlockUtils.destroy;
 
-  baseTick(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void {
+  baseTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
     this.afterTick(event, args);
     this.enterLeaveTick(event, args);
     this.neighborTick(event, args);
   }
 
-  basePlace(
-    event: BlockComponentOnPlaceEvent,
-    args: CustomComponentParameters,
-  ): void {
+  basePlace(event: BlockComponentOnPlaceEvent, args: CustomComponentParameters): void {
     for (const direction in Direction) {
       const sourceBlock = event.block.offset(WorldUtils.dir2Offset(direction));
       if (!sourceBlock) continue;
-      const updateEvent = new NeighborUpdateEvent(
-        event.block,
-        sourceBlock,
-        direction as Direction,
-      );
-      this.onNeighborUpdate(updateEvent, args);
+      const updateEvent = new NeighborUpdateEvent(event.block, sourceBlock, direction as Direction);
+      if (this.onNeighborUpdate) this.onNeighborUpdate(updateEvent, args);
     }
   }
 
@@ -131,10 +98,7 @@ export abstract class BlockBaseComponent {
   }
 
   // TODO: Tick is per block instance (more blocks screws w/ timing)
-  afterTick(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void {
+  afterTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
     for (const e of this.scheduledEvents) {
       if (e.timeLeft > 0) {
         e.timeLeft--;
@@ -150,56 +114,44 @@ export abstract class BlockBaseComponent {
     }
   }
 
-  enterLeaveTick(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void {
+  enterLeaveTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
     const entities = event.dimension.getEntities({
       maxDistance: 1.5,
       location: event.block.location,
     });
     const hash = Hasher.stringify(event.block);
     for (const entity of entities) {
-      this.onNearbyEntityTick(
-        new NearbyEntityBlockEvent(event.block, entity),
-        args,
-      );
+      this.onNearbyEntityTick(new NearbyEntityBlockEvent(event.block, entity), args);
       let eBlock = entity.dimension.getBlock(entity.location);
       let blk = entity.getDynamicProperty("mcutils:in_block") as string;
       let block = Hasher.parseBlock(blk);
       let bl = this.isInBlock(event.block, entity);
-      if (bl) this.inBlockTick(new InBlockTickEvent(event.block, entity), args);
+      if (bl && this.inBlockTick) this.inBlockTick(new EntityInBlockTickEvent(entity, event.block), args);
       if (bl && blk !== hash) {
         entity.setDynamicProperty("mcutils:in_block", hash);
-        let same = event.block.typeId == block?.typeId;
-        this.onEnter(new EnterBlockEvent(event.block, entity, same), args);
+        if (this.onEnter) this.onEnter(new EntityEnterBlockEvent(entity, event.block, block), args);
         continue;
       }
       if (!bl && blk === hash) {
         let same = event.block?.typeId == eBlock?.typeId;
-        this.onLeave(new LeaveBlockEvent(event.block, entity, same), args);
+        if (this.onLeave) this.onLeave(new EntityLeaveBlockEvent(entity, event.block, block), args);
         entity.setDynamicProperty("mcutils:in_block", Hasher.stringify(eBlock));
       }
     }
   }
 
-  neighborTick(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void {
+  neighborTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
     const direction = BlockUtils.getNeighborUpdate(event);
     if (!direction) return;
     const updateBlock = event.block.offset(WorldUtils.dir2Offset(direction));
     if (!updateBlock) return;
-    this.onNeighborUpdate(
-      new NeighborUpdateEvent(event.block, updateBlock, direction),
-      args,
-    );
+    if (this.onNeighborUpdate)
+      this.onNeighborUpdate(new NeighborUpdateEvent(event.block, updateBlock, direction), args);
   }
 
   update(block: Block, args: CustomComponentParameters): void {
     const event = new NeighborUpdateEvent(block, block);
-    this.onNeighborUpdate(event, args);
+    if (this.onNeighborUpdate) this.onNeighborUpdate(event, args);
   }
 
   spawnParticle(block: Block, effectName: string, location?: Vector3) {
@@ -214,11 +166,8 @@ export abstract class BlockBaseComponent {
 
   after(
     block: Block,
-    callback: (
-      event: ScheduledBlockEvent,
-      args: CustomComponentParameters,
-    ) => void,
-    tickDelay: number,
+    callback: (event: ScheduledBlockEvent, args: CustomComponentParameters) => void,
+    tickDelay: number
   ) {
     this.scheduledEvents.add({
       callback: callback,
@@ -234,112 +183,80 @@ export abstract class BlockBaseComponent {
    * This function will be called when an entity is nearby.
    * @param {NearbyEntityBlockEvent} event
    */
-  onNearbyEntityTick(
-    event: NearbyEntityBlockEvent,
-    args: CustomComponentParameters,
-  ): void {}
+  onNearbyEntityTick(event: NearbyEntityBlockEvent, args: CustomComponentParameters): void {}
 
+  // TODO: Is only called once. (if a block has 2 components with this it will only call one)
   /**
    * This function will be called when a block has been placed/updated next to this block. (Requires neighborTick)
    * @param {NeighborUpdateEvent} event
    */
-  onNeighborUpdate(
-    event: NeighborUpdateEvent,
-    args: CustomComponentParameters,
-  ): void {}
+  onNeighborUpdate?(event: NeighborUpdateEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when an entity has entered the block. (Requires enterLeaveTick)
-   * @param {EnterBlockEvent} event
+   * @param {EntityEnterBlockEvent} event
    * @param {CustomComponentParameters} args
    */
-  onEnter(event: EnterBlockEvent, args: CustomComponentParameters): void {}
+  onEnter?(event: EntityEnterBlockEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when an entity has left the block. (Requires enterLeaveTick)
-   * @param {LeaveBlockEvent} event
+   * @param {EntityLeaveBlockEvent} event
    * @param {CustomComponentParameters} args
    */
-  onLeave(event: LeaveBlockEvent, args: CustomComponentParameters): void {}
+  onLeave?(event: EntityLeaveBlockEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when an entity is in the block. (Requires enterLeaveTick)
-   * @param {InBlockTickEvent} event
+   * @param {EntityInBlockTickEvent} event
    * @param {CustomComponentParameters} args
    */
-  inBlockTick(event: InBlockTickEvent, args: CustomComponentParameters): void {}
+  inBlockTick?(event: EntityInBlockTickEvent, args: CustomComponentParameters): void;
 
   // EVENTS
 
   /**
    * This function will be called before a player places the block.
    */
-  beforeOnPlayerPlace?(
-    event: BlockComponentPlayerPlaceBeforeEvent,
-    args: CustomComponentParameters,
-  ): void;
+  beforeOnPlayerPlace?(event: BlockComponentPlayerPlaceBeforeEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when an entity falls onto the block that this custom component is bound to.
    */
-  onEntityFallOn?(
-    event: BlockComponentEntityFallOnEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onEntityFallOn?(event: BlockComponentEntityFallOnEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when the block that this custom component is bound to is placed.
    */
-  onPlace?(
-    event: BlockComponentOnPlaceEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onPlace?(event: BlockComponentOnPlaceEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when a player breaks the block.
    */
-  onPlayerBreak?(
-    event: BlockComponentPlayerBreakEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onPlayerBreak?(event: BlockComponentPlayerBreakEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when a player successfully interacts with the block that this custom component is bound to.
    */
-  onPlayerInteract?(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onPlayerInteract?(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when a block randomly ticks.
    */
-  onRandomTick?(
-    event: BlockComponentRandomTickEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onRandomTick?(event: BlockComponentRandomTickEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when an entity steps off the block that this custom component is bound to.
    */
-  onStepOff?(
-    event: BlockComponentStepOffEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onStepOff?(event: BlockComponentStepOffEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when an entity steps onto the block that this custom component is bound to.
    */
-  onStepOn?(
-    event: BlockComponentStepOnEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onStepOn?(event: BlockComponentStepOnEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when a block ticks.
    */
-  onTick?(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onTick?(event: BlockComponentTickEvent, args: CustomComponentParameters): void;
 }

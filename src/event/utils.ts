@@ -8,6 +8,10 @@ export abstract class EventSignal<T, O = undefined> {
 
   constructor() {}
 
+  get size(): number {
+    return this.listeners.length;
+  }
+
   subscribe(callback: (event: T) => void, options?: O): (event: T) => void {
     this.listeners.push({ callback, options });
     return callback;

@@ -1,20 +1,24 @@
 {
   "name": "@lpsmods/mc-utils",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "legopitstop",
   "license": "MIT",
   "description": "Utilities for making Minecraft: Bedrock Edition scripts",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "build": "node build.mjs",
     "copy": "xcopy \"src\" \"%UserProfile%\\Documents\\GitHub\\Minecraft\\mcutils-example\\scripts\\mc-utils\" /s /y /I",
-    "rebuild": "npm run build && npm run copy && echo Done!",
+    "rebuild": "npm run copy && echo Done!",
     "dev": "chokidar \"src/**/*\" -c \"npm run rebuild\" -d"
   },
+  "homepage": "https://github.com/lpsmods/mc-utils#readme",
+  "funding": "https://github.com/sponsors/legopitstop",
   "repository": {
     "type": "git",
     "url": "https://github.com/lpsmods/mc-utils"
+  },
+  "bugs": {
+    "url": "https://github.com/lpsmods/mc-utils/issues"
   },
   "keywords": [
     "minecraft",
@@ -27,12 +31,16 @@
     "@minecraft/math": "^2.2.6",
     "@minecraft/server": "^2.1.0",
     "@minecraft/server-ui": "^2.0.0",
-    "chokidar-cli": "^3.0.0",
-    "esbuild": "^0.25.4",
-    "glob": "^11.0.2",
-    "molang": "^2.0.1"
+    "molang": "^2.0.1",
+    "superstruct": "^2.0.2"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.44.0",
+    "chokidar-cli": "^3.0.0",
+    "esbuild": "^0.25.4",
+    "eslint": "^9.35.0",
+    "eslint-plugin-minecraft-linting": "^2.0.9",
+    "glob": "^11.0.2",
     "typescript": "^4.0.0"
   }
 }

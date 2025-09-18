@@ -2,14 +2,7 @@
  * Generic item functions.
  */
 
-import {
-  Entity,
-  EquipmentSlot,
-  GameMode,
-  ItemStack,
-  Player,
-  Vector3,
-} from "@minecraft/server";
+import { Entity, EquipmentSlot, GameMode, ItemStack, Player, Vector3 } from "@minecraft/server";
 
 export abstract class ItemUtils {
   /**
@@ -21,11 +14,7 @@ export abstract class ItemUtils {
     if (!itemStack) {
       return false;
     }
-    return (
-      itemStack.hasTag("axe") ||
-      itemStack.hasTag("minecraft:is_axe") ||
-      itemStack.typeId.endsWith("_axe")
-    );
+    return itemStack.hasTag("axe") || itemStack.hasTag("minecraft:is_axe") || itemStack.typeId.endsWith("_axe");
   }
 
   // TODO: Remove and replace with isHolding + isAxe
@@ -73,11 +62,7 @@ export abstract class ItemUtils {
    * @param {number} slot
    * @param {ItemStack} resultStack
    */
-  static setStack(
-    player: Player,
-    slot: EquipmentSlot,
-    resultStack: ItemStack,
-  ): void {
+  static setStack(player: Player, slot: EquipmentSlot, resultStack: ItemStack): void {
     const inv = player.getComponent("inventory");
     const equ = player.getComponent("equippable");
     if (!equ) return;
@@ -102,13 +87,12 @@ export abstract class ItemUtils {
    */
   static decrementStack(
     player: Player,
-    slot: EquipmentSlot,
+    slot: EquipmentSlot = EquipmentSlot.Mainhand,
     amount: number = 1,
     gameModeCheck: boolean = true,
     emptyStack?: ItemStack,
   ): boolean {
-    if (gameModeCheck && player.getGameMode() == GameMode.Creative)
-      return false;
+    if (gameModeCheck && player.getGameMode() == GameMode.Creative) return false;
     const equ = player.getComponent("equippable");
     if (!equ) return false;
     const stack = equ.getEquipment(slot);
@@ -176,29 +160,17 @@ export abstract class ItemUtils {
    */
   static isIgnitable(itemStack: ItemStack | undefined): boolean {
     if (!itemStack) return false;
-    return (
-      itemStack.matches("flint_and_steel") || itemStack.matches("fire_charge")
-    );
+    return itemStack.matches("flint_and_steel") || itemStack.matches("fire_charge");
   }
 
-  static usedIgnitable(
-    player: Player,
-    itemStack: ItemStack,
-    soundLocation?: Vector3,
-  ): void {
+  static usedIgnitable(player: Player, itemStack: ItemStack, soundLocation?: Vector3): void {
     if (itemStack.matches("fire_charge")) {
-      player.dimension.playSound(
-        "mob.ghast.fireball",
-        soundLocation ?? player.location,
-      );
+      player.dimension.playSound("mob.ghast.fireball", soundLocation ?? player.location);
       ItemUtils.decrementStack(player, EquipmentSlot.Mainhand);
       return;
     }
     if (itemStack.matches("flint_and_steel")) {
-      player.dimension.playSound(
-        "fire.ignite",
-        soundLocation ?? player.location,
-      );
+      player.dimension.playSound("fire.ignite", soundLocation ?? player.location);
       // Damage
       ItemUtils.applyDamage(player, itemStack, 1);
       return;
@@ -211,22 +183,14 @@ export abstract class ItemUtils {
    * @param itemStack The item stack to deal damage to.
    * @param amount The amount of damage to apply (default is 1).
    */
-  static applyDamage(
-    source: Entity,
-    itemStack: ItemStack,
-    amount: number = 1,
-    slot?: EquipmentSlot,
-  ): void {
-    if (source instanceof Player && source?.getGameMode() === GameMode.Creative)
-      return;
+  static applyDamage(source: Entity, itemStack: ItemStack, amount: number = 1, slot?: EquipmentSlot): void {
+    if (source instanceof Player && source?.getGameMode() === GameMode.Creative) return;
     const equ = source.getComponent("equippable");
     if (!equ) return;
     const durability = itemStack.getComponent("durability");
     if (!durability) return; // If the item has no durability, do nothing.
 
-    const unbreakingLevel =
-      itemStack.getComponent("enchantable")?.getEnchantment("unbreaking")
-        ?.level ?? 0;
+    const unbreakingLevel = itemStack.getComponent("enchantable")?.getEnchantment("unbreaking")?.level ?? 0;
 
     const shouldApplyDamage = Math.random() < 1 / (unbreakingLevel + 1);
 
@@ -275,13 +239,7 @@ export abstract class ItemUtils {
     if (!con) return;
     const main = con.getEquipment(slot);
     if (!main) return;
-    const res = ItemUtils.decrementStack(
-      player,
-      slot,
-      amount,
-      gameModeCheck,
-      itemStack,
-    );
+    const res = ItemUtils.decrementStack(player, slot, amount, gameModeCheck, itemStack);
     if (!res) return;
     if (ItemUtils.has(player, itemStack)) return;
     ItemUtils.give(player, itemStack);
@@ -289,20 +247,38 @@ export abstract class ItemUtils {
 
   /**
    * Match any item name.
-   * @param {ItemStack} item
-   * @param {string[]} itemNames
+   * @param {ItemStack} itemStack The item to match.
+   * @param {string[]} itemPredicates An array of item names. Prefix with '#' for item tag or "!" to ignore.
    * @returns {boolean} Whether or not the item matched any of the item names.
    */
-  static matchAny(item: ItemStack, itemNames: string[]): boolean {
-    const items = [...new Set(itemNames)];
-    return items.some((itemName) => {
-      if (itemName.charAt(0) === "#") {
-        return item.hasTag(itemName.slice(1));
-      }
-      if (itemName.charAt(0) === "!") {
-        return !item.matches(itemName.slice(1));
-      }
-      return item.matches(itemName);
+  static matchAny(
+    itemStack: ItemStack,
+    itemPredicates: string[],
+    states?: Record<string, string | number | boolean>,
+  ): boolean {
+    const itemSet = [...new Set(itemPredicates)];
+    return itemSet.some((itemPredicate) => {
+      return ItemUtils.matches(itemStack, itemPredicate, states);
     });
+  }
+
+  /**
+   * Match this item.
+   * @param {ItemStack} itemStack The item to match.
+   * @param {string} itemPredicate An item name. Prefix with '#' for item tag or "!" to ignore.
+   * @returns {boolean}
+   */
+  static matches(
+    itemStack: ItemStack,
+    itemPredicate: string,
+    states?: Record<string, string | number | boolean>,
+  ): boolean {
+    if (itemPredicate.charAt(0) === "#") {
+      return itemStack.hasTag(itemPredicate.slice(1));
+    }
+    if (itemPredicate.charAt(0) === "!") {
+      return !itemStack.matches(itemPredicate.slice(1), states);
+    }
+    return itemStack.matches(itemPredicate, states);
   }
 }

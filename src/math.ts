@@ -33,11 +33,7 @@ export class MathUtils {
    * @param {number} amount
    * @returns {{from: Vector3, to: Vector3}}
    */
-  static expandRegion(
-    from: Vector3,
-    to: Vector3,
-    amount: number = 1,
-  ): { from: Vector3; to: Vector3 } {
+  static expandRegion(from: Vector3, to: Vector3, amount: number = 1): { from: Vector3; to: Vector3 } {
     const min = {
       x: Math.min(from.x, to.x) - amount,
       y: Math.min(from.y, to.y) - amount,
@@ -60,11 +56,7 @@ export class MathUtils {
    * @param {Vector3} to
    * @returns {boolean}
    */
-  static isInRect(
-    origin: Entity | Vector3,
-    from: Vector3,
-    to: Vector3,
-  ): boolean {
+  static isInRect(origin: Entity | Vector3, from: Vector3, to: Vector3): boolean {
     const minX = Math.min(from.x, to.x);
     const maxX = Math.max(from.x, to.x);
     const minY = Math.min(from.y, to.y);
@@ -72,17 +64,12 @@ export class MathUtils {
     const minZ = Math.min(from.z, to.z);
     const maxZ = Math.max(from.z, to.z);
     let loc = origin instanceof Entity ? origin.location : origin;
-    return (
-      loc.x >= minX &&
-      loc.x <= maxX &&
-      loc.y >= minY &&
-      loc.y <= maxY &&
-      loc.z >= minZ &&
-      loc.z <= maxZ
-    );
+    return loc.x >= minX && loc.x <= maxX && loc.y >= minY && loc.y <= maxY && loc.z >= minZ && loc.z <= maxZ;
   }
 
-  // TODO: Use Vector3Utils.add instead of this function
+  /**
+   * @deprecated use Vector3Utils.add instead.
+   */
   static vecOffset(pos: Vector3, offset: Vector3 = { x: 0, y: 0, z: 0 }) {
     return Vector3Utils.add(pos, offset);
   }
@@ -94,14 +81,8 @@ export class MathUtils {
    * @param initialStrength
    * @returns
    */
-  static applyBounce(
-    entity: Entity,
-    initialStrength: number = 1.0,
-    decayRate: number = 0.8,
-  ): void {
-    let strength = entity.getDynamicProperty("mcutils:bounce_strength") as
-      | number
-      | undefined;
+  static applyBounce(entity: Entity, initialStrength: number = 1.0, decayRate: number = 0.8): void {
+    let strength = entity.getDynamicProperty("mcutils:bounce_strength") as number | undefined;
     if (strength === undefined) {
       strength = initialStrength;
     }
@@ -160,11 +141,7 @@ export class MathUtils {
    * @param callback - Function called for each position. Return a value to stop scanning early.
    * @returns The first non-undefined result from the callback, or undefined if nothing was found.
    */
-  static chebyshevDistance<T>(
-    origin: Vector3,
-    size: number,
-    callback: (pos: Vector3) => T | undefined,
-  ): T | undefined {
+  static chebyshevDistance<T>(origin: Vector3, size: number, callback: (pos: Vector3) => T | undefined): T | undefined {
     for (let dx = -size; dx <= size; dx++) {
       for (let dy = -size; dy <= size; dy++) {
         for (let dz = -size; dz <= size; dz++) {
@@ -193,11 +170,7 @@ export class MathUtils {
    * @param {Vector3} rotation
    * @returns {Vector3[]}
    */
-  static rotatePoints(
-    points: Vector3[],
-    origin: Vector3,
-    rotation: Vector3,
-  ): Vector3[] {
+  static rotatePoints(points: Vector3[], origin: Vector3, rotation: Vector3): Vector3[] {
     // Convert degrees to radians
     const rx = (rotation.x * Math.PI) / 180;
     const ry = (rotation.y * Math.PI) / 180;

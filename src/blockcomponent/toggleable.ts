@@ -1,25 +1,28 @@
-import {
-  BlockComponentPlayerInteractEvent,
-  CustomComponentParameters,
-} from "@minecraft/server";
+import { Block, BlockComponentPlayerInteractEvent, CustomComponentParameters } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockBaseComponent } from "./base";
 import { BlockUtils } from "../block/utils";
 import { AddonUtils } from "../addon";
+import { create, defaulted, object, string, Struct } from "superstruct";
 
 export interface ToggleableOptions {
-  state: keyof BlockStateSuperset;
-  true_sound_event?: string;
-  false_sound_event?: string;
+  toggle_state: keyof BlockStateSuperset;
+  true_sound_event: string;
+  false_sound_event: string;
   // toggled_by_redstone?: boolean;
 }
 
 // TODO: Make it toggled by redstone
 export class ToggleableComponent extends BlockBaseComponent {
-  static typeId = AddonUtils.makeId("toggleable");
+  static readonly componentId = AddonUtils.makeId("toggleable");
+  struct: Struct<any, any> = object({
+    toggle_state: defaulted(string(), 'mcutils:open'),
+    true_sound_event: defaulted(string(), "use.stone"),
+    false_sound_event: defaulted(string(), "use.stone"),
+  });
 
   /**
-   * Toggleable/Openable block behavior. (e.g. doors, trapdoors)
+   * Toggleable block state behavior. (like; doors, trapdoors)
    */
   constructor() {
     super();
@@ -27,25 +30,23 @@ export class ToggleableComponent extends BlockBaseComponent {
   }
 
   getSound(open: boolean = false, args: CustomComponentParameters): string {
-    const options = args.params as ToggleableOptions;
+    const options = create(args.params, this.struct) as ToggleableOptions;
     if (open) {
-      return options.true_sound_event ?? "use.stone";
+      return options.true_sound_event;
     }
-    return options.false_sound_event ?? "use.stone";
+    return options.false_sound_event;
+  }
+
+  toggle(block: Block, args: CustomComponentParameters) {
+    const options = create(args.params, this.struct) as ToggleableOptions;
+    const bool = BlockUtils.toggleState(block, options.toggle_state);
+    block.dimension.playSound(this.getSound(bool, args), block.location);
+    this.update(block, args);
   }
 
   // EVENTS
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as ToggleableOptions;
-    const bool = BlockUtils.toggleState(event.block, options.state);
-    event.block.dimension.playSound(
-      this.getSound(bool, args),
-      event.block.location,
-    );
-    this.update(event.block, args);
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+    this.toggle(event.block, args);
   }
 }

@@ -1,11 +1,9 @@
-import {
-  BlockComponentPlayerInteractEvent,
-  CustomComponentParameters,
-  EquipmentSlot,
-} from "@minecraft/server";
+import { BlockComponentPlayerInteractEvent, CustomComponentParameters, EquipmentSlot } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { ItemUtils } from "../item/utils";
 import { AddonUtils } from "../addon";
+import { array, create, defaulted, number, object, string, Struct } from "superstruct";
+import { clampNumber } from "@minecraft/math";
 
 export class CakeInteraction {
   readonly item: string;
@@ -28,13 +26,20 @@ export class CakeInteraction {
 
 export interface CakeOptions {
   slice_state: keyof BlockStateSuperset;
-  interactions?: string[];
-  max_slices?: number;
+  max_slices: number;
+  nutrition: number;
+  interactions: string[];
 }
 
 // TODO: Check players hunger.
 export class CakeComponent {
-  static typeId = AddonUtils.makeId("cake");
+  static readonly componentId = AddonUtils.makeId("cake");
+  struct: Struct<any, any> = object({
+    slice_state: defaulted(string(), "mcutils:slices"),
+    max_slices: defaulted(number(), 6),
+    interactions: defaulted(array(string()), []),
+    nutrition: defaulted(number(), 2),
+  });
 
   SLICES = 6;
 
@@ -45,10 +50,7 @@ export class CakeComponent {
     this.onPlayerInteract = this.onPlayerInteract.bind(this);
   }
 
-  placeBlock(
-    event: BlockComponentPlayerInteractEvent,
-    options: CakeOptions,
-  ): boolean {
+  placeBlock(event: BlockComponentPlayerInteractEvent, options: CakeOptions): boolean {
     if (!event.player) return false;
     const SLICES = event.block.permutation.getState(options.slice_state);
     if (SLICES != 0) {
@@ -60,7 +62,7 @@ export class CakeComponent {
     if (!mainhand) {
       return false;
     }
-    const actions = CakeInteraction.parseAll(options.interactions ?? []);
+    const actions = CakeInteraction.parseAll(options.interactions);
     let interaction = actions.find((x) => mainhand.matches(x.item));
     if (interaction) {
       event.dimension.playSound("cake.add_candle", event.block.location);
@@ -73,27 +75,24 @@ export class CakeComponent {
 
   eat(event: BlockComponentPlayerInteractEvent, options: CakeOptions): void {
     if (!event.player) return;
-    event.player.addEffect("saturation", 100, {
-      amplifier: 0,
-      showParticles: false,
-    });
+    const hunger = event.player.getComponent("player.hunger");
+    if (hunger) {
+      hunger.setCurrentValue(
+        clampNumber(hunger.currentValue + options.nutrition, hunger.effectiveMin, hunger.effectiveMax)
+      );
+    }
     var slice = event.block.permutation.getState(options.slice_state) as number;
     if (slice === options.max_slices) {
       return event.dimension.setBlockType(event.block.location, "air");
     }
     // Decrease slice
-    event.block.setPermutation(
-      event.block.permutation.withState(options.slice_state, slice + 1),
-    );
+    event.block.setPermutation(event.block.permutation.withState(options.slice_state, slice + 1));
   }
 
   // EVENTS
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as CakeOptions;
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as CakeOptions;
     if (!this.placeBlock(event, options)) {
       this.eat(event, options);
     }

@@ -6,6 +6,8 @@ import {
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
 import { AddonUtils } from "../addon";
+import { create, defaulted, object, string, Struct } from "superstruct";
+import { vec2 } from "../validation";
 
 export interface TimeDetectorOptions {
   inverted_state: keyof BlockStateSuperset;
@@ -15,8 +17,16 @@ export interface TimeDetectorOptions {
 
 // TODO:
 export class TimeDetectorComponent {
-  static typeId = AddonUtils.makeId("time_detector");
+  static readonly componentId = AddonUtils.makeId("time_detector");
+  struct: Struct<any, any> = object({
+    inverted_state: defaulted(string(), 'mcutils:inverted'),
+    powered_state: defaulted(string(), 'mcutils:powered'),
+    time_interval: defaulted(vec2, [0, 0]),
+  });
 
+  /**
+   * Vanilla time detector block behavior. (like; daylight detector)
+   */
   constructor() {
     this.onPlayerInteract = this.onPlayerInteract.bind(this);
     this.onTick = this.onTick.bind(this);
@@ -25,23 +35,15 @@ export class TimeDetectorComponent {
   // EVENTS
 
   // inverted, it outputs a signal strength of 15 minus the current internal sky light level, where values over 15 or below 0 are taken as 15 or 0 respectively.
-  onTick(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as TimeDetectorOptions;
-    const inverted = event.block.permutation.getState(
-      options.inverted_state,
-    ) as boolean;
+  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as TimeDetectorOptions;
+    const inverted = event.block.permutation.getState(options.inverted_state) as boolean;
     if (inverted) {
     }
   }
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as TimeDetectorOptions;
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as TimeDetectorOptions;
     BlockUtils.toggleState(event.block, options.inverted_state);
     // TODO: Sound?
   }

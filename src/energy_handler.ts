@@ -59,14 +59,9 @@ export class EnergyHandler {
    * @param {number} amount
    * @returns
    */
-  static transferEnergyTo(
-    source: Block | ItemStack,
-    other: Block | ItemStack,
-    amount: number,
-  ): boolean {
+  static transferEnergyTo(source: Block | ItemStack, other: Block | ItemStack, amount: number): boolean {
     if (!EnergyHandler.canTransferTo(source, other)) return false;
-    const otherEnergy =
-      (other.getDynamicProperty("common:energy") as number) ?? 0;
+    const otherEnergy = (other.getDynamicProperty("common:energy") as number) ?? 0;
     other.setDynamicProperty("common:energy", otherEnergy + amount);
     EnergyHandler.removeEnergy(source, amount);
     return true;
@@ -78,10 +73,7 @@ export class EnergyHandler {
    * @param {Block|ItemStack} other
    * @returns
    */
-  static canTransferTo(
-    source: Block | ItemStack,
-    other: Block | ItemStack,
-  ): boolean {
+  static canTransferTo(source: Block | ItemStack, other: Block | ItemStack): boolean {
     return source.hasTag("energy") && other.hasTag("energy");
   }
 

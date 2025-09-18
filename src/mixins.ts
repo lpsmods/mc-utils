@@ -1,14 +1,6 @@
-import {
-  ItemStack,
-  Block,
-  ScoreboardObjective,
-  Vector3,
-  Player,
-  Dimension,
-  Entity,
-} from "@minecraft/server";
+import { ItemStack, Block, ScoreboardObjective, Vector3, Player, Dimension, Entity } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
-import { DataStorage } from "./misc/data_storage";
+import { DataStorage } from "./data_storage";
 import { PlayerUtils, ArmorSet, ArmorSetEvent } from "./entity/player_utils";
 import { ItemUtils } from "./item/utils";
 import { WorldUtils } from "./world/utils";
@@ -24,11 +16,7 @@ declare module "@minecraft/server" {
   }
 
   interface Dimension {
-    getBiome(
-      location: Vector3,
-      entityId?: string,
-      propertyName?: string,
-    ): Biome | undefined;
+    getBiome(location: Vector3, entityId?: string, propertyName?: string): Biome | undefined;
   }
 
   interface ScoreboardObjective {
@@ -58,9 +46,7 @@ declare module "@minecraft/server" {
      * property has not been set.
      * @throws This function can throw errors.
      */
-    getDynamicProperty(
-      identifier: string,
-    ): boolean | number | string | Vector3 | undefined;
+    getDynamicProperty(identifier: string): boolean | number | string | Vector3 | undefined;
 
     /**
      * @remarks
@@ -96,26 +82,12 @@ declare module "@minecraft/server" {
      * Data value of the property to set.
      * @throws This function can throw errors.
      */
-    setDynamicProperty(
-      identifier: string,
-      value?: boolean | number | string | Vector3,
-    ): void;
+    setDynamicProperty(identifier: string, value?: boolean | number | string | Vector3): void;
 
-    getState<T extends keyof BlockStateSuperset>(
-      stateName: T,
-    ): BlockStateSuperset[T] | undefined;
-    setState<T extends keyof BlockStateSuperset>(
-      stateName: T,
-      value: any,
-    ): void;
-    incrementState<T extends keyof BlockStateSuperset>(
-      stateName: T,
-      amount?: number,
-    ): number;
-    decrementState<T extends keyof BlockStateSuperset>(
-      stateName: T,
-      amount?: number,
-    ): number;
+    getState<T extends keyof BlockStateSuperset>(stateName: T): BlockStateSuperset[T] | undefined;
+    setState<T extends keyof BlockStateSuperset>(stateName: T, value: any): void;
+    incrementState<T extends keyof BlockStateSuperset>(stateName: T, amount?: number): number;
+    decrementState<T extends keyof BlockStateSuperset>(stateName: T, amount?: number): number;
 
     /**
      * Get this blocks energy level.
@@ -142,10 +114,7 @@ declare module "@minecraft/server" {
   }
 
   interface Player {
-    applyArmor(
-      armorSet: ArmorSet,
-      condition?: (event: ArmorSetEvent) => boolean,
-    ): void;
+    applyArmor(armorSet: ArmorSet, condition?: (event: ArmorSetEvent) => boolean): void;
   }
 
   interface Entity {
@@ -177,42 +146,27 @@ Block.prototype.executeMolang = function (expression) {
 };
 
 Block.prototype.clearDynamicProperties = function (): void {
-  const store = new DataStorage(
-    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`,
-  );
+  const store = new DataStorage(`mcutils:block_${this.location.x},${this.location.y},${this.location.z}`);
   store.clear();
 };
 
-Block.prototype.getDynamicProperty = function (
-  identifier: string,
-): boolean | number | string | Vector3 | undefined {
-  const store = new DataStorage(
-    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`,
-  );
+Block.prototype.getDynamicProperty = function (identifier: string): boolean | number | string | Vector3 | undefined {
+  const store = new DataStorage(`mcutils:block_${this.location.x},${this.location.y},${this.location.z}`);
   return store.getItem(identifier);
 };
 
 Block.prototype.getDynamicPropertyIds = function (): string[] {
-  const store = new DataStorage(
-    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`,
-  );
+  const store = new DataStorage(`mcutils:block_${this.location.x},${this.location.y},${this.location.z}`);
   return store.keys();
 };
 
 Block.prototype.getDynamicPropertyTotalByteCount = function (): number {
-  const store = new DataStorage(
-    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`,
-  );
+  const store = new DataStorage(`mcutils:block_${this.location.x},${this.location.y},${this.location.z}`);
   return store.getSize();
 };
 
-Block.prototype.setDynamicProperty = function (
-  identifier: string,
-  value?: boolean | number | string | Vector3,
-): void {
-  const store = new DataStorage(
-    `mcutils:block_${this.location.x},${this.location.y},${this.location.z}`,
-  );
+Block.prototype.setDynamicProperty = function (identifier: string, value?: boolean | number | string | Vector3): void {
+  const store = new DataStorage(`mcutils:block_${this.location.x},${this.location.y},${this.location.z}`);
   store.setItem(identifier, value);
 };
 

@@ -1,18 +1,19 @@
-import {
-  BlockComponentPlayerInteractEvent,
-  ItemStack,
-  Block,
-  CustomComponentParameters,
-} from "@minecraft/server";
+import { BlockComponentPlayerInteractEvent, ItemStack, Block, CustomComponentParameters } from "@minecraft/server";
 import { AddonUtils } from "../addon";
+import { create, defaulted, object, optional, Struct } from "superstruct";
+import { isBlock, isItem } from "../validation";
 
 export interface PottedFlowerOptions {
   item?: string;
-  block?: string;
+  block: string;
 }
 
 export class PottedFlowerComponent {
-  static typeId = AddonUtils.makeId("potted_flower");
+  static readonly componentId = AddonUtils.makeId("potted_flower");
+  struct: Struct<any, any> = object({
+    item: optional(isItem),
+    block: defaulted(isBlock, 'flower_pot'),
+  });
 
   /**
    * Vanilla flower pot behavior.
@@ -27,14 +28,11 @@ export class PottedFlowerComponent {
 
   // EVENTS
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as PottedFlowerOptions;
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as PottedFlowerOptions;
     const e = event.player?.getComponent("inventory");
     e &&
       (e.container?.addItem(new ItemStack(this.getItem(event.block, options))),
-      event.block.setType(options.block ?? "flower_pot"));
+      event.block.setType(options.block));
   }
 }

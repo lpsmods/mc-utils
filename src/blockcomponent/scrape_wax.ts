@@ -4,20 +4,30 @@ import {
   CustomComponentParameters,
   MolangVariableMap,
 } from "@minecraft/server";
-import { Identifier } from "../misc/identifier";
+import { Identifier } from "../identifier";
 import { ItemUtils } from "../item/utils";
 import { BlockUtils } from "../block/utils";
 import { AddonUtils } from "../addon";
+import { create, defaulted, object, optional, string, Struct } from "superstruct";
+import { isBlock } from "../validation";
 
 export interface ScrapeWaxOptions {
   block?: string;
-  particle_effect?: string;
-  sound_effect?: string;
+  particle_effect: string;
+  sound_effect: string;
 }
 
 export class ScrapeWaxComponent {
-  static typeId = AddonUtils.makeId("scrape_wax");
+  static readonly componentId = AddonUtils.makeId("scrape_wax");
+  struct: Struct<any, any> = object({
+    block: optional(isBlock),
+    particle_effect: defaulted(string(), "minecraft:wax_particle"),
+    sound_effect: defaulted(string(), "copper.wax.off"),
+  });
 
+  /**
+   * Vanilla scrape wax block behavior.
+   */
   constructor() {
     this.onPlayerInteract = this.onPlayerInteract.bind(this);
   }
@@ -31,12 +41,9 @@ export class ScrapeWaxComponent {
     BlockUtils.setType(block, this.getBlock(block, options));
   }
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
     if (!event.player) return;
-    const options = args.params as ScrapeWaxOptions;
+    const options = create(args.params, this.struct) as ScrapeWaxOptions;
     if (!ItemUtils.holdingAxe(event.player)) return;
     this.convertBlock(event.block, options);
     const variables = new MolangVariableMap();
@@ -47,9 +54,6 @@ export class ScrapeWaxComponent {
       event.block.location,
       variables,
     );
-    event.block.dimension.playSound(
-      options.sound_effect ?? "copper.wax.off",
-      event.block.location,
-    );
+    event.block.dimension.playSound(options.sound_effect ?? "copper.wax.off", event.block.location);
   }
 }

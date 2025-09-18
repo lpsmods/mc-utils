@@ -13,9 +13,11 @@ import { TextUtils } from "../text";
 export class TextDisplayHandler extends EntityHandler {
   constructor(options: EntityQueryOptions) {
     super(options);
+    this.onInteract = this.onInteract.bind(this);
+    this.onSpawn = this.onSpawn.bind(this);
   }
 
-  onPlayerInteract(event: PlayerInteractWithEntityAfterEvent): void {
+  onInteract(event: PlayerInteractWithEntityAfterEvent): void {
     if (event.player.isSneaking || event.target.hasTag("locked")) return;
     system.run(() => this.show.bind(this)(event));
   }
@@ -35,18 +37,18 @@ export class TextDisplayHandler extends EntityHandler {
     ui.show(event.player).then((res) => {
       switch (res.selection) {
         case 0:
-          return this.#rename(event);
+          return this.rename(event);
         case 1:
-          return this.#center(event.target);
+          return this.center(event.target);
         case 2:
-          return this.#lock(event.target);
+          return this.lock(event.target);
         case 3:
           return event.target.remove();
       }
     });
   }
 
-  #rename(event: PlayerInteractWithEntityAfterEvent): void {
+  private rename(event: PlayerInteractWithEntityAfterEvent): void {
     const ui = new ModalFormData();
     ui.title("Rename");
     ui.textField("Name", "", { defaultValue: event.target.nameTag });
@@ -58,14 +60,14 @@ export class TextDisplayHandler extends EntityHandler {
     });
   }
 
-  #center(entity: Entity): void {
+  private center(entity: Entity): void {
     const pos = Vector3Utils.floor(entity.location);
     pos.x += 0.5;
     pos.z += 0.5;
     entity.teleport(pos);
   }
 
-  #lock(entity: Entity): void {
+  private lock(entity: Entity): void {
     entity.addTag("locked");
   }
 }

@@ -1,8 +1,8 @@
 import { Entity } from "@minecraft/server";
 import { EventSignal } from "./utils";
-import { AreaDetector } from "../misc/area_detector";
+import { AreaDetector } from "../area_detector";
 
-export class AreaEvent {
+export abstract class AreaEvent {
   readonly entity: Entity;
   readonly area: AreaDetector;
 
@@ -20,25 +20,31 @@ export class AreaEnterEventSignal extends EventSignal<AreaEnterEvent> {}
 export class AreaLeaveEventSignal extends EventSignal<AreaLeaveEvent> {}
 export class AreaTickEventSignal extends EventSignal<AreaTickEvent> {}
 
+/**
+ * Custom area events.
+ */
 export abstract class AreaEvents {
   private constructor() {}
 
   /**
    * This event fires when a entity enters the area.
+   * @eventProperty
    */
-  static readonly enter = new AreaEnterEventSignal();
+  static readonly entityEnter = new AreaEnterEventSignal();
 
   /**
    * This event fires when a entity leaves the area.
+   * @eventProperty
    */
-  static readonly leave = new AreaLeaveEventSignal();
+  static readonly entityLeave = new AreaLeaveEventSignal();
 
   /**
    * This event fires every tick a entity is in the area.
+   * @eventProperty
    */
-  static readonly tick = new AreaTickEventSignal();
+  static readonly entityTick = new AreaTickEventSignal();
+
+  static get size(): number {
+    return this.entityEnter.size + this.entityLeave.size + this.entityTick.size;
+  }
 }
-
-function setup(): void {}
-
-setup();

@@ -3,15 +3,19 @@ import {
   BlockComponentTickEvent,
   CustomComponentParameters,
   Entity,
+  EntityFilter,
   EntityQueryOptions,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { deepCopy } from "../utils";
 import { BlockUtils } from "../block/utils";
 import { AddonUtils } from "../addon";
+import { create, defaulted, number, object, string, Struct } from "superstruct";
+import { entityFilter } from "../validation";
+import { BlockBaseComponent } from "./base";
 
 export interface PressurePlateOptions {
-  filter: EntityQueryOptions;
+  filter: EntityFilter;
   powered_state: keyof BlockStateSuperset;
   delay?: number;
   click_on_sound_event?: string;
@@ -19,10 +23,21 @@ export interface PressurePlateOptions {
 }
 
 // TODO: Extend BlockBase and use onEnter and onLeave instead.
-export class PressurePlateComponent {
-  static typeId = AddonUtils.makeId("pressure_plate");
+export class PressurePlateComponent extends BlockBaseComponent {
+  static readonly componentId = AddonUtils.makeId("pressure_plate");
+  struct: Struct<any, any> = object({
+    filter: defaulted(entityFilter, { type: "player" }),
+    powered_state: defaulted(string(), "mcutils:powered"),
+    delay: defaulted(number(), 20),
+    click_on_sound_event: defaulted(string(), "click_on.stone_pressure_plate"),
+    click_off_sound_event: defaulted(string(), "click_off.stone_pressure_plate"),
+  });
 
+  /**
+   * Vanilla pressure plate block behavior.
+   */
   constructor() {
+    super();
     this.onTick = this.onTick.bind(this);
   }
 
@@ -34,7 +49,7 @@ export class PressurePlateComponent {
   }
 
   getEntities(block: Block, options: PressurePlateOptions): Entity[] {
-    const filter = deepCopy(options.filter);
+    const filter = deepCopy(options.filter) as EntityQueryOptions;
     filter.maxDistance = 1.5;
     filter.location = block.location;
     // TODO: Use better block pos detection.
@@ -45,25 +60,19 @@ export class PressurePlateComponent {
         (entity) =>
           Math.floor(entity.location.x) == block.location.x &&
           Math.floor(entity.location.y) == block.location.y &&
-          Math.floor(entity.location.z) == block.location.z,
+          Math.floor(entity.location.z) == block.location.z
       );
   }
 
   // EVENTS
 
   // Check for entities
-  onTick(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as PressurePlateOptions;
+  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as PressurePlateOptions;
     // Check if anything is on the pressure plate.
     //
-    const delay =
-      (event.block.getDynamicProperty("mcutils:delay") as number) ?? 0;
-    const powered = event.block.permutation.getState(
-      options.powered_state,
-    ) as boolean;
+    const delay = (event.block.getDynamicProperty("mcutils:delay") as number) ?? 0;
+    const powered = event.block.permutation.getState(options.powered_state) as boolean;
     const entities = this.getEntities(event.block, options);
     if (!powered && entities.length > 0) {
       event.block.setDynamicProperty("mcutils:delay", options.delay);
@@ -81,26 +90,4 @@ export class PressurePlateComponent {
       }
     }
   }
-}
-
-export class WoodenPressurePlateComponent extends PressurePlateComponent {
-  static typeId = AddonUtils.makeId("wooden_pressure_plate");
-}
-
-// mobs, players, armor stands
-// https://minecraft.wiki/w/Stone_Pressure_Plate
-export class StonePressurePlateComponent extends PressurePlateComponent {
-  static typeId = AddonUtils.makeId("stone_pressure_plate");
-}
-
-// Outputs 1 redstone level per entity.
-// https://minecraft.wiki/w/Light_Weighted_Pressure_Plate
-export class LightWeightedPressurePlateComponent extends PressurePlateComponent {
-  static typeId = AddonUtils.makeId("light_weighted_pressure_plate");
-}
-
-// 1 redstone level for every 10 entities starting at 1
-// https://minecraft.wiki/w/Heavy_Weighted_Pressure_Plate
-export class HeavyWeightedPressurePlateComponent extends PressurePlateComponent {
-  static typeId = AddonUtils.makeId("heavy_weighted_pressure_plate");
 }

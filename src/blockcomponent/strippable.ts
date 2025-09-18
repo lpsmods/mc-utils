@@ -5,17 +5,23 @@ import {
   CustomComponentParameters,
 } from "@minecraft/server";
 import { LRUCache } from "../cache";
-import { Identifier } from "../misc/identifier";
+import { Identifier } from "../identifier";
 import { ItemUtils } from "../item/utils";
 import { AddonUtils } from "../addon";
+import { create, defaulted, object, optional, string, Struct } from "superstruct";
+import { isBlock } from "../validation";
 
 export interface StrippableOptions {
   block?: string;
-  sound_event?: string;
+  sound_event: string;
 }
 
 export class StrippableComponent {
-  static typeId = AddonUtils.makeId("strippable");
+  static readonly componentId = AddonUtils.makeId("strippable");
+  struct: Struct<any, any> = object({
+    block: optional(isBlock),
+    sound_event: defaulted(string(), "dig.wood"),
+  });
 
   static CACHE = new LRUCache<string, string>();
 
@@ -38,24 +44,15 @@ export class StrippableComponent {
 
   stripBlock(block: Block, options: StrippableOptions): void {
     block.setPermutation(
-      BlockPermutation.resolve(
-        this.getStrippedBlock(block, options),
-        block.permutation.getAllStates(),
-      ),
+      BlockPermutation.resolve(this.getStrippedBlock(block, options), block.permutation.getAllStates()),
     );
-    block.dimension.playSound(
-      options.sound_event ?? "dig.wood",
-      block.location,
-    );
+    block.dimension.playSound(options.sound_event ?? "dig.wood", block.location);
   }
 
   // EVENTS
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as StrippableOptions;
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as StrippableOptions;
     if (!event.player || !ItemUtils.holdingAxe(event.player)) return;
 
     this.stripBlock(event.block, options);

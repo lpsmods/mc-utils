@@ -1,5 +1,8 @@
-import { Identifier } from "../misc/identifier";
+import { Identifier } from "../identifier";
 
+/**
+ * Describes a biome.
+ */
 export class Biome {
   readonly typeId: string;
 

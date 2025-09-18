@@ -2,26 +2,12 @@
  * Generic player functions.
  */
 
-import {
-  Block,
-  EquipmentSlot,
-  ItemStack,
-  Player,
-  system,
-  Vector2,
-  Vector3,
-  world,
-} from "@minecraft/server";
+import { Block, EquipmentSlot, ItemStack, Player, system, Vector2, Vector3, world } from "@minecraft/server";
 import { Chunk } from "../world/chunk";
 import { MathUtils } from "../math";
 
 export class ArmorSetEvent {
-  constructor(
-    player: Player,
-    itemStack: ItemStack,
-    equipmentSlot: EquipmentSlot,
-    beforeItemStack?: ItemStack,
-  ) {
+  constructor(player: Player, itemStack: ItemStack, equipmentSlot: EquipmentSlot, beforeItemStack?: ItemStack) {
     this.player = player;
     this.itemStack = itemStack;
     this.beforeItemStack = beforeItemStack;
@@ -50,10 +36,7 @@ export class PlayerUtils {
    * @param {number} simulationDistance
    * @returns
    */
-  static getLoadedChunks(
-    player: Player,
-    simulationDistance: number = 4,
-  ): Chunk[] {
+  static getLoadedChunks(player: Player, simulationDistance: number = 4): Chunk[] {
     const px = Math.floor(player.location.x);
     const pz = Math.floor(player.location.z);
     const chunkX = Math.floor(px / 16);
@@ -69,13 +52,9 @@ export class PlayerUtils {
 
         // Cardinal edge: allow distance up to simulationDistance
         const isCardinal =
-          (dx === 0 && Math.abs(dz) === simulationDistance) ||
-          (dz === 0 && Math.abs(dx) === simulationDistance);
+          (dx === 0 && Math.abs(dz) === simulationDistance) || (dz === 0 && Math.abs(dx) === simulationDistance);
 
-        if (
-          taxicab <= simulationDistance + 1 &&
-          (taxicab <= simulationDistance || isCardinal)
-        ) {
+        if (taxicab <= simulationDistance + 1 && (taxicab <= simulationDistance || isCardinal)) {
           const x = chunkX + dx;
           const z = chunkZ + dz;
           chunks.push(new Chunk(player.dimension, { x, z }));
@@ -130,23 +109,14 @@ export class PlayerUtils {
    * @param condition
    * @returns
    */
-  static applyArmor(
-    player: Player,
-    armorSet: ArmorSet,
-    condition?: (event: ArmorSetEvent) => boolean,
-  ): void {
+  static applyArmor(player: Player, armorSet: ArmorSet, condition?: (event: ArmorSetEvent) => boolean): void {
     const equ = player.getComponent("equippable");
     if (!equ) return;
     for (const key in EquipmentSlot) {
       const slot = EquipmentSlot[key as keyof typeof EquipmentSlot];
       const itemStack = armorSet[key.toLowerCase() as keyof ArmorSet];
       if (!itemStack) continue;
-      const event = new ArmorSetEvent(
-        player,
-        itemStack,
-        slot,
-        equ.getEquipment(slot),
-      );
+      const event = new ArmorSetEvent(player, itemStack, slot, equ.getEquipment(slot));
       if (condition === undefined || condition(event)) {
         equ.setEquipment(event.equipmentSlot, event.itemStack);
       }
@@ -171,10 +141,7 @@ export class PlayerUtils {
     player.inputPermissions.setPermissionCategory(11, false);
     player.inputPermissions.setPermissionCategory(12, false);
     player.teleport(location, { rotation: rotation });
-    for (const anim of animations ?? [
-      "animation.player.riding.arms",
-      "animation.player.riding.legs",
-    ]) {
+    for (const anim of animations ?? ["animation.player.riding.arms", "animation.player.riding.legs"]) {
       player.playAnimation(anim, {
         stopExpression: "q.is_sneaking||q.is_jumping",
       });

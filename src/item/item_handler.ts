@@ -12,7 +12,9 @@ import {
   ItemUseBeforeEvent,
   world,
 } from "@minecraft/server";
-import { id, Identifier } from "../misc/identifier";
+import { id, Identifier } from "../identifier";
+
+let initialized = false;
 
 export abstract class ItemHandler {
   static all = new Map<string, ItemHandler>();
@@ -23,21 +25,25 @@ export abstract class ItemHandler {
   constructor(itemId: id, equipmentSlot?: EquipmentSlot) {
     this.itemId = Identifier.parse(itemId);
     this.equipmentSlot = equipmentSlot;
+    if (!initialized) init();
   }
 
   /**
    * This event fires when a chargeable item completes charging.
+   * @param {ItemCompleteUseAfterEvent} event
    */
   abstract onCompleteUse?(event: ItemCompleteUseAfterEvent): void;
 
   /**
    * This event fires when a chargeable item is released from
+   * @param {ItemReleaseUseAfterEvent} event
    * charging.
    */
   abstract onReleaseUse?(event: ItemReleaseUseAfterEvent): void;
 
   /**
    * This event fires when a chargeable item starts charging.
+   * @param {ItemStartUseAfterEvent} event
    */
   abstract onStartUse?(event: ItemStartUseAfterEvent): void;
 
@@ -47,11 +53,13 @@ export abstract class ItemHandler {
    * button. If multiple blocks are placed, this event will only
    * occur once at the beginning of the block placement. Note:
    * This event cannot be used with Hoe or Axe items.
+   * @param {ItemStartUseOnAfterEvent} event
    */
   abstract onStartUseOn?(event: ItemStartUseOnAfterEvent): void;
 
   /**
    * This event fires when a chargeable item stops charging.
+   * @param {ItemStopUseAfterEvent} event
    */
   abstract onStopUse?(event: ItemStopUseAfterEvent): void;
 
@@ -59,18 +67,21 @@ export abstract class ItemHandler {
    * This event fires when a player releases the Use Item / Place
    * Block button after successfully using an item. Note: This
    * event cannot be used with Hoe or Axe items.
+   * @param {ItemStopUseOnAfterEvent} event
    */
   abstract onStopUseOn?(event: ItemStopUseOnAfterEvent): void;
 
   /**
    * This event fires when an item is successfully used by a
    * player.
+   * @param {ItemUseAfterEvent} event
    */
   abstract onUse?(event: ItemUseAfterEvent): void;
 
   /**
    * This event fires when an item is successfully used by a
    * player.
+   * @param {ItemUseBeforeEvent} event
    */
   abstract beforeUse?(event: ItemUseBeforeEvent): void;
 
@@ -79,11 +90,7 @@ export abstract class ItemHandler {
   }
 }
 
-function callHandle(
-  name: string,
-  itemStack: ItemStack | undefined,
-  event: any,
-): void {
+function callHandle(name: string, itemStack: ItemStack | undefined, event: any): void {
   if (!itemStack) return;
   for (const handler of ItemHandler.all.values()) {
     const func = handler[name as keyof ItemHandler];
@@ -94,7 +101,7 @@ function callHandle(
   }
 }
 
-function setup() {
+function init() {
   world.afterEvents.itemCompleteUse.subscribe((event) => {
     callHandle("onCompleteUse", event.itemStack, event);
   });
@@ -120,5 +127,3 @@ function setup() {
     callHandle("beforeUse", event.itemStack, event);
   });
 }
-
-setup();

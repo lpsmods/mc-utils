@@ -1,34 +1,30 @@
-import {
-  CustomComponentParameters,
-  EquipmentSlot,
-  ItemComponentUseEvent,
-  ItemStack,
-  Player,
-} from "@minecraft/server";
-import {
-  ActionForm,
-  ActionFormEvent,
-  ActionFormHandler,
-} from "../ui/action_form";
+import { CustomComponentParameters, EquipmentSlot, ItemComponentUseEvent, ItemStack, Player } from "@minecraft/server";
+import { ActionForm, ActionFormEvent, ActionFormHandler } from "../ui/action_form";
 import { ModalForm, ModalFormHandler } from "../ui/modal_form";
 import { TextUtils } from "../text";
 import { AddonUtils } from "../addon";
+import { create, defaulted, number, object, Struct } from "superstruct";
 
 export interface WritableBookOptions {
-  max_pages?: number;
+  max_pages: number;
 }
 
 export class WritableBookComponent {
-  static typeId = AddonUtils.makeId("writable_book");
-  MAX_PAGES = 50;
+  static readonly componentId = AddonUtils.makeId("writable_book");
+  struct: Struct<any, any> = object({
+    max_pages: defaulted(number(), 50),
+  });
 
+  /**
+   * Writeable book item behavior.
+   */
   constructor() {
     this.onUse = this.onUse.bind(this);
   }
 
   onUse(event: ItemComponentUseEvent, args: CustomComponentParameters): void {
     if (!event.itemStack) return;
-    const options = args.params as WritableBookOptions;
+    const options = create(args.params, this.struct) as WritableBookOptions;
     this.show(event.source, event.itemStack, 1, options);
   }
 
@@ -39,14 +35,9 @@ export class WritableBookComponent {
   }
 
   // Set itemstack when updated.
-  show(
-    player: Player,
-    itemStack: ItemStack,
-    page: number,
-    options: WritableBookOptions,
-  ): void {
+  show(player: Player, itemStack: ItemStack, page: number, options: WritableBookOptions): void {
     const body = itemStack.getDynamicProperty(`mcutils:page_${page}`) as string;
-    const maxPages = options.max_pages ?? this.MAX_PAGES;
+    const maxPages = options.max_pages;
     const form: ActionForm = {
       title: {
         translate: "book.pageIndicator",
@@ -80,10 +71,7 @@ export class WritableBookComponent {
               },
               submitLabel: "#addExternalServerScreen.saveButtonLabel",
               onSubmit: (formEvent) => {
-                itemStack.setDynamicProperty(
-                  `mcutils:page_${page}`,
-                  formEvent.formResult.content,
-                );
+                itemStack.setDynamicProperty(`mcutils:page_${page}`, formEvent.formResult.content);
                 this.saveItem(player, itemStack);
                 this.show(player, itemStack, page, options);
               },

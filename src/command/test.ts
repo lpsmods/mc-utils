@@ -1,22 +1,36 @@
+/**
+ * @internal Used to test units at runtime.
+*/
+
 import {
+  CustomCommand,
   CustomCommandOrigin,
   CustomCommandParamType,
   CustomCommandResult,
+  system,
 } from "@minecraft/server";
 
-export const testCommand = {
+export type unitTestMap = Map<string, (ctx: CustomCommandOrigin, message?: string) => void>;
+
+export const unitTests: unitTestMap = new Map();
+
+export const testCommand: CustomCommand = {
   name: "mcutils:test",
-  description: "Celebration size",
+  description: "Runs a unit test",
   permissionLevel: 1,
-  optionalParameters: [
-    { type: CustomCommandParamType.Integer, name: "celebrationSize" },
-  ],
+  mandatoryParameters: [{ name: "mcutils:units", type: CustomCommandParamType.Enum }],
+  optionalParameters: [{ name: "message", type: CustomCommandParamType.String }],
 };
 
 export function executeTestCommand(
   ctx: CustomCommandOrigin,
-  celebrationSize: number,
+  unit: string,
+  message?: string
 ): CustomCommandResult | undefined {
-  console.warn("WORKED!");
-  return undefined;
+  const func = unitTests.get(unit);
+  if (!func) return { status: 0, message: `§c'${unit}' is not a valid unit test!` };
+  system.run(() => {
+    func(ctx, message);
+  });
+  return { status: 1, message: "§aRan without errors" };
 }

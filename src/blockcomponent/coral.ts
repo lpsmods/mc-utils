@@ -1,21 +1,22 @@
-import {
-  Block,
-  BlockComponentPlayerInteractEvent,
-  BlockComponentTickEvent,
-  CustomComponentParameters,
-} from "@minecraft/server";
+import { Block, BlockComponentTickEvent, CustomComponentParameters } from "@minecraft/server";
 import { LRUCache } from "../cache";
-import { Identifier } from "../misc/identifier";
+import { Identifier } from "../identifier";
 import { BlockUtils } from "../block/utils";
 import { AddonUtils } from "../addon";
+import { create, defaulted, number, object, optional, Struct } from "superstruct";
+import { isBlock } from "../validation";
 
 export interface CoralOptions {
-  delay?: number;
+  delay: number;
   block?: string;
 }
 
 export class CoralComponent {
-  static typeId = AddonUtils.makeId("coral");
+  static readonly componentId = AddonUtils.makeId("coral");
+  struct: Struct<any, any> = object({
+    delay: defaulted(number(), 60),
+    block: optional(isBlock),
+  });
 
   static CACHE = new LRUCache<string, string>();
 
@@ -59,11 +60,8 @@ export class CoralComponent {
 
   // EVENTS
 
-  onTick(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as CoralOptions;
+  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as CoralOptions;
     const blk = event.block;
     const water = this.hasWater(blk);
     let delay = (blk.getDynamicProperty("mcutils:delay") as number) ?? 0;
@@ -74,7 +72,7 @@ export class CoralComponent {
     }
 
     if (!water && delay == 0) {
-      blk.setDynamicProperty("mcutils:delay", options.delay ?? 60);
+      blk.setDynamicProperty("mcutils:delay", options.delay);
       return;
     }
 

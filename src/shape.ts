@@ -1,9 +1,11 @@
 import { BlockPermutation, Vector3 } from "@minecraft/server";
-import { MathUtils } from "../math";
+import { MathUtils } from "./math";
 import { Font, Fonts } from "./font";
 import { Drawer } from "./drawer";
 
 export abstract class Shape {
+  static readonly typeId: string;
+
   drawer?: Drawer = undefined;
 
   location: Vector3;
@@ -84,6 +86,8 @@ export abstract class Shape {
 }
 
 export class Box extends Shape {
+  static readonly typeId = 'box';
+
   bound: Vector3;
 
   constructor(location: Vector3, bound: Vector3) {
@@ -120,15 +124,13 @@ export class Box extends Shape {
       points.push({ x: maxX, y: minY, z: z });
       points.push({ x: maxX, y: maxY, z: z });
     }
-    return MathUtils.rotatePoints(
-      points,
-      this.location,
-      this.origin ?? this.rotation,
-    );
+    return MathUtils.rotatePoints(points, this.location, this.origin ?? this.rotation);
   }
 }
 
 export class Line extends Shape {
+  static readonly typeId: string = 'line';
+  
   endLocation: Vector3;
 
   constructor(location: Vector3, endLocation: Vector3) {
@@ -212,15 +214,13 @@ export class Line extends Shape {
     }
 
     points.push({ x: x2, y: y2, z: z2 });
-    return MathUtils.rotatePoints(
-      points,
-      this.location,
-      this.origin ?? this.rotation,
-    );
+    return MathUtils.rotatePoints(points, this.location, this.origin ?? this.rotation);
   }
 }
 
 export class Arrow extends Line {
+  static readonly typeId = 'arrow';
+  
   headLength: number = 1;
   headRadius: number = 1;
   headSegments: number = 1;
@@ -233,6 +233,8 @@ export class Arrow extends Line {
 }
 
 export class Circle extends Shape {
+  static readonly typeId = 'circle';
+  
   getPoints(): Vector3[] {
     const points: Vector3[] = [];
     const { x: cx, y: cy, z: cz } = this.location;
@@ -247,15 +249,13 @@ export class Circle extends Shape {
         points.push({ x: px, y: cy, z: pz });
       }
     }
-    return MathUtils.rotatePoints(
-      points,
-      this.location,
-      this.origin ?? this.rotation,
-    );
+    return MathUtils.rotatePoints(points, this.location, this.origin ?? this.rotation);
   }
 }
 
 export class Sphere extends Shape {
+  static readonly typeId = 'sphere';
+  
   getPoints(): Vector3[] {
     const points: Vector3[] = [];
     const { x: cx, y: cy, z: cz } = this.location;
@@ -274,15 +274,13 @@ export class Sphere extends Shape {
         }
       }
     }
-    return MathUtils.rotatePoints(
-      points,
-      this.location,
-      this.origin ?? this.rotation,
-    );
+    return MathUtils.rotatePoints(points, this.location, this.origin ?? this.rotation);
   }
 }
 
 export class Text extends Shape {
+  static readonly typeId = 'text';
+  
   text: string;
   font: Fonts = Fonts.Default;
 
@@ -323,16 +321,14 @@ export class Text extends Shape {
       }
       offsetX += (glyph[0].length + 1) * scale;
     }
-    return MathUtils.rotatePoints(
-      points,
-      this.location,
-      this.origin ?? this.rotation,
-    );
+    return MathUtils.rotatePoints(points, this.location, this.origin ?? this.rotation);
   }
 }
 
 // TODO: Adjust shape
 export class Cone extends Shape {
+  static readonly typeId = 'cone';
+  
   radius: number;
   height: number;
 
@@ -352,10 +348,7 @@ export class Cone extends Shape {
       const currentRadius = this.radius * (1 - t);
       const currentY = cy + t * this.height;
       const circumference = 2 * Math.PI * currentRadius;
-      const horizontalSteps = Math.max(
-        8,
-        Math.floor(circumference * stepsPerBlock),
-      );
+      const horizontalSteps = Math.max(8, Math.floor(circumference * stepsPerBlock));
       for (let i = 0; i < horizontalSteps; i++) {
         const theta = (i / horizontalSteps) * Math.PI * 2;
         const px = Math.cos(theta) * currentRadius;
@@ -373,6 +366,8 @@ export class Cone extends Shape {
 
 // TODO: Adjust shape
 export class Cylinder extends Shape {
+  static readonly typeId = 'cylinder';
+  
   radius: number;
   height: number;
 
@@ -391,10 +386,7 @@ export class Cylinder extends Shape {
 
     // Precompute circumference resolution
     const circumference = 2 * Math.PI * this.radius;
-    const horizontalSteps = Math.max(
-      8,
-      Math.floor(circumference * stepsPerBlock),
-    );
+    const horizontalSteps = Math.max(8, Math.floor(circumference * stepsPerBlock));
 
     for (let step = 0; step <= verticalSteps; step++) {
       const currentY = cy + (step / verticalSteps) * this.height;
@@ -418,6 +410,8 @@ export class Cylinder extends Shape {
 
 // TODO: Implement shape
 export class Dodecahedron extends Shape {
+  static readonly typeId = 'dodecahedron';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -430,6 +424,8 @@ export class Dodecahedron extends Shape {
 
 // TODO: Implement shape
 export class Edges extends Shape {
+  static readonly typeId = 'edges';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -442,6 +438,8 @@ export class Edges extends Shape {
 
 // TODO: Implement shape
 export class Extrude extends Shape {
+  static readonly typeId = 'extrude';
+  
   shape: Shape;
 
   constructor(shape: Shape) {
@@ -457,6 +455,8 @@ export class Extrude extends Shape {
 
 // TODO: Implement shape
 export class Icosahedron extends Shape {
+  static readonly typeId = 'icosahedron';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -469,6 +469,8 @@ export class Icosahedron extends Shape {
 
 // TODO: Implement shape
 export class Lathe extends Shape {
+  static readonly typeId = 'lathe';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -481,6 +483,8 @@ export class Lathe extends Shape {
 
 // TODO: Implement shape
 export class Octahedron extends Shape {
+  static readonly typeId = 'octahedron';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -493,6 +497,8 @@ export class Octahedron extends Shape {
 
 // TODO: Implement shape
 export class Plane extends Shape {
+  static readonly typeId = 'plane';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -505,6 +511,8 @@ export class Plane extends Shape {
 
 // TODO: Implement shape
 export class Polyhedron extends Shape {
+  static readonly typeId = 'polyhedron';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -517,6 +525,8 @@ export class Polyhedron extends Shape {
 
 // TODO: Implement shape
 export class Ring extends Shape {
+  static readonly typeId = 'ring';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -529,6 +539,8 @@ export class Ring extends Shape {
 
 // TODO: Implement shape
 export class Tetrahedron extends Shape {
+  static readonly typeId = 'tetrahedron';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -541,6 +553,8 @@ export class Tetrahedron extends Shape {
 
 // TODO: Implement shape
 export class Torus extends Shape {
+  static readonly typeId = 'torus';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -553,6 +567,8 @@ export class Torus extends Shape {
 
 // TODO: Implement shape
 export class TorusKnot extends Shape {
+  static readonly typeId = 'torus_knot';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -565,6 +581,8 @@ export class TorusKnot extends Shape {
 
 // TODO: Implement shape
 export class Tube extends Shape {
+  static readonly typeId = 'tube';
+  
   constructor(location: Vector3) {
     super(location);
   }
@@ -577,6 +595,8 @@ export class Tube extends Shape {
 
 // TODO: Implement shape
 export class Wireframe extends Shape {
+  static readonly typeId = 'wireframe';
+  
   shape: Shape;
 
   constructor(shape: Shape) {
@@ -593,6 +613,8 @@ export class Wireframe extends Shape {
 // TODO: Implement shape
 //  https://threejs.org/docs/#api/en/geometries/ShapeGeometry
 export class CustomShape extends Shape {
+  static readonly typeId = 'custom_shape';
+  
   constructor(location: Vector3) {
     super(location);
   }

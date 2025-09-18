@@ -6,19 +6,24 @@ import {
   Direction,
 } from "@minecraft/server";
 import { BlockBaseComponent, NeighborUpdateEvent } from "./base";
-import {
-  FallingBlockEvent,
-  FallingBlockHandler,
-} from "../entity/falling_block_handler";
+import { FallingBlockEvent, FallingBlockHandler } from "../entity/falling_block_handler";
 import { AddonUtils } from "../addon";
+import { create, object, Struct } from "superstruct";
+import { isEntity } from "../validation";
 
 export interface FallingBlockOptions {
   entity: string;
 }
 
 export class FallingBlockComponent extends BlockBaseComponent {
-  static typeId = AddonUtils.makeId("falling_block");
+  static readonly componentId = AddonUtils.makeId("falling_block");
+  struct: Struct<any, any> = object({
+    entity: isEntity,
+  });
 
+  /**
+   * Vanilla falling block behavior.
+   */
   constructor() {
     super();
     this.onTick = this.onTick.bind(this);
@@ -26,7 +31,7 @@ export class FallingBlockComponent extends BlockBaseComponent {
   }
 
   fall(block: Block, args: CustomComponentParameters): void {
-    const options = args.params as FallingBlockOptions;
+    const options = create(args.params, this.struct) as FallingBlockOptions;
     FallingBlockHandler.create(this, args, block, options.entity);
   }
 
@@ -48,26 +53,17 @@ export class FallingBlockComponent extends BlockBaseComponent {
 
   // EVENTS
 
-  onNeighborUpdate(
-    event: NeighborUpdateEvent,
-    args: CustomComponentParameters,
-  ): void {
+  onNeighborUpdate(event: NeighborUpdateEvent, args: CustomComponentParameters): void {
     if (event.direction !== Direction.Down) return;
     if (!event.sourceBlock.isAir) return;
     this.fall(event.block, args);
   }
 
-  onTick(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void {
+  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
     this.baseTick(event, args);
   }
 
-  onPlace(
-    event: BlockComponentOnPlaceEvent,
-    args: CustomComponentParameters,
-  ): void {
+  onPlace(event: BlockComponentOnPlaceEvent, args: CustomComponentParameters): void {
     const down = event.block.below();
     if (!down || !down.isAir) return;
     this.fall(event.block, args);

@@ -20,12 +20,7 @@ export class TextUtils {
    * @param {string[]} strings
    * @returns {string}
    */
-  static stripAll(
-    text: string,
-    strings: string[],
-    prefix?: string,
-    suffix?: string,
-  ): string {
+  static stripAll(text: string, strings: string[], prefix?: string, suffix?: string): string {
     strings = strings.map((str) => (prefix ?? "") + str + (suffix ?? ""));
     const regex = new RegExp(strings.join("|"), "gi");
     return text.replace(regex, "");
@@ -128,14 +123,8 @@ export class TextUtils {
       const extendedStart = Math.max(0, start - padding);
       const extendedEnd = Math.min(text.length, end + padding);
 
-      if (
-        mergedRanges.length > 0 &&
-        mergedRanges[mergedRanges.length - 1].end >= extendedStart
-      ) {
-        mergedRanges[mergedRanges.length - 1].end = Math.max(
-          mergedRanges[mergedRanges.length - 1].end,
-          extendedEnd,
-        );
+      if (mergedRanges.length > 0 && mergedRanges[mergedRanges.length - 1].end >= extendedStart) {
+        mergedRanges[mergedRanges.length - 1].end = Math.max(mergedRanges[mergedRanges.length - 1].end, extendedEnd);
       } else {
         mergedRanges.push({ start: extendedStart, end: extendedEnd });
       }

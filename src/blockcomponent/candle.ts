@@ -12,6 +12,8 @@ import { BlockUtils } from "../block/utils";
 import { ItemUtils } from "../item/utils";
 import { BlockBaseComponent } from "./base";
 import { AddonUtils } from "../addon";
+import { array, create, defaulted, number, object, optional, string, Struct } from "superstruct";
+import { isItem, vec3 } from "../validation";
 
 export interface CandleOptions {
   candles_state: keyof BlockStateSuperset;
@@ -47,8 +49,19 @@ export class CandleFlamePosition {
 
 // TODO: Ambient sounds
 export class CandleComponent extends BlockBaseComponent {
-  static typeId = AddonUtils.makeId("candle");
+  static readonly componentId = AddonUtils.makeId("candle");
+  struct: Struct<any, any> = object({
+    candles_state: string(),
+    lit_state: string(),
+    max_candles: number(),
+    item: optional(isItem),
+    flame_particle: defaulted(string(), "minecraft:candle_flame_particle"),
+    flame_positions: defaulted(array(vec3), []),
+  });
 
+  /**
+   * Vanilla candle block behavior.
+   */
   constructor() {
     super();
     this.onPlayerInteract = this.onPlayerInteract.bind(this);
@@ -80,28 +93,16 @@ export class CandleComponent extends BlockBaseComponent {
 
   // EVENTS
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as CandleOptions;
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as CandleOptions;
     if (!event.player) return;
     const lit = event.block.permutation.getState(options.lit_state) as boolean;
-    const count = event.block.permutation.getState(
-      options.candles_state,
-    ) as number;
+    const count = event.block.permutation.getState(options.candles_state) as number;
     const equ = event.player.getComponent("equippable");
     if (!equ) return;
     const mainhand = equ.getEquipment(EquipmentSlot.Mainhand);
-    if (
-      count < options.max_candles &&
-      mainhand &&
-      mainhand.matches(this.getCandleItem(event.block, options))
-    ) {
-      event.dimension.playSound(
-        this.getSound(event.block),
-        event.block.location,
-      );
+    if (count < options.max_candles && mainhand && mainhand.matches(this.getCandleItem(event.block, options))) {
+      event.dimension.playSound(this.getSound(event.block), event.block.location);
       BlockUtils.incrementState(event.block, options.candles_state);
       ItemUtils.decrementStack(event.player, EquipmentSlot.Mainhand);
       return;
@@ -119,27 +120,18 @@ export class CandleComponent extends BlockBaseComponent {
     }
   }
 
-  onTick(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as CandleOptions;
+  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as CandleOptions;
     const lit = event.block.permutation.getState(options.lit_state);
     if (!lit) return;
     const positions = options.flame_positions
       ? CandleFlamePosition.parseAll(options.flame_positions)
       : this.#defaultFlames();
-    const candles = event.block.permutation.getState(
-      options.candles_state,
-    ) as number;
+    const candles = event.block.permutation.getState(options.candles_state) as number;
     if (system.currentTick % 40 === 0) {
       for (const pos of positions) {
         if (pos.candles !== candles) continue;
-        this.spawnParticle(
-          event.block,
-          options.flame_particle ?? "minecraft:candle_flame_particle",
-          pos.location,
-        );
+        this.spawnParticle(event.block, options.flame_particle, pos.location);
       }
     }
   }

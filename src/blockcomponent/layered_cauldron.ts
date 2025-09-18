@@ -9,11 +9,13 @@ import {
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { ItemUtils } from "../item/utils";
 import { AddonUtils } from "../addon";
+import { array, create, defaulted, number, object, string, Struct } from "superstruct";
+import { isBlock } from "../validation";
 
 export interface LayeredCauldronOptions {
   block: string;
   level_state: keyof BlockStateSuperset;
-  max_level?: number;
+  max_level: number;
   interactions?: string[];
 }
 
@@ -66,7 +68,13 @@ export class LayeredCauldronInteraction {
 }
 
 export class LayeredCauldronComponent {
-  static typeId = AddonUtils.makeId("layered_cauldron");
+  static readonly componentId = AddonUtils.makeId("layered_cauldron");
+  struct: Struct<any, any> = object({
+    block: defaulted(isBlock, 'cauldron'),
+    level_state: defaulted(string(), 'mcutils:level'),
+    max_level: defaulted(number(), 3),
+    interactions: defaulted(array(string()), []),
+  });
 
   /**
    * Vanilla "water" cauldron block behavior.
@@ -75,10 +83,7 @@ export class LayeredCauldronComponent {
     this.onPlayerInteract = this.onPlayerInteract.bind(this);
   }
 
-  getInteraction(
-    itemStack: ItemStack,
-    options: LayeredCauldronOptions,
-  ): LayeredCauldronInteraction | undefined {
+  getInteraction(itemStack: ItemStack, options: LayeredCauldronOptions): LayeredCauldronInteraction | undefined {
     const actions = LayeredCauldronInteraction.parseAll(options.interactions);
     for (const action of actions) {
       if (itemStack.matches(action.input)) return action;
@@ -90,11 +95,8 @@ export class LayeredCauldronComponent {
 
   // EVENTS
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as LayeredCauldronOptions;
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as LayeredCauldronOptions;
     if (!event.player) return;
     const equ = event.player.getComponent("equippable");
     if (!equ) return;
@@ -103,11 +105,7 @@ export class LayeredCauldronComponent {
     let interaction = this.getInteraction(mainhand, options);
     if (!interaction) return;
     // TODO: Sound
-    ItemUtils.convert(
-      event.player,
-      EquipmentSlot.Mainhand,
-      interaction.getOutputStack(),
-    );
+    ItemUtils.convert(event.player, EquipmentSlot.Mainhand, interaction.getOutputStack());
     event.block.setPermutation(interaction.getBlock(event.block, options));
     this.update(event);
   }

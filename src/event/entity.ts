@@ -1,10 +1,8 @@
 import {
   Block,
   Entity,
-  EntityInventoryComponent,
   EntityQueryOptions,
   InvalidEntityError,
-  LocationInUnloadedChunkError,
   LocationOutOfWorldBoundariesError,
   PlayerInteractWithEntityAfterEvent,
   system,
@@ -16,8 +14,9 @@ import { forAllDimensions } from "../utils";
 import { Vector3Utils } from "@minecraft/math";
 import { Hasher } from "../type";
 import { ErrorUtils } from "../error";
+import { locationToChunk } from "../world";
 
-export class EntityEvent {
+export abstract class EntityEvent {
   constructor(entity: Entity) {
     this.entity = entity;
   }
@@ -25,9 +24,14 @@ export class EntityEvent {
   readonly entity: Entity;
 }
 
-export class EntityInventoryChangedEvent extends EntityEvent {}
+export abstract class EntityBlockEvent extends EntityEvent {
+  constructor(entity: Entity, block: Block) {
+    super(entity);
+    this.block = block;
+  }
 
-export class EntityTickEvent extends EntityEvent {}
+  readonly block: Block;
+}
 
 export class EntityMountEvent extends EntityEvent {
   constructor(entity: Entity, rider: Entity) {
@@ -51,9 +55,29 @@ export class EntityMovedEvent extends EntityEvent {
   constructor(entity: Entity, prevLocation: Vector3) {
     super(entity);
     this.prevLocation = prevLocation;
+
+    const pos = Vector3Utils.floor(entity.location);
+    const prev = Vector3Utils.floor(prevLocation);
+    this.movedBlock = !Vector3Utils.equals(pos, prev);
+    const cPos = locationToChunk(pos);
+    const cPrev = locationToChunk(prev);
+    this.movedChunk = cPos.x != cPrev.x || cPos.z != cPrev.z;
   }
 
+  /**
+   * The previous entity location.
+   */
   readonly prevLocation: Vector3;
+
+  /**
+   * Whether or not the player moved to a new block.
+   */
+  readonly movedBlock: boolean;
+
+  /**
+   * Whether or not the player moved to a new chunk.
+   */
+  readonly movedChunk: boolean;
 }
 
 export class EntityFallOnEvent extends EntityEvent {
@@ -65,28 +89,48 @@ export class EntityFallOnEvent extends EntityEvent {
   readonly distance: number;
 }
 
-export class EntityStepOnEvent extends EntityEvent {
-  constructor(entity: Entity, block: Block) {
-    super(entity);
-    this.block = block;
+export class EntityTickEvent extends EntityEvent {}
+
+export class EntityStepOnEvent extends EntityBlockEvent {}
+
+export class EntityStepOffEvent extends EntityBlockEvent {}
+
+export class EntityEnterBlockEvent extends EntityBlockEvent {
+  constructor(entity: Entity, block: Block, previousBlock?: Block) {
+    super(entity, block);
+    this.previousBlock = previousBlock;
+    this.sameType = !previousBlock || block.matches(previousBlock.typeId);
   }
-  readonly block: Block;
+
+  readonly previousBlock?: Block;
+
+  /**
+   * Whether or not the current and previous block are the same type.
+   */
+  readonly sameType: boolean;
 }
 
-export class EntityStepOffEvent extends EntityEvent {
-  constructor(entity: Entity, block: Block) {
-    super(entity);
-    this.block = block;
+export class EntityLeaveBlockEvent extends EntityBlockEvent {
+  constructor(entity: Entity, block: Block, newBlock?: Block) {
+    super(entity, block);
+    this.newBlock = newBlock;
+    this.sameType = !newBlock || block.matches(newBlock.typeId);
   }
-  readonly block: Block;
+
+  readonly newBlock?: Block;
+
+  /**
+   * Whether or not the current and new block are the same type.
+   */
+  readonly sameType: boolean;
 }
 
-export class EntityEventSignal<T extends EntityEvent> extends EventSignal<
-  T,
-  EntityQueryOptions
-> {
+export class EntityInBlockTickEvent extends EntityBlockEvent {}
+
+export abstract class EntityEventSignal<T extends EntityEvent> extends EventSignal<T, EntityQueryOptions> {
   apply(event: T): void {
     for (const fn of this.listeners) {
+      if (!event.entity.isValid) continue;
       if (fn.options && !event.entity.matches(fn.options)) continue;
       try {
         fn.callback(event);
@@ -96,8 +140,6 @@ export class EntityEventSignal<T extends EntityEvent> extends EventSignal<
     }
   }
 }
-
-export class EntityInventoryChangedEventSignal extends EntityEventSignal<EntityInventoryChangedEvent> {}
 
 export class EntityMountEventSignal extends EntityEventSignal<EntityMountEvent> {}
 
@@ -113,63 +155,95 @@ export class EntityStepOnEventSignal extends EntityEventSignal<EntityStepOnEvent
 
 export class EntityStepOffEventSignal extends EntityEventSignal<EntityStepOffEvent> {}
 
+export class EntityEnterBlockEventSignal extends EntityEventSignal<EntityEnterBlockEvent> {}
+
+export class EntityLeaveBlockEventSignal extends EntityEventSignal<EntityLeaveBlockEvent> {}
+
+export class EntityInBlockTickEventSignal extends EntityEventSignal<EntityInBlockTickEvent> {}
+
+/**
+ * Custom entity events
+ */
 export class EntityEvents {
   private constructor() {}
 
   /**
-   * This event fires when a players inventory has changed.
-   */
-  static readonly playerInventoryChanged =
-    new EntityInventoryChangedEventSignal();
-
-  /**
    * This event fires when a entity mounts.
+   * @eventProperty
    */
   static readonly mount = new EntityMountEventSignal();
 
   /**
    * This event fires when a entity dismounts.
+   * @eventProperty
    */
   static readonly dismount = new EntityDismountEventSignal();
 
   /**
    * This event fires when a entity moves.
+   * @eventProperty
    */
   static readonly moved = new EntityMovedEventSignal();
 
   /**
    * This event fires every tick.
+   * @eventProperty
    */
   static readonly tick = new EntityTickEventSignal();
 
   /**
    * This event fires when a entity falls on the ground.
+   * @eventProperty
    */
   static readonly fallOn = new EntityFallOnEventSignal();
 
   /**
    * This event fires when a entity steps on a block.
+   * @eventProperty
    */
   static readonly stepOn = new EntityStepOnEventSignal();
 
   /**
    * This event fires when a entity steps off a block.
+   * @eventProperty
    */
   static readonly stepOff = new EntityStepOffEventSignal();
+
+  /**
+   * This event fires when an entity enters a block.
+   * @eventProperty
+   */
+  static readonly enterBlock = new EntityEnterBlockEventSignal();
+
+  /**
+   * This event fires when a entity leaves a block.
+   * @eventProperty
+   */
+  static readonly leaveBlock = new EntityLeaveBlockEventSignal();
+
+  /**
+   * This event fires every tick a entity is in a block.
+   * @eventProperty
+   */
+  static readonly inBlockTick = new EntityInBlockTickEventSignal();
+
+  static get size(): number {
+    return (
+      this.mount.size +
+      this.dismount.size +
+      this.moved.size +
+      this.tick.size +
+      this.fallOn.size +
+      this.stepOn.size +
+      this.stepOff.size +
+      this.enterBlock.size +
+      this.leaveBlock.size +
+      this.inBlockTick.size
+    );
+  }
 }
 
 // INTERNAL LOGIC
-
-function inventoryTick(inv: EntityInventoryComponent, entity: Entity): void {
-  if (!inv.container) return;
-  const currentHash = Hasher.stringify(inv.container);
-  const prevHash = entity.getDynamicProperty("mcutils:prev_inv");
-  if (currentHash !== prevHash) {
-    entity.setDynamicProperty("mcutils:prev_inv", currentHash);
-    const event = new EntityInventoryChangedEvent(entity);
-    EntityEvents.playerInventoryChanged.apply(event);
-  }
-}
 
 function mountEntityTick(entity: Entity): void {
   const riding = entity.getComponent("riding");
@@ -183,10 +257,7 @@ function mountEntityTick(entity: Entity): void {
   }
   let id = entity.getDynamicProperty("mcutils:last_mount") as string;
   if (id) {
-    const mountEvent = new EntityDismountEvent(
-      world.getEntity(id) ?? entity,
-      entity,
-    );
+    const mountEvent = new EntityDismountEvent(world.getEntity(id) ?? entity, entity);
     entity.setDynamicProperty("mcutils:last_mount", undefined);
     entity.removeTag("mcutils_riding");
     EntityEvents.dismount.apply(mountEvent);
@@ -203,54 +274,62 @@ function mountTick(event: EntityTickEvent): void {
 
 function movedTick(event: EntityTickEvent): void {
   const dim = event.entity.dimension;
-  const value =
-    (event.entity.getDynamicProperty("mcutils:prev_location") as string) ??
-    "0,0,0";
+  const value = (event.entity.getDynamicProperty("mcutils:prev_location") as string) ?? "0,0,0";
   const prevPos = Hasher.parseVec3(value);
   const pos = event.entity.location;
   pos.x = Math.round(pos.x * 100) / 100;
   pos.y = Math.round(pos.y * 100) / 100;
   pos.z = Math.round(pos.z * 100) / 100;
   if (Vector3Utils.equals(prevPos, pos)) return;
-  event.entity.setDynamicProperty(
-    "mcutils:prev_location",
-    Hasher.stringify(pos),
-  );
-  EntityEvents.moved.apply(new EntityMovedEvent(event.entity, prevPos));
+  event.entity.setDynamicProperty("mcutils:prev_location", Hasher.stringify(pos));
+  const movedEvent = new EntityMovedEvent(event.entity, prevPos);
+  EntityEvents.moved.apply(movedEvent);
+
+  if (!movedEvent.movedBlock) return;
+
+  // Enter block
+  const block = dim.getBlock(pos);
+  const prevBlock = dim.getBlock(prevPos);
+  if (prevBlock) {
+    EntityEvents.leaveBlock.apply(new EntityLeaveBlockEvent(event.entity, prevBlock, block));
+  }
+  if (block) {
+    EntityEvents.enterBlock.apply(new EntityEnterBlockEvent(event.entity, block, prevBlock));
+  }
 
   // Step on/off
   ErrorUtils.wrapCatch(LocationOutOfWorldBoundariesError, () => {
-    const newBlock = dim.getBlock(pos)?.below();
-    const prevBlock = dim.getBlock(prevPos)?.below();
-    if (!newBlock || !prevBlock) return;
+    const newBlock = block?.below();
+    const prevBlock2 = prevBlock?.below();
+    if (!newBlock || !prevBlock2) return;
     const newHash = Hasher.stringify(newBlock);
-    const prevHash = Hasher.stringify(prevBlock);
+    const prevHash = Hasher.stringify(prevBlock2);
     if (newHash === prevHash) return;
     EntityEvents.stepOn.apply(new EntityStepOnEvent(event.entity, newBlock));
-    EntityEvents.stepOff.apply(new EntityStepOnEvent(event.entity, prevBlock));
+    EntityEvents.stepOff.apply(new EntityStepOnEvent(event.entity, prevBlock2));
   });
 }
 
 function entityTick(event: EntityTickEvent): void {
   mountTick(event);
   EntityEvents.tick.apply(event);
-  const inv = event.entity.getComponent("inventory");
-  if (inv) inventoryTick(inv, event.entity);
   movedTick(event);
 
+  // in block
+  const block = event.entity.dimension.getBlock(event.entity.location);
+  if (block) {
+    EntityEvents.inBlockTick.apply(new EntityInBlockTickEvent(event.entity, block));
+  }
+
   // Fall
-  let fallingPos = event.entity.getDynamicProperty("mcutils:falling_pos") as
-    | Vector3
-    | undefined;
+  let fallingPos = event.entity.getDynamicProperty("mcutils:falling_pos") as Vector3 | undefined;
   if (fallingPos == undefined && event.entity.isFalling) {
     fallingPos = event.entity.location;
     event.entity.setDynamicProperty("mcutils:falling_pos", fallingPos);
   }
 
   if (fallingPos && event.entity.isOnGround) {
-    let dif = Vector3Utils.floor(
-      Vector3Utils.subtract(fallingPos, event.entity.location),
-    );
+    let dif = Vector3Utils.floor(Vector3Utils.subtract(fallingPos, event.entity.location));
     event.entity.setDynamicProperty("mcutils:falling_pos");
     EntityEvents.fallOn.apply(new EntityFallOnEvent(event.entity, dif.y));
   }
@@ -273,8 +352,7 @@ function tick(): void {
 function playerInteract(event: PlayerInteractWithEntityAfterEvent): void {
   try {
     // Mountable
-    if (event.player.isSneaking || event.player.hasTag("mcutils_riding"))
-      return;
+    if (event.player.isSneaking || event.player.hasTag("mcutils_riding")) return;
     const rideable = event.target.getComponent("rideable");
     if (!rideable) return;
     const mountEvent = new EntityMountEvent(event.target, event.player);
@@ -286,9 +364,9 @@ function playerInteract(event: PlayerInteractWithEntityAfterEvent): void {
   }
 }
 
-function setup() {
+function init() {
   system.runInterval(tick);
   world.afterEvents.playerInteractWithEntity.subscribe(playerInteract);
 }
 
-setup();
+init();

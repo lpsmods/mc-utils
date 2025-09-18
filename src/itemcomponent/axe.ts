@@ -1,11 +1,9 @@
-import {
-  ItemUseOnEvent,
-  Block,
-  CustomComponentParameters,
-} from "@minecraft/server";
+import { ItemUseOnEvent, Block, CustomComponentParameters, Vector3 } from "@minecraft/server";
 import { ToolComponent } from "./tool";
 import { offsetVolume } from "../utils";
 import { AddonUtils } from "../addon";
+import { array, create, defaulted, number, object, optional, string, Struct } from "superstruct";
+import { isBlock } from "../validation";
 
 export interface AxeInteraction {
   block: string;
@@ -13,14 +11,28 @@ export interface AxeInteraction {
 }
 
 export interface AxeOptions {
-  size?: number;
-  interactions?: AxeInteraction[];
+  interactions: AxeInteraction[];
+  size: number;
+  sound_event: string;
 }
 
 export class AxeComponent extends ToolComponent {
-  static typeId = AddonUtils.makeId("axe");
+  static readonly componentId = AddonUtils.makeId("axe");
 
-  interactions: { [key: string]: string } = AxeComponent.#defaultInteractions();
+  struct: Struct<any, any> = object({
+    size: defaulted(number(), 1),
+    sound_event: defaulted(string(), "use.gravel"),
+    interactions: defaulted(
+      array(
+        object({
+          block: isBlock,
+          converted_block: isBlock,
+        })
+      ),
+      []
+    ),
+  });
+  interactions: { [key: string]: string } = AxeComponent.defaultInteractions();
 
   /**
    * Makes this item strip logs like an axe.
@@ -30,7 +42,7 @@ export class AxeComponent extends ToolComponent {
     this.onUseOn = this.onUseOn.bind(this);
   }
 
-  static #defaultInteractions(): { [key: string]: string } {
+  private static defaultInteractions(): { [key: string]: string } {
     return {
       oak_log: "stripped_oak_log",
       spruce_log: "stripped_spruce_log",
@@ -114,11 +126,8 @@ export class AxeComponent extends ToolComponent {
     };
   }
 
-  getInteraction(
-    block: Block,
-    options: AxeOptions,
-  ): AxeInteraction | undefined {
-    for (const interaction of options.interactions ?? []) {
+  getInteraction(block: Block, options: AxeOptions): AxeInteraction | undefined {
+    for (const interaction of options.interactions) {
       if (block.matches(interaction.block)) {
         return interaction;
       }
@@ -131,37 +140,30 @@ export class AxeComponent extends ToolComponent {
    * @param {Block} block The block that should be converted.
    * @param {ItemUseOnEvent} event The item event for context.
    */
-  convertBlock(
-    block: Block,
-    event: ItemUseOnEvent,
-    options: AxeOptions,
-  ): boolean | undefined {
+  convertBlock(block: Block, event: ItemUseOnEvent, options: AxeOptions): boolean | undefined {
     let result;
     if (!(result = this.getInteraction(block, options))) return;
     block.setType(result.block);
   }
 
-  #interactBlock(event: ItemUseOnEvent, options: AxeOptions): void {
+  private interactBlock(event: ItemUseOnEvent, options: AxeOptions): void {
     event.block.dimension.playSound("use.gravel", event.block.location, {
       volume: 1,
     });
-    offsetVolume<boolean>(
-      { x: options.size ?? 1, y: options.size ?? 1, z: options.size ?? 1 },
-      (pos) => {
-        try {
-          const target = event.block.offset(pos);
-          if (!target) return;
-          return this.convertBlock(target, event, options);
-        } catch (err) {}
-      },
-    );
+    offsetVolume<boolean>({ x: options.size, y: options.size, z: options.size }, (pos) => {
+      try {
+        const target = event.block.offset(pos);
+        if (!target) return;
+        return this.convertBlock(target, event, options);
+      } catch (err) {}
+    });
   }
 
   // EVENTS
 
   onUseOn(event: ItemUseOnEvent, args: CustomComponentParameters): void {
-    const options = args.params as AxeOptions;
+    const options = create(args.params, this.struct) as AxeOptions;
     if (!this.getInteraction(event.block, options)) return;
-    this.#interactBlock(event, options);
+    this.interactBlock(event, options);
   }
 }

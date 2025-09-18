@@ -1,9 +1,5 @@
 import { WorldUtils } from "../world/utils";
-import {
-  FeatureHandler,
-  FeatureRuleCanPlaceEvent,
-  FeatureRulePlaceEvent,
-} from "./feature_handler";
+import { FeatureHandler, FeatureRuleCanPlaceEvent, FeatureRulePlaceEvent } from "./feature_handler";
 import { Vector3Utils } from "@minecraft/math";
 import { REPLACEABLE_BLOCKS } from "../constants";
 import { BiomeUtils } from "../biome/utils";
@@ -31,6 +27,9 @@ export interface FeatureRuleOptions {
   };
 }
 
+/**
+ * Defines a custom feature rule.
+ */
 export class FeatureRule {
   static typeId: string | null = "feature_rule";
   id: string | null = null;
@@ -55,8 +54,7 @@ export class FeatureRule {
    * @returns {boolean}
    */
   canPlace(event: FeatureRuleCanPlaceEvent): boolean {
-    if (!this.handler)
-      throw new Error(`FeatureHandler not found for feature rule '${this.id}'`);
+    if (!this.handler) throw new Error(`FeatureHandler not found for feature rule '${this.id}'`);
     const feature = this.handler.features.get(this.placesFeature);
     if (!feature) throw new Error(`Feature ${this.placesFeature} not found!`);
     if (feature.beforePlace) feature.beforePlace();
@@ -69,8 +67,7 @@ export class FeatureRule {
     }
     const block = dim.getBlock(loc);
     if (!block) {
-      if (this.handler.debug)
-        console.warn(`${this.id} | getBlock failed (was the chunk loaded?)`);
+      if (this.handler.debug) console.warn(`${this.id} | getBlock failed (was the chunk loaded?)`);
       return false;
     }
     const onBlock = block.below();
@@ -85,18 +82,15 @@ export class FeatureRule {
     if (this.options.distribution) {
       const { x, y, z } = this.options.distribution;
       if (x !== undefined && loc.x % x !== 0) {
-        if (this.handler.debug)
-          console.warn(`${this.id} | X distribution failed`);
+        if (this.handler.debug) console.warn(`${this.id} | X distribution failed`);
         return false;
       }
       if (y !== undefined && loc.y % y !== 0) {
-        if (this.handler.debug)
-          console.warn(`${this.id} | Y distribution failed`);
+        if (this.handler.debug) console.warn(`${this.id} | Y distribution failed`);
         return false;
       }
       if (z !== undefined && loc.z % z !== 0) {
-        if (this.handler.debug)
-          console.warn(`${this.id} | Z distribution failed`);
+        if (this.handler.debug) console.warn(`${this.id} | Z distribution failed`);
         return false;
       }
     }
@@ -104,8 +98,7 @@ export class FeatureRule {
     // Scatter chance (random chance to place)
     if (this.options.scatter_chance !== undefined) {
       if (Math.random() > this.options.scatter_chance) {
-        if (this.handler.debug)
-          console.warn(`${this.id} | scatter chance failed`);
+        if (this.handler.debug) console.warn(`${this.id} | scatter chance failed`);
         return false;
       }
     }
@@ -131,8 +124,7 @@ export class FeatureRule {
       );
       if (!biome) return false;
       if (!BiomeUtils.matchAny(biome, this.options.biomes)) {
-        if (this.handler.debug)
-          console.warn(`${this.id} | Can't place in ${biome.typeId}`);
+        if (this.handler.debug) console.warn(`${this.id} | Can't place in ${biome.typeId}`);
         return false;
       }
     }
@@ -148,8 +140,7 @@ export class FeatureRule {
             const block = dim.getBlock(pos);
             if (!block) continue;
             if (!BlockUtils.matchAny(block, blocks)) {
-              if (this.handler.debug)
-                console.warn(`${this.id} | Can't place on ${block.typeId}`);
+              if (this.handler.debug) console.warn(`${this.id} | Can't place on ${block.typeId}`);
               return false;
             }
           }
@@ -171,16 +162,8 @@ export class FeatureRule {
     }
 
     // Y-level restriction
-    if (
-      this.options.min_y !== undefined &&
-      event.location.y < this.options.min_y
-    )
-      return false;
-    if (
-      this.options.max_y !== undefined &&
-      event.location.y > this.options.max_y
-    )
-      return false;
+    if (this.options.min_y !== undefined && event.location.y < this.options.min_y) return false;
+    if (this.options.max_y !== undefined && event.location.y > this.options.max_y) return false;
 
     // Biome restriction
     // if (this.options.allowed_biomes && this.options.allowed_biomes.length > 0) {
@@ -219,10 +202,7 @@ export class FeatureRule {
 
   place(event: FeatureRulePlaceEvent): void {
     const dim = event.dimension;
-    const entity = dim.spawnEntity(
-      event.handle.options?.type ?? "mcutils:custom_feature",
-      event.location,
-    );
+    const entity = dim.spawnEntity(event.handle.options?.type ?? "mcutils:custom_feature", event.location);
     entity.addTag(this.placesFeature);
   }
 }

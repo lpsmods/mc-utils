@@ -8,6 +8,7 @@ import { BlockBaseComponent, NeighborUpdateEvent } from "./base";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
 import { AddonUtils } from "../addon";
+import { create, defaulted, object, string, Struct } from "superstruct";
 
 export interface WallOptions {
   north_state: keyof BlockStateSuperset;
@@ -18,10 +19,17 @@ export interface WallOptions {
 }
 
 export class WallComponent extends BlockBaseComponent {
-  static typeId = AddonUtils.makeId("wall");
+  static readonly componentId = AddonUtils.makeId("wall");
+  struct: Struct<any, any> = object({
+    north_state: defaulted(string(), "mcutils:north"),
+    east_state: defaulted(string(), "mcutils:east"),
+    south_state: defaulted(string(), "mcutils:south"),
+    west_state: defaulted(string(), "mcutils:west"),
+    up_state: defaulted(string(), "mcutils:up"),
+  });
 
   /**
-   * Wall block behavior.
+   * Vanilla wall block behavior.
    */
   constructor() {
     super();
@@ -50,44 +58,23 @@ export class WallComponent extends BlockBaseComponent {
     const eUp = above.east();
     const wUp = above.west();
     if (this.isWall(above)) return true;
-    if (
-      this.isWall(north) &&
-      this.isWall(south) &&
-      !this.isWall(east) &&
-      !this.isWall(west)
-    )
-      return false;
-    if (
-      !this.isWall(north) &&
-      !this.isWall(south) &&
-      this.isWall(east) &&
-      this.isWall(west)
-    )
-      return false;
+    if (this.isWall(north) && this.isWall(south) && !this.isWall(east) && !this.isWall(west)) return false;
+    if (!this.isWall(north) && !this.isWall(south) && this.isWall(east) && this.isWall(west)) return false;
     return true;
   }
 
   // EVENTS
 
-  onPlace(
-    event: BlockComponentOnPlaceEvent,
-    args: CustomComponentParameters,
-  ): void {
+  onPlace(event: BlockComponentOnPlaceEvent, args: CustomComponentParameters): void {
     this.basePlace(event, args);
   }
 
-  onTick(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void {
+  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
     this.baseTick(event, args);
   }
 
-  onNeighborUpdate(
-    event: NeighborUpdateEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as WallOptions;
+  onNeighborUpdate(event: NeighborUpdateEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as WallOptions;
     const above = event.block.above();
     // TODO: post
     if (above && this.#upperBit(event.block)) {
@@ -102,19 +89,11 @@ export class WallComponent extends BlockBaseComponent {
       if (above && this.isWall(above)) {
         switch (event.direction.toLowerCase()) {
           case "north":
-            return BlockUtils.setState(
-              event.block,
-              options.north_state,
-              "tall",
-            );
+            return BlockUtils.setState(event.block, options.north_state, "tall");
           case "east":
             return BlockUtils.setState(event.block, options.east_state, "tall");
           case "south":
-            return BlockUtils.setState(
-              event.block,
-              options.south_state,
-              "tall",
-            );
+            return BlockUtils.setState(event.block, options.south_state, "tall");
           case "west":
             return BlockUtils.setState(event.block, options.west_state, "tall");
         }

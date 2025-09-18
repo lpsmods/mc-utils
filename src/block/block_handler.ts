@@ -17,7 +17,9 @@ import {
   world,
 } from "@minecraft/server";
 import { PlayerUtils } from "../entity/player_utils";
-import { id, Identifier } from "../misc/identifier";
+import { id, Identifier } from "../identifier";
+
+let initialized = false;
 
 export abstract class BlockHandler {
   static all = new Map<string, BlockHandler>();
@@ -28,33 +30,80 @@ export abstract class BlockHandler {
   constructor(blockId: id, location?: Vector3) {
     this.blockId = Identifier.parse(blockId);
     this.location = location;
+    if (!initialized) init();
   }
 
+  /**
+   *
+   * @param {BlockExplodeAfterEvent} event
+   */
   abstract onExplode?(event: BlockExplodeAfterEvent): void;
 
+  /**
+   *
+   * @param {ButtonPushAfterEvent} event
+   */
   abstract onButtonPush?(event: ButtonPushAfterEvent): void;
 
+  /**
+   *
+   * @param {LeverActionAfterEvent} event
+   */
   abstract onLeverAction?(event: LeverActionAfterEvent): void;
 
+  /**
+   *
+   * @param {PlayerBreakBlockAfterEvent} event
+   */
   abstract onPlayerBreak?(event: PlayerBreakBlockAfterEvent): void;
 
+  /**
+   *
+   * @param {PlayerPlaceBlockAfterEvent} event
+   */
   abstract onPlayerPlace?(event: PlayerPlaceBlockAfterEvent): void;
 
+  /**
+   *
+   * @param {PlayerInteractWithBlockAfterEvent} event
+   */
   abstract onPlayerInteract?(event: PlayerInteractWithBlockAfterEvent): void;
 
+  /**
+   *
+   * @param {PressurePlatePopAfterEvent} event
+   */
   abstract onPressurePlatePop?(event: PressurePlatePopAfterEvent): void;
 
+  /**
+   *
+   * @param {PressurePlatePushAfterEvent} event
+   */
   abstract onPressurePlatePush?(event: PressurePlatePushAfterEvent): void;
 
+  /**
+   *
+   * @param {ProjectileHitBlockAfterEvent} event
+   */
   abstract onProjectileHitBlock?(event: ProjectileHitBlockAfterEvent): void;
 
+  /**
+   *
+   * @param {any} event
+   */
   abstract onTick?(event: any): void;
 
+  /**
+   *
+   * @param {PlayerBreakBlockBeforeEvent} event
+   */
   abstract beforePlayerBreak?(event: PlayerBreakBlockBeforeEvent): void;
 
-  abstract beforePlayerInteract?(
-    event: PlayerInteractWithBlockBeforeEvent,
-  ): void;
+  /**
+   *
+   * @param {PlayerInteractWithBlockBeforeEvent} event
+   */
+  abstract beforePlayerInteract?(event: PlayerInteractWithBlockBeforeEvent): void;
 
   matches(block: Block, entity?: Entity): boolean {
     if (this.location) {
@@ -75,7 +124,8 @@ function callHandle(name: string, block: Block | undefined, event: any): void {
   }
 }
 
-function setup() {
+function init() {
+  initialized = true;
   world.afterEvents.blockExplode.subscribe((event) => {
     callHandle("onExplode", event.block, event);
   });
@@ -129,5 +179,3 @@ function setup() {
     }
   });
 }
-
-setup();

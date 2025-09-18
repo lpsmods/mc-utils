@@ -1,16 +1,5 @@
-import {
-  system,
-  Block,
-  Vector2,
-  Vector3,
-  Dimension,
-  DimensionTypes,
-  world,
-  Container,
-  VectorXZ,
-} from "@minecraft/server";
+import { system, Block, Vector3, Dimension, DimensionTypes, world } from "@minecraft/server";
 import { LRUCache } from "./cache";
-import { Typing, TypingTypes } from "./type";
 
 // const CACHED_SOUNDS: { [key: string]: string } = {};
 
@@ -51,10 +40,7 @@ const soundCache = new LRUCache<string, string>();
  * @param {string} defaultSound
  * @returns String
  */
-export function getInteractSound(
-  block: Block,
-  defaultSound: string = "dig.stone",
-): string {
+export function getInteractSound(block: Block, defaultSound: string = "dig.stone"): string {
   if (!block) return "dig.stone";
   const key = block.typeId;
   if (soundCache.has(key)) return soundCache.get(key) ?? defaultSound;
@@ -64,14 +50,9 @@ export function getInteractSound(
     "dig.stem": ["crimson", "warped"],
     "break.cherry_wood": ["cherry"],
   };
-  if (
-    key.includes("dirt") ||
-    key.includes("farmland") ||
-    key.includes("gravel")
-  )
+  if (key.includes("dirt") || key.includes("farmland") || key.includes("gravel"))
     return soundCache.set(key, "dig.gravel");
-  if (key.includes("crimson") || key.includes("warped"))
-    return soundCache.set(key, "dig.stem");
+  if (key.includes("crimson") || key.includes("warped")) return soundCache.set(key, "dig.stem");
   if (key.includes("cherry")) return soundCache.set(key, "break.cherry_wood");
   return soundCache.set(key, defaultSound);
 }
@@ -84,9 +65,7 @@ export function getInteractSound(
 export function forDuration(callback: Function, duration?: number): void {
   var delta = 0;
   const o = system.runInterval(() => {
-    callback.call(delta),
-      delta >= (duration ?? 20) && system.clearRun(o),
-      delta++;
+    callback.call(delta), delta >= (duration ?? 20) && system.clearRun(o), delta++;
   });
 }
 
@@ -94,9 +73,7 @@ export function forDuration(callback: Function, duration?: number): void {
  * Run a function for all dimensions.
  * @param callback
  */
-export function forAllDimensions(
-  callback: (dimension: Dimension) => void,
-): void {
+export function forAllDimensions(callback: (dimension: Dimension) => void): void {
   for (const dimType of DimensionTypes.getAll()) {
     callback(world.getDimension(dimType.typeId));
   }
@@ -108,10 +85,7 @@ export function forAllDimensions(
  * @param callback
  * @returns
  */
-export function offsetVolume<T>(
-  offset: Vector3,
-  callback: (pos: Vector3) => T | undefined,
-): T | undefined {
+export function offsetVolume<T>(offset: Vector3, callback: (pos: Vector3) => T | undefined): T | undefined {
   for (let x = -offset.x; x < offset.x + 1; x++) {
     for (let y = -offset.y; y < offset.y + 1; y++) {
       for (let z = -offset.z; z < offset.z + 1; z++) {
@@ -199,4 +173,29 @@ export function differenceArray(a: string[], b: string[]): string[] {
 export function removeItems<T>(source: T[], itemsToRemove: T[]): T[] {
   const toRemove = new Set(itemsToRemove);
   return source.filter((item) => !toRemove.has(item));
+}
+
+export function deepMerge<T extends object, U extends object>(obj1: T, obj2: U): T & U {
+  const result: any = { ...obj1 };
+
+  for (const key in obj2) {
+    if (Object.prototype.hasOwnProperty.call(obj2, key)) {
+      if (
+        typeof obj2[key] === "object" &&
+        obj2[key] !== null &&
+        !Array.isArray(obj2[key]) &&
+        typeof result[key] === "object" &&
+        result[key] !== null &&
+        !Array.isArray(result[key])
+      ) {
+        // Recursively merge objects
+        result[key] = deepMerge(result[key], obj2[key]);
+      } else {
+        // Overwrite value
+        result[key] = obj2[key];
+      }
+    }
+  }
+
+  return result as T & U;
 }

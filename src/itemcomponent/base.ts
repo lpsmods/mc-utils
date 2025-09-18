@@ -1,7 +1,5 @@
 import {
-  ItemStack,
   world,
-  Player,
   EquipmentSlot,
   ItemComponentBeforeDurabilityDamageEvent,
   CustomComponentParameters,
@@ -11,12 +9,17 @@ import {
   ItemComponentMineBlockEvent,
   ItemComponentUseEvent,
   ItemComponentUseOnEvent,
+  EntityHitBlockAfterEvent,
 } from "@minecraft/server";
-import { Ticking } from "../misc/ticking";
+import { Ticking } from "../ticking";
 import { ItemEvent, ItemHoldEvent } from "../event/item";
+import { object, Struct } from "superstruct";
 
 export abstract class ItemBaseComponent extends Ticking {
+  static readonly componentId: string;
+
   static components: ItemBaseComponent[] = [];
+  struct: Struct<any, any> = object({});
 
   /**
    * Custom item component containing additional item events.
@@ -24,8 +27,6 @@ export abstract class ItemBaseComponent extends Ticking {
   constructor() {
     super();
   }
-
-  #init() {}
 
   tick(): void {
     // Skip if no events are bound.
@@ -57,51 +58,52 @@ export abstract class ItemBaseComponent extends Ticking {
 
   // CUSTOM EVENTS
 
+  /**
+   * This function will be called when an item containing this component is held.
+   */
   onHold?(event: ItemEvent): void;
+
+  /**
+   * This function will be called when an item containing this component is no longer being held.
+   */
   onReleaseHold?(event: ItemEvent): void;
+
+  /**
+   * This function will be called every tick when an item containing this component is being held.
+   */
   onHoldTick?(event: ItemEvent): void;
 
   // EVENTS
 
   /**
+   * This function will be called when an item containing this component is used to hit a block.
+   */
+  onHitBlock?(event: EntityHitBlockAfterEvent): void;
+
+  /**
    * This function will be called when an item containing this component is hitting an entity and about to take durability damage.
    */
-  onBeforeDurabilityDamage?(
-    event: ItemComponentBeforeDurabilityDamageEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onBeforeDurabilityDamage?(event: ItemComponentBeforeDurabilityDamageEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when an item containing this component's use duration was completed.
    */
-  onCompleteUse?(
-    event: ItemComponentCompleteUseEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onCompleteUse?(event: ItemComponentCompleteUseEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when an item containing this component is eaten by an entity.
    */
-  onConsume?(
-    event: ItemComponentConsumeEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onConsume?(event: ItemComponentConsumeEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when an item containing this component is used to hit another entity.
    */
-  onHitEntity?(
-    event: ItemComponentHitEntityEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onHitEntity?(event: ItemComponentHitEntityEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when an item containing this component is used to mine a block.
    */
-  onMineBlock?(
-    event: ItemComponentMineBlockEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onMineBlock?(event: ItemComponentMineBlockEvent, args: CustomComponentParameters): void;
 
   /**
    * This function will be called when an item containing this component is used by a player.
@@ -111,8 +113,16 @@ export abstract class ItemBaseComponent extends Ticking {
   /**
    * This function will be called when an item containing this component is used on a block.
    */
-  onUseOn?(
-    event: ItemComponentUseOnEvent,
-    args: CustomComponentParameters,
-  ): void;
+  onUseOn?(event: ItemComponentUseOnEvent, args: CustomComponentParameters): void;
 }
+
+// TODO: Test
+function init(): void {
+  world.afterEvents.entityHitBlock.subscribe((event: EntityHitBlockAfterEvent) => {
+    for (const com of ItemBaseComponent.components) {
+      if (com.onHitBlock) com.onHitBlock(event);
+    }
+  });
+}
+
+init();

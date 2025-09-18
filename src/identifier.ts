@@ -1,13 +1,5 @@
-import {
-  Block,
-  BlockPermutation,
-  BlockType,
-  Entity,
-  EntityType,
-  ItemStack,
-  ItemType,
-} from "@minecraft/server";
-import { Biome } from "../biome/biome";
+import { Block, BlockPermutation, BlockType, Entity, EntityType, ItemStack, ItemType } from "@minecraft/server";
+import { Biome } from "./biome/biome";
 
 export type id =
   | string
@@ -79,8 +71,7 @@ export class Identifier {
   static parse(value: id): Identifier {
     if (!value) return new Identifier("minecraft", "unknown");
     if (value instanceof Block) return Identifier.parse(value.typeId);
-    if (value instanceof BlockPermutation)
-      return Identifier.parse(value.type.id);
+    if (value instanceof BlockPermutation) return Identifier.parse(value.type.id);
     if (value instanceof ItemStack) return Identifier.parse(value.typeId);
     if (value instanceof Entity) return Identifier.parse(value.typeId);
     if (value instanceof Biome) return Identifier.parse(value.typeId);

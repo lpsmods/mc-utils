@@ -11,13 +11,12 @@ import {
   GameMode,
   Player,
   Vector3,
-  world,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { MathUtils } from "../math";
 import { WorldUtils } from "../world/utils";
 import { Oxidization } from "../constants";
-import { Identifier } from "../misc/identifier";
+import { Identifier } from "../identifier";
 import { Hasher } from "../type";
 import { Vector3Utils } from "@minecraft/math";
 
@@ -36,12 +35,7 @@ export abstract class BlockUtils {
    */
   static setType(block: Block, typeId?: string | BlockType): void {
     const blockName = typeId instanceof BlockType ? typeId.id : typeId;
-    block.setPermutation(
-      BlockPermutation.resolve(
-        blockName ?? "air",
-        block.permutation.getAllStates(),
-      ),
-    );
+    block.setPermutation(BlockPermutation.resolve(blockName ?? "air", block.permutation.getAllStates()));
   }
 
   /**
@@ -51,11 +45,7 @@ export abstract class BlockUtils {
    * @param {any} stateValue
    * @returns {Block}
    */
-  static setState(
-    block: Block,
-    stateName: keyof BlockStateSuperset,
-    stateValue: any,
-  ): void {
+  static setState(block: Block, stateName: keyof BlockStateSuperset, stateValue: any): void {
     block.setPermutation(block.permutation.withState(stateName, stateValue));
   }
 
@@ -65,11 +55,7 @@ export abstract class BlockUtils {
    * @param stateName
    * @param amount
    */
-  static incrementState(
-    block: Block,
-    stateName: keyof BlockStateSuperset,
-    amount: number = 1,
-  ): number {
+  static incrementState(block: Block, stateName: keyof BlockStateSuperset, amount: number = 1): number {
     const value = (block.permutation.getState(stateName) as number) + amount;
     BlockUtils.setState(block, stateName, value);
     return value;
@@ -81,11 +67,7 @@ export abstract class BlockUtils {
    * @param stateName
    * @param amount
    */
-  static decrementState(
-    block: Block,
-    stateName: keyof BlockStateSuperset,
-    amount: number = 1,
-  ): number {
+  static decrementState(block: Block, stateName: keyof BlockStateSuperset, amount: number = 1): number {
     const value = (block.permutation.getState(stateName) as number) - amount;
     BlockUtils.setState(block, stateName, value);
     return value;
@@ -96,10 +78,7 @@ export abstract class BlockUtils {
    * @param block
    * @param stateName
    */
-  static toggleState(
-    block: Block,
-    stateName: keyof BlockStateSuperset,
-  ): boolean {
+  static toggleState(block: Block, stateName: keyof BlockStateSuperset): boolean {
     const value = block.permutation.getState(stateName) as boolean;
     BlockUtils.setState(block, stateName, !value);
     return !value;
@@ -166,11 +145,7 @@ export abstract class BlockUtils {
    * @param condition - Function to test.
    * @returns {boolean} - True if the block is found within range, false otherwise.
    */
-  static isWithinTaxicabDistance(
-    origin: Block,
-    maxDistance: number,
-    condition: (block: Block) => boolean,
-  ): boolean {
+  static isWithinTaxicabDistance(origin: Block, maxDistance: number, condition: (block: Block) => boolean): boolean {
     return (
       MathUtils.taxicabDistance<boolean>(origin, maxDistance, (location) => {
         const blk = origin.dimension.getBlock(location);
@@ -186,11 +161,7 @@ export abstract class BlockUtils {
    * @param condition - Function to test.
    * @returns {boolean} - True if the block is found within range, false otherwise.
    */
-  static isWithinChebyshevDistance(
-    origin: Block,
-    maxDistance: number,
-    condition: (block: Block) => boolean,
-  ): boolean {
+  static isWithinChebyshevDistance(origin: Block, maxDistance: number, condition: (block: Block) => boolean): boolean {
     return (
       MathUtils.chebyshevDistance<boolean>(origin, maxDistance, (location) => {
         const blk = origin.dimension.getBlock(location);
@@ -215,11 +186,8 @@ export abstract class BlockUtils {
    * @returns
    */
   static destroy(block: Block, player?: Player): void {
-    if (player && player.getGameMode() === GameMode.Creative)
-      return block.setType("air");
-    block.dimension.runCommand(
-      `setblock ${block.location.x} ${block.location.y} ${block.location.z} air destroy`,
-    );
+    if (player && player.getGameMode() === GameMode.Creative) return block.setType("air");
+    block.dimension.runCommand(`setblock ${block.location.x} ${block.location.y} ${block.location.z} air destroy`);
   }
 
   /**
@@ -241,22 +209,15 @@ export abstract class BlockUtils {
    * @param {Vector3[]} positions
    * @returns {Vector3[]}
    */
-  static getExposedBlocks(
-    positions: Vector3[],
-    direction: ExposedDirection = ExposedDirection.Above,
-  ) {
+  static getExposedBlocks(positions: Vector3[], direction: ExposedDirection = ExposedDirection.Above) {
     const posSet = new Set(positions.map((p) => Hasher.stringify(p)));
 
     return positions.filter((p) => {
       if (direction === "above") {
-        return !posSet.has(
-          Hasher.stringify(Vector3Utils.add(p, { x: 0, y: 1, z: 0 })),
-        );
+        return !posSet.has(Hasher.stringify(Vector3Utils.add(p, { x: 0, y: 1, z: 0 })));
       }
       if (direction === "below") {
-        return !posSet.has(
-          Hasher.stringify(Vector3Utils.add(p, { x: 0, y: -1, z: 0 })),
-        );
+        return !posSet.has(Hasher.stringify(Vector3Utils.add(p, { x: 0, y: -1, z: 0 })));
       }
       if (direction === "side") {
         const sides = [
@@ -273,20 +234,44 @@ export abstract class BlockUtils {
 
   /**
    * Match any block name.
-   * @param {Block} block
-   * @param {string[]} blockNames
+   * @param {Block} block The block to match.
+   * @param {string[]} blockPredicates An array of block names. Prefix with '#' for block tag or "!" to ignore.
    * @returns {boolean} Whether or not the block matched any of the block names.
    */
-  static matchAny(block: Block, blockNames: string[]): boolean {
-    const items = [...new Set(blockNames)];
-    return items.some((blockName) => {
-      if (blockName.charAt(0) === "#") {
-        return block.hasTag(blockName.slice(1));
-      }
-      if (blockName.charAt(0) === "!") {
-        return !block.matches(blockName.slice(1));
-      }
-      return block.matches(blockName);
+  static matchAny(
+    block: Block,
+    blockPredicates: string[],
+    states?: Record<string, string | number | boolean>,
+  ): boolean {
+    const blockSet = [...new Set(blockPredicates)];
+    return blockSet.some((blockPredicate) => {
+      return BlockUtils.matches(block, blockPredicate, states);
     });
+  }
+
+  /**
+   * Match this block.
+   * @param {Block} block The block to match.
+   * @param {string} blockPredicate A block name. Prefix with '#' for block tag or "!" to ignore.
+   * @returns {boolean}
+   */
+  static matches(block: Block, blockPredicate: string, states?: Record<string, string | number | boolean>): boolean {
+    if (blockPredicate.charAt(0) === "#") {
+      return block.hasTag(blockPredicate.slice(1));
+    }
+    if (blockPredicate.charAt(0) === "!") {
+      return !block.matches(blockPredicate.slice(1), states);
+    }
+    return block.matches(blockPredicate, states);
+  }
+
+  /**
+   * Whether or not the block is a wall block.
+   * @param {Block} block
+   * @returns {boolean}
+   */
+  static isWall(block?: Block): boolean {
+    if (!block) return false;
+    return block.hasTag("wall") || Identifier.parse(block).path.includes("wall");
   }
 }

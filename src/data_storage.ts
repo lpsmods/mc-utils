@@ -1,23 +1,11 @@
-import {
-  world,
-  World,
-  Vector3,
-  PlayerLeaveBeforeEvent,
-  Entity,
-  ItemStack,
-  ContainerSlot,
-} from "@minecraft/server";
+import { world, World, Vector3, PlayerLeaveBeforeEvent, Entity, ItemStack, ContainerSlot } from "@minecraft/server";
 
-// TODO: Integrate LRU cache to store last 5 requests in memory to improve performance of large values.
 export class DataStorage {
   static instances = new Map<string, DataStorage>();
 
   readonly rootId: string;
   readonly core: World | Entity | ItemStack | ContainerSlot;
-  constructor(
-    rootId: string,
-    core?: World | Entity | ItemStack | ContainerSlot,
-  ) {
+  constructor(rootId: string, core?: World | Entity | ItemStack | ContainerSlot) {
     this.rootId = rootId;
     this.core = core ?? world;
     DataStorage.instances.set(rootId, this);
@@ -53,10 +41,7 @@ export class DataStorage {
     this.core.setDynamicProperty(this.rootId, JSON.stringify(data));
   }
 
-  setItem(
-    key: string,
-    value?: string | number | boolean | Vector3 | undefined,
-  ): void {
+  setItem(key: string, value?: string | number | boolean | Vector3 | undefined): void {
     var res = this.core.getDynamicProperty(this.rootId);
     if (!res) res = "{}";
     var data = JSON.parse(res.toString());
@@ -87,8 +72,7 @@ export class DataStorage {
         // Handle surrogate pair
         const next = str.charCodeAt(i + 1);
         if (next >= 0xdc00 && next <= 0xdfff) {
-          const fullCodePoint =
-            ((codePoint - 0xd800) << 10) + (next - 0xdc00) + 0x10000;
+          const fullCodePoint = ((codePoint - 0xd800) << 10) + (next - 0xdc00) + 0x10000;
           bytes += 4;
           i++; // Skip the next char
           continue;
@@ -106,9 +90,7 @@ export class DataStorage {
     return bytes;
   }
 
-  update(data: {
-    [key: string]: string | number | boolean | Vector3 | undefined;
-  }): void {
+  update(data: { [key: string]: string | number | boolean | Vector3 | undefined }): void {
     for (const k of Object.keys(data)) {
       const v = data[k];
       this.setItem(k, v);

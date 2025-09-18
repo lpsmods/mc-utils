@@ -4,7 +4,6 @@ import {
   CustomComponentParameters,
   EquipmentSlot,
   GameMode,
-  ItemStack,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockBaseComponent } from "./base";
@@ -15,15 +14,21 @@ import { BlockUtils } from "../block/utils";
 import { CropComponent, CropOptions } from "./crop";
 import { SaplingComponent, SaplingOptions } from "./sapling";
 import { AddonUtils } from "../addon";
+import { array, create, defaulted, number, object, string, Struct } from "superstruct";
 
 export interface FertilizableOptions {
   growth_state?: keyof BlockStateSuperset;
   max_stage?: number;
-  items?: string[];
+  items: string[];
 }
 
 export class FertilizableComponent extends BlockBaseComponent {
-  static typeId = AddonUtils.makeId("fertilizable");
+  static readonly componentId = AddonUtils.makeId("fertilizable");
+  struct: Struct<any, any> = object({
+    growth_state: string(),
+    max_stage: defaulted(number(), 7),
+    items: defaulted(array(string()), ["bone_meal"]),
+  });
 
   /**
    * Vanilla fertilizable block behavior.
@@ -34,49 +39,22 @@ export class FertilizableComponent extends BlockBaseComponent {
   }
 
   getMaxStage(block: Block, options: FertilizableOptions): number {
-    const com =
-      block.getComponent(CropComponent.typeId) ??
-      block.getComponent(SaplingComponent.typeId);
+    const com = block.getComponent(CropComponent.componentId) ?? block.getComponent(SaplingComponent.componentId);
     if (!com) return options.max_stage ?? 7;
+    return (com.customComponentParameters.params as CropOptions | SaplingOptions).max_stage ?? 7;
+  }
+
+  getGrowthState(block: Block, options: FertilizableOptions): keyof BlockStateSuperset {
+    const com = block.getComponent(CropComponent.componentId) ?? block.getComponent(SaplingComponent.componentId);
+    if (!com) return options.growth_state ?? ("mcutils:growth" as keyof BlockStateSuperset);
     return (
-      (com.customComponentParameters.params as CropOptions | SaplingOptions)
-        .max_stage ?? 7
+      (com.customComponentParameters.params as CropOptions | SaplingOptions).growth_state ??
+      ("mcutils:growth" as keyof BlockStateSuperset)
     );
   }
 
-  getGrowthState(
-    block: Block,
-    options: FertilizableOptions,
-  ): keyof BlockStateSuperset {
-    const com =
-      block.getComponent(CropComponent.typeId) ??
-      block.getComponent(SaplingComponent.typeId);
-    if (!com)
-      return (
-        options.growth_state ?? ("mcutils:growth" as keyof BlockStateSuperset)
-      );
-    return (
-      (com.customComponentParameters.params as CropOptions | SaplingOptions)
-        .growth_state ?? ("mcutils:growth" as keyof BlockStateSuperset)
-    );
-  }
-
-  matchItem(
-    itemStack: ItemStack | undefined,
-    options: FertilizableOptions,
-  ): boolean {
-    if (!itemStack) return false;
-    for (const item of options.items ?? ["bone_meal"]) {
-      if (itemStack.matches(item)) return true;
-    }
-    return false;
-  }
-
-  onFertilize(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): boolean {
-    const options = args.params as FertilizableOptions;
+  fertilize(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): boolean {
+    const options = create(args.params, this.struct) as FertilizableOptions;
     if (!event.player) return false;
     if (!this.isFertilizable(event, options)) return false;
     if (!this.canGrow(event, options)) return false;
@@ -97,22 +75,17 @@ export class FertilizableComponent extends BlockBaseComponent {
     return true;
   }
 
-  isFertilizable(
-    event: BlockComponentPlayerInteractEvent,
-    options: FertilizableOptions,
-  ): boolean {
+  isFertilizable(event: BlockComponentPlayerInteractEvent, options: FertilizableOptions): boolean {
     if (!event.player) return false;
     const equ = event.player.getComponent("equippable");
     if (!equ) return false;
     const mainhand = equ.getEquipment(EquipmentSlot.Mainhand);
-    if (!this.matchItem(mainhand, options)) return false;
+    if (!mainhand || !ItemUtils.matchAny(mainhand, options.items)) return false;
     return true;
   }
 
-  canGrow(
-    event: BlockComponentPlayerInteractEvent,
-    options: FertilizableOptions,
-  ): boolean {
+  // TODO: Check light level
+  canGrow(event: BlockComponentPlayerInteractEvent, options: FertilizableOptions): boolean {
     const growthName = this.getGrowthState(event.block, options);
     const growthState = event.block.permutation.getState(growthName) as number;
     return growthState <= this.getMaxStage(event.block, options);
@@ -122,11 +95,8 @@ export class FertilizableComponent extends BlockBaseComponent {
     return RandomUtils.int(2, 5);
   }
 
-  grow(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as FertilizableOptions;
+  grow(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as FertilizableOptions;
     const growthName = this.getGrowthState(event.block, options);
     const maxStage = this.getMaxStage(event.block, options);
     if (event.player) {
@@ -144,10 +114,7 @@ export class FertilizableComponent extends BlockBaseComponent {
 
   // EVENTS
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): boolean {
-    return this.onFertilize(event, args);
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): boolean {
+    return this.fertilize(event, args);
   }
 }

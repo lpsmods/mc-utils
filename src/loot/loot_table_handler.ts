@@ -1,11 +1,8 @@
-import { Dimension, Vector3 } from "@minecraft/server";
+import { Dimension, Entity, ItemStack, Vector3, world } from "@minecraft/server";
 import { RandomUtils } from "../random";
 
 export abstract class LootTableHandler {
-  static all: Map<string, LootTableHandler> = new Map<
-    string,
-    LootTableHandler
-  >();
+  static all: Map<string, LootTableHandler> = new Map<string, LootTableHandler>();
   readonly id: string;
   tables: string[];
 
@@ -36,17 +33,45 @@ export abstract class LootTableHandler {
   }
 
   // TODO: Only replace items that are dropped.
+  /**
+   * Removes all drops at location.
+   * @param {Dimension} dimension
+   * @param {Vector3} location
+   */
   removeDrops(dimension: Dimension, location: Vector3): void {
-    for (const item of dimension.getEntities({
-      type: "item",
-      location: location,
-      maxDistance: 1.5,
-    })) {
-      item.remove();
-    }
+    this.getItems(dimension, location).forEach((entity) => {
+      entity.remove();
+    });
   }
 
-  drop(dimension: Dimension, location: Vector3): void {
+  /**
+   * Get all entity items.
+   * @param {Dimension} dimension
+   * @param {Vector3} location
+   * @returns {Entity[]}
+   */
+  getItems(dimension: Dimension, location: Vector3): Entity[] {
+    return dimension.getEntities({ type: "item", location: location, maxDistance: 1.5 });
+  }
+
+  /**
+   * Get all item stacks.
+   * @param {Dimension} dimension
+   * @param {Vector3} location
+   * @returns {ItemStack[]}
+   */
+  getLoot(dimension: Dimension, location: Vector3): ItemStack[] {
+    return this.getItems(dimension, location)
+      .map((entity) => entity.getComponent("item")?.itemStack)
+      .filter((item) => item !== undefined);
+  }
+
+  /**
+   * Spawns this loot table.
+   * @param {Dimension} dimension
+   * @param {Vector3} location
+   */
+  generate(dimension: Dimension, location: Vector3): void {
     if (!this.tables.includes(this.getDefaultTable())) {
       this.removeDrops(dimension, location);
     }
@@ -54,9 +79,7 @@ export abstract class LootTableHandler {
     for (const table of this.tables) {
       if (table === this.getDefaultTable()) continue;
       const arg = table.replace(/^loot_tables\//m, "");
-      dimension.runCommand(
-        `loot spawn ${location.x} ${location.y} ${location.z} loot "${arg}"`,
-      );
+      dimension.runCommand(`loot spawn ${location.x} ${location.y} ${location.z} loot "${arg}"`);
     }
   }
 }

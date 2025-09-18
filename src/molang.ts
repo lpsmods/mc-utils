@@ -12,11 +12,12 @@ import {
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { Molang } from "molang";
+import { deepMerge } from "./utils";
 
 export interface MolangEnvironment {
-  query: Record<string, unknown>;
-  variable: Record<string, unknown>;
-  context: Record<string, unknown>;
+  query?: Record<string, unknown>;
+  variable?: Record<string, unknown>;
+  context?: Record<string, unknown>;
 }
 
 export abstract class MolangUtils {
@@ -26,25 +27,19 @@ export abstract class MolangUtils {
    * @param {string} expression
    * @returns {unknown}
    */
-  static block(block: Block, expression: string): unknown {
+  static block(block: Block, expression: string, env: MolangEnvironment = {}): unknown {
     const dim = block.dimension;
-    const env = {
+    let defaultEnv = {
       query: {
         // TODO:
         cardinal_facing: "down",
         cardinal_facing_2d: "north",
         cardinal_player_facing: "down",
         block_state(stateName: string): unknown {
-          return block.permutation.getState(
-            stateName as keyof BlockStateSuperset,
-          );
+          return block.permutation.getState(stateName as keyof BlockStateSuperset);
         },
         has_block_state(stateName: string): boolean {
-          return (
-            block.permutation.getState(
-              stateName as keyof BlockStateSuperset,
-            ) !== undefined
-          );
+          return block.permutation.getState(stateName as keyof BlockStateSuperset) !== undefined;
         },
         all_tags(...tags: string[]): boolean {
           return tags.every((tag) => block.hasTag(tag));
@@ -52,42 +47,22 @@ export abstract class MolangUtils {
         any_tag(...tags: string[]): boolean {
           return tags.some((tag) => block.hasTag(tag));
         },
-        block_has_all_tags(
-          x: number,
-          y: number,
-          z: number,
-          ...tags: string[]
-        ): boolean {
+        block_has_all_tags(x: number, y: number, z: number, ...tags: string[]): boolean {
           const blk = dim.getBlock({ x, y, z });
           if (!blk) return false;
           return tags.every((tag) => blk.hasTag(tag));
         },
-        block_has_any_tag(
-          x: number,
-          y: number,
-          z: number,
-          ...tags: string[]
-        ): boolean {
+        block_has_any_tag(x: number, y: number, z: number, ...tags: string[]): boolean {
           const blk = dim.getBlock({ x, y, z });
           if (!blk) return false;
           return tags.some((tag) => blk.hasTag(tag));
         },
-        block_neighbor_has_all_tags(
-          x: number,
-          y: number,
-          z: number,
-          ...tags: string[]
-        ): boolean {
+        block_neighbor_has_all_tags(x: number, y: number, z: number, ...tags: string[]): boolean {
           const blk = block.offset({ x, y, z });
           if (!blk) return false;
           return tags.every((tag) => block.hasTag(tag));
         },
-        block_neighbor_has_any_tag(
-          x: number,
-          y: number,
-          z: number,
-          ...tags: string[]
-        ): boolean {
+        block_neighbor_has_any_tag(x: number, y: number, z: number, ...tags: string[]): boolean {
           const blk = block.offset({ x, y, z });
           if (!blk) return false;
           return tags.some((tag) => block.hasTag(tag));
@@ -96,8 +71,9 @@ export abstract class MolangUtils {
       variable: {},
       context: {},
     };
-    MolangUtils.commonEnv(env, dim);
-    const molang = new Molang(env, { useCache: true });
+    defaultEnv = deepMerge(defaultEnv, env);
+    MolangUtils.commonEnv(defaultEnv, dim);
+    const molang = new Molang(defaultEnv, { useCache: true });
     return molang.execute(expression);
   }
 
@@ -107,8 +83,8 @@ export abstract class MolangUtils {
    * @param {string} expression
    * @returns {unknown}
    */
-  static item(itemStack: ItemStack, expression: string): unknown {
-    const env = {
+  static item(itemStack: ItemStack, expression: string, env: MolangEnvironment = {}): unknown {
+    let defaultEnv = {
       query: {
         max_durability: 0,
         remaining_durability: 0,
@@ -130,13 +106,13 @@ export abstract class MolangUtils {
 
     const durability = itemStack.getComponent("durability");
     if (durability) {
-      env.query.max_durability = durability.maxDurability;
-      env.query.remaining_durability =
-        durability.maxDurability - durability.damage;
+      defaultEnv.query.max_durability = durability.maxDurability;
+      defaultEnv.query.remaining_durability = durability.maxDurability - durability.damage;
     }
 
-    MolangUtils.commonEnv(env);
-    const molang = new Molang(env, { useCache: true });
+    defaultEnv = deepMerge(defaultEnv, env);
+    MolangUtils.commonEnv(defaultEnv);
+    const molang = new Molang(defaultEnv, { useCache: true });
     return molang.execute(expression);
   }
 
@@ -146,9 +122,9 @@ export abstract class MolangUtils {
    * @param {string} expression
    * @returns {unknown}
    */
-  static entity(entity: Entity, expression: string): unknown {
+  static entity(entity: Entity, expression: string, env: MolangEnvironment = {}): unknown {
     const dim = entity.dimension;
-    const env = {
+    let defaultEnv = {
       query: {
         target_x_rotation: entity.getRotation().x,
         target_y_rotation: entity.getRotation().y,
@@ -189,9 +165,7 @@ export abstract class MolangUtils {
         is_tamed: false,
         on_fire_time: 0,
         scoreboard(objectiveName: string): number {
-          return (
-            world.scoreboard.getObjective(objectiveName)?.getScore(entity) ?? 0
-          );
+          return world.scoreboard.getObjective(objectiveName)?.getScore(entity) ?? 0;
         },
         equipped_item_all_tags(slotName: string, ...tags: string[]): boolean {
           const equ = entity.getComponent("equippable");
@@ -224,13 +198,9 @@ export abstract class MolangUtils {
           if (!equ) return false;
           switch (slot) {
             case 0:
-              return (
-                equ.getEquipment(EquipmentSlot.Mainhand)?.matches(name) ?? false
-              );
+              return equ.getEquipment(EquipmentSlot.Mainhand)?.matches(name) ?? false;
             case 1:
-              return (
-                equ.getEquipment(EquipmentSlot.Offhand)?.matches(name) ?? false
-              );
+              return equ.getEquipment(EquipmentSlot.Offhand)?.matches(name) ?? false;
           }
           return false;
         },
@@ -278,102 +248,100 @@ export abstract class MolangUtils {
     const equ = entity.getComponent("equippable");
     if (equ) {
       const right = equ.getEquipment(EquipmentSlot.Mainhand);
-      env.variable.is_holding_right = right !== undefined;
+      defaultEnv.variable.is_holding_right = right !== undefined;
       if (right) {
         const durability = right.getComponent("durability");
-        env.query.main_hand_item_max_duration = durability?.maxDurability ?? 0;
+        defaultEnv.query.main_hand_item_max_duration = durability?.maxDurability ?? 0;
         if (right.matches("spyglass")) {
-          env.variable.is_holding_spyglass = true;
+          defaultEnv.variable.is_holding_spyglass = true;
         }
       }
 
       const left = equ.getEquipment(EquipmentSlot.Offhand);
-      env.variable.is_holding_left = left !== undefined;
+      defaultEnv.variable.is_holding_left = left !== undefined;
       if (left) {
         if (left.matches("spyglass")) {
-          env.variable.is_holding_spyglass = true;
+          defaultEnv.variable.is_holding_spyglass = true;
         }
       }
       const head = equ.getEquipment(EquipmentSlot.Head);
-      env.query.has_head_gear = head !== undefined;
+      defaultEnv.query.has_head_gear = head !== undefined;
     }
 
     const projectile = entity.getComponent("projectile");
     if (projectile) {
-      env.query.has_owner = projectile.owner !== undefined;
+      defaultEnv.query.has_owner = projectile.owner !== undefined;
     }
 
     const tameable = entity.getComponent("tameable");
     if (tameable) {
-      env.query.has_owner = tameable.tamedToPlayer !== undefined;
+      defaultEnv.query.has_owner = tameable.tamedToPlayer !== undefined;
     }
 
     const rideable = entity.getComponent("rideable");
     if (rideable) {
-      env.query.has_rider = rideable.getRiders().length !== 0;
-      env.query.has_player_rider = rideable
-        .getRiders()
-        .some((entity) => entity instanceof Player);
+      defaultEnv.query.has_rider = rideable.getRiders().length !== 0;
+      defaultEnv.query.has_player_rider = rideable.getRiders().some((entity) => entity instanceof Player);
     }
 
     const mov = entity.getComponent("movement");
     if (mov) {
-      env.query.ground_speed = mov.currentValue;
+      defaultEnv.query.ground_speed = mov.currentValue;
     }
 
     const health = entity.getComponent("health");
     if (health) {
-      env.query.heath = health.currentValue;
-      env.query.max_health = health.effectiveMax;
+      defaultEnv.query.heath = health.currentValue;
+      defaultEnv.query.max_health = health.effectiveMax;
     }
 
     const leashable = entity.getComponent("leashable");
     if (leashable) {
-      env.query.is_leashed = leashable.isLeashed;
+      defaultEnv.query.is_leashed = leashable.isLeashed;
     }
 
     const onfire = entity.getComponent("onfire");
     if (onfire) {
-      env.query.is_onfire = onfire.onFireTicksRemaining > 0;
-      env.query.on_fire_time = onfire.onFireTicksRemaining;
+      defaultEnv.query.is_onfire = onfire.onFireTicksRemaining > 0;
+      defaultEnv.query.on_fire_time = onfire.onFireTicksRemaining;
     }
 
-    env.query.mark_variant = entity.getComponent("mark_variant")?.value ?? 0;
-    env.query.variant = entity.getComponent("variant")?.value ?? 0;
-    env.query.skin_id = entity.getComponent("skin_id")?.value ?? 0;
-    env.query.model_scale = entity.getComponent("scale")?.value ?? 0;
+    defaultEnv.query.mark_variant = entity.getComponent("mark_variant")?.value ?? 0;
+    defaultEnv.query.variant = entity.getComponent("variant")?.value ?? 0;
+    defaultEnv.query.skin_id = entity.getComponent("skin_id")?.value ?? 0;
+    defaultEnv.query.model_scale = entity.getComponent("scale")?.value ?? 0;
 
-    env.query.is_baby = entity.getComponent("is_baby") !== undefined;
-    env.query.is_charged = entity.getComponent("is_charged") !== undefined;
-    env.query.is_chested = entity.getComponent("is_chested") !== undefined;
-    env.query.is_ignited = entity.getComponent("is_ignited") !== undefined;
-    env.query.is_illager_captain =
-      entity.getComponent("is_illager_captain") !== undefined;
-    env.query.is_fire_immune = entity.getComponent("fire_immune") !== undefined;
-    env.query.is_saddled = entity.getComponent("is_saddled") !== undefined;
-    env.query.is_shaking = entity.getComponent("is_shaking") !== undefined;
-    env.query.is_sheared = entity.getComponent("is_sheared") !== undefined;
-    env.query.is_stackable = entity.getComponent("is_stackable") !== undefined;
-    env.query.is_stunned = entity.getComponent("is_stunned") !== undefined;
-    env.query.is_tamed = entity.getComponent("is_tamed") !== undefined;
+    defaultEnv.query.is_baby = entity.getComponent("is_baby") !== undefined;
+    defaultEnv.query.is_charged = entity.getComponent("is_charged") !== undefined;
+    defaultEnv.query.is_chested = entity.getComponent("is_chested") !== undefined;
+    defaultEnv.query.is_ignited = entity.getComponent("is_ignited") !== undefined;
+    defaultEnv.query.is_illager_captain = entity.getComponent("is_illager_captain") !== undefined;
+    defaultEnv.query.is_fire_immune = entity.getComponent("fire_immune") !== undefined;
+    defaultEnv.query.is_saddled = entity.getComponent("is_saddled") !== undefined;
+    defaultEnv.query.is_shaking = entity.getComponent("is_shaking") !== undefined;
+    defaultEnv.query.is_sheared = entity.getComponent("is_sheared") !== undefined;
+    defaultEnv.query.is_stackable = entity.getComponent("is_stackable") !== undefined;
+    defaultEnv.query.is_stunned = entity.getComponent("is_stunned") !== undefined;
+    defaultEnv.query.is_tamed = entity.getComponent("is_tamed") !== undefined;
 
-    if (entity instanceof Player) MolangUtils.player(env, entity);
+    if (entity instanceof Player) MolangUtils.player(defaultEnv, entity);
 
-    MolangUtils.commonEnv(env, dim);
-    const molang = new Molang(env, { useCache: true });
+    defaultEnv = deepMerge(defaultEnv, env);
+    MolangUtils.commonEnv(defaultEnv, dim);
+    const molang = new Molang(defaultEnv, { useCache: true });
     return molang.execute(expression);
   }
 
   private static player(env: MolangEnvironment, player: Player): void {
+    if (!env.query) env.query = {};
+    if (!env.variable) env.variable = {};
     env.query.is_spectator = player.getGameMode() === GameMode.Spectator;
     env.query.is_jumping = player.isJumping;
     env.query.is_emoting = player.isEmoting;
     env.variable.player_x_rotation = player.getRotation().x;
     env.variable.player_y_rotation = player.getRotation().y;
-    env.query.client_max_render_distance =
-      player.clientSystemInfo.maxRenderDistance;
-    env.query.client_memory_tier =
-      player.clientSystemInfo.memoryTier.toString();
+    env.query.client_max_render_distance = player.clientSystemInfo.maxRenderDistance;
+    env.query.client_memory_tier = player.clientSystemInfo.memoryTier.toString();
     env.query.player_level = player.level;
     env.query.graphics_mode_is_any = (...modes: string[]): boolean => {
       return modes.some((mode) => mode === player.graphicsMode);
@@ -386,9 +354,9 @@ export abstract class MolangUtils {
   }
 
   private static commonEnv(env: MolangEnvironment, dim?: Dimension): void {
+    if (!env.query) env.query = {};
     env.query.day = world.getDay();
-    env.query.time_of_day =
-      ((((world.getTimeOfDay() * 0.25) / 2400) % 1) + 1) % 1;
+    env.query.time_of_day = ((((world.getTimeOfDay() * 0.25) / 2400) % 1) + 1) % 1;
     if (!dim) return;
     env.query.heightmap = (x: number, z: number) => {
       const blk = dim.getTopmostBlock({ x, z });

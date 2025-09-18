@@ -40,3 +40,5 @@ export * from "./toggleable";
 export * from "./vertical_slab";
 export * from "./wall";
 export * from "./waxable";
+export * from "./viscosity";
+export * from "./tile_entity";

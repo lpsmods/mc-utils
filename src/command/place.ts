@@ -10,9 +10,7 @@ export const placeCommand = {
   //   optionalParameters: [{ type: CustomCommandParamType.Integer, name: "celebrationSize" }],
 };
 
-export function executePlaceCommand(
-  ctx: CustomCommandOrigin,
-): CustomCommandResult | undefined {
+export function executePlaceCommand(ctx: CustomCommandOrigin): CustomCommandResult | undefined {
   console.warn("PLACE");
   return undefined;
 }

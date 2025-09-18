@@ -1,14 +1,13 @@
 import { Player, RawMessage, world } from "@minecraft/server";
 import { ModalFormData } from "@minecraft/server-ui";
-import { DataStorage } from "../misc/data_storage";
+import { DataStorage } from "../data_storage";
 import { TextUtils } from "../text";
 
 // TODO: Save options
 
 function t(text: string | RawMessage): string | RawMessage {
   if (typeof text !== "string") return text;
-  const content =
-    text.charAt(0) == "#" ? { translate: text.toString().slice(1) } : text;
+  const content = text.charAt(0) == "#" ? { translate: text.toString().slice(1) } : text;
   return TextUtils.renderMarkdown(content);
 }
 
@@ -36,12 +35,7 @@ export type FormResult = {
 };
 
 export class ModalFormOnSubmit extends ModalFormEvent {
-  constructor(
-    ui: ModalFormData,
-    player: Player,
-    formResult: FormResult,
-    ctx?: any,
-  ) {
+  constructor(ui: ModalFormData, player: Player, formResult: FormResult, ctx?: any) {
     super(ui, player, ctx);
     this.formResult = formResult;
   }
@@ -190,8 +184,7 @@ export class ModalFormHandler {
     // Show
     const res = ui.show(player);
     res.then((res) => {
-      if (res.canceled || res.formValues === undefined)
-        return this.form.onClose ? this.form.onClose(event) : undefined;
+      if (res.canceled || res.formValues === undefined) return this.form.onClose ? this.form.onClose(event) : undefined;
       const results: FormResult = {};
       for (const i in keys) {
         const v = res.formValues[i];

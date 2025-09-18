@@ -1,11 +1,4 @@
-import {
-  BlockType,
-  BlockTypes,
-  EntityType,
-  EntityTypes,
-  ItemType,
-  ItemTypes,
-} from "@minecraft/server";
+import { BlockType, BlockTypes, EntityType, EntityTypes, ItemType, ItemTypes } from "@minecraft/server";
 
 export abstract class AddonUtils {
   static addonId: string = "mcutils";
@@ -24,9 +17,7 @@ export abstract class AddonUtils {
    * @returns {BlockType[]}
    */
   static getBlockTypes(): BlockType[] {
-    return BlockTypes.getAll().filter((block) =>
-      block.id.startsWith(this.addonId + ":"),
-    );
+    return BlockTypes.getAll().filter((block) => block.id.startsWith(this.addonId + ":"));
   }
 
   /**
@@ -34,9 +25,7 @@ export abstract class AddonUtils {
    * @returns {ItemType[]}
    */
   static getItemTypes(): ItemType[] {
-    return ItemTypes.getAll().filter((item) =>
-      item.id.startsWith(this.addonId + ":"),
-    );
+    return ItemTypes.getAll().filter((item) => item.id.startsWith(this.addonId + ":"));
   }
 
   /**
@@ -44,8 +33,6 @@ export abstract class AddonUtils {
    * @returns {EntityType[]}
    */
   static getEntityTypes(): EntityType[] {
-    return EntityTypes.getAll().filter((entity) =>
-      entity.id.startsWith(this.addonId + ":"),
-    );
+    return EntityTypes.getAll().filter((entity) => entity.id.startsWith(this.addonId + ":"));
   }
 }

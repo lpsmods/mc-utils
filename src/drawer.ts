@@ -1,15 +1,11 @@
-import {
-  BlockPermutation,
-  Dimension,
-  LocationInUnloadedChunkError,
-  system,
-} from "@minecraft/server";
+import { BlockPermutation, Dimension, LocationInUnloadedChunkError, system, world } from "@minecraft/server";
 import { Ticking } from "./ticking";
 import { Vector3Utils } from "@minecraft/math";
 import { Shape } from "./shape";
+import { CENTER_ENTITY } from "./constants";
 
 export abstract class Drawer extends Ticking {
-  dimension: Dimension;
+  dimensionId: string;
   tickInterval?: number;
   removeWhenEmpty: boolean;
   private shapes: Shape[] = [];
@@ -17,18 +13,18 @@ export abstract class Drawer extends Ticking {
   /**
    * Create a new drawer context.
    * @param {number} tickInterval
-   * @param {Dimension} dimension
+   * @param {Dimension} dimensionId
    * @param {boolean} removeWhenEmpty Removes this drawer when it has no shapes to draw.
    */
-  constructor(
-    dimension: Dimension,
-    tickInterval?: number,
-    removeWhenEmpty: boolean = true,
-  ) {
+  constructor(dimensionId: string, tickInterval?: number, removeWhenEmpty: boolean = true) {
     super();
     this.removeWhenEmpty = removeWhenEmpty;
     this.tickInterval = tickInterval;
-    this.dimension = dimension;
+    this.dimensionId = dimensionId;
+  }
+
+  get dimension(): Dimension {
+    return world.getDimension(this.dimensionId);
   }
 
   /**
@@ -72,8 +68,7 @@ export abstract class Drawer extends Ticking {
           shape.remove();
         }
       }
-      if (this.tickInterval && system.currentTick % this.tickInterval === 0)
-        continue;
+      if (this.tickInterval && system.currentTick % this.tickInterval === 0) continue;
       if (shape.onTick) shape.onTick(shape);
       this.drawShape(shape);
     }
@@ -100,7 +95,7 @@ export class ParticleDrawer extends Drawer {
     var palette = shape.material ?? "minecraft:endrod";
     for (let pos of shape.getPoints()) {
       try {
-        pos = Vector3Utils.add(pos, { x: 0.5, y: 0, z: 0.5 });
+        pos = Vector3Utils.add(pos, CENTER_ENTITY);
         if (palette instanceof BlockPermutation) palette = "minecraft:endrod";
         this.dimension.spawnParticle(palette, pos);
       } catch (err) {}

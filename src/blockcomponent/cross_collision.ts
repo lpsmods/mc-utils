@@ -8,6 +8,7 @@ import {
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
 import { AddonUtils } from "../addon";
+import { create, defaulted, object, string, Struct } from "superstruct";
 
 export interface CrossCollisionOptions {
   north_state: keyof BlockStateSuperset;
@@ -17,7 +18,13 @@ export interface CrossCollisionOptions {
 }
 
 export class CrossCollisionComponent extends BlockBaseComponent {
-  static typeId = AddonUtils.makeId("cross_collision");
+  static readonly componentId = AddonUtils.makeId("cross_collision");
+  struct: Struct<any, any> = object({
+    north_state: defaulted(string(), 'mcutils:north'),
+    east_state: defaulted(string(), 'mcutils:east'),
+    south_state: defaulted(string(), 'mcutils:south'),
+    west_state: defaulted(string(), 'mcutils:west'),
+  });
 
   /**
    * Fence, Iron bars, and glass pane like behavior.
@@ -34,11 +41,8 @@ export class CrossCollisionComponent extends BlockBaseComponent {
 
   // EVENTS
 
-  onNeighborUpdate(
-    event: NeighborUpdateEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as CrossCollisionOptions;
+  onNeighborUpdate(event: NeighborUpdateEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as CrossCollisionOptions;
     if (!event.direction) return;
     if (this.isAttachable(event.sourceBlock)) {
       switch (event.direction.toLowerCase()) {
@@ -64,17 +68,11 @@ export class CrossCollisionComponent extends BlockBaseComponent {
     }
   }
 
-  onTick(
-    event: BlockComponentTickEvent,
-    args: CustomComponentParameters,
-  ): void {
+  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
     this.baseTick(event, args);
   }
 
-  onPlace(
-    event: BlockComponentOnPlaceEvent,
-    args: CustomComponentParameters,
-  ): void {
+  onPlace(event: BlockComponentOnPlaceEvent, args: CustomComponentParameters): void {
     this.basePlace(event, args);
   }
 }

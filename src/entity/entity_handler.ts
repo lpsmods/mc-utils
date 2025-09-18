@@ -11,20 +11,23 @@ import {
   EntityHurtAfterEvent,
   EntityLoadAfterEvent,
   EntitySpawnAfterEvent,
+  PlayerInteractWithEntityBeforeEvent,
 } from "@minecraft/server";
-import { MathUtils } from "../math";
+
 import { RandomUtils } from "../random";
 import {
   EntityDismountEvent,
   EntityEvents,
   EntityFallOnEvent,
-  EntityInventoryChangedEvent,
   EntityMountEvent,
   EntityMovedEvent,
   EntityStepOffEvent,
   EntityStepOnEvent,
   EntityTickEvent,
 } from "../event/entity";
+import { forAllDimensions } from "../utils";
+
+let initialized = false;
 
 // TODO: Error when falling block falls from a high height.
 export class EntityHandler {
@@ -33,41 +36,58 @@ export class EntityHandler {
   entity?: Entity;
   readonly id: string;
 
-  constructor(options: EntityQueryOptions, id?: string) {
+  constructor(options: EntityQueryOptions, handleId?: string) {
     this.options = options;
-    this.id = id ?? RandomUtils.id(4);
+    this.id = handleId ?? RandomUtils.id(4);
     EntityHandler.all.set(this.id, this);
+    if (!initialized) init();
+  }
+
+  /**
+   * Remove all entities from the world.
+   */
+  removeAll(): void {
+    this.getEntities().forEach((entity) => entity.remove());
+  }
+
+  /**
+   * Get all entities from all dimensions
+   * @param {EntityQueryOptions} options Additional options
+   * @returns {Entity[]}
+   */
+  getEntities(options?: EntityQueryOptions): Entity[] {
+    const results: Entity[] = [];
+    forAllDimensions((dim) => {
+      for (const entity of dim.getEntities({ ...this.options, ...(options ?? {}) })) {
+        results.push(entity);
+      }
+    });
+    return results;
   }
 
   /**
    * Unregister api events.
    */
-  remove(): void {
+  delete(): void {
     EntityHandler.all.delete(this.id);
   }
 
   // CUSTOM EVENTS
 
   /**
-   * This function will be called when a entity mounts another entity.
+   * Fires when a entity mounts another entity.
    * @param {EntityMountEnterEvent} event
    */
   onMount?(event: EntityMountEvent): void {}
 
   /**
-   * This function will be called when a entity dismounts another entity.
+   * Fires when a entity dismounts another entity.
    * @param {EntityMountExitEvent} event
    */
   onDismount?(event: EntityDismountEvent): void {}
 
   /**
-   * This function will be called when a entity's inventory changes.
-   * @param {EntityInventoryChangedEvent} event
-   */
-  onInventoryChanged?(event: EntityInventoryChangedEvent): void {}
-
-  /**
-   * This function will be called when a entity moves.
+   * Fires when a entity moves.
    * @param {EntityMovedEvent} event
    */
   onMoved?(event: EntityMovedEvent): void {}
@@ -75,93 +95,94 @@ export class EntityHandler {
   // EVENTS
 
   /**
-   * This function will be called when a entity ticks.
+   * Fires when a entity ticks.
    * @param {EntityTickEvent} event
    */
   onTick?(event: EntityTickEvent): void {}
 
   /**
-   * This function will be called when a player interacts with a entity.
+   * Fires when a player interacts with a entity.
    * @param {PlayerInteractWithEntityAfterEvent} event
    */
-  onPlayerInteract?(event: PlayerInteractWithEntityAfterEvent): void {}
+  onInteract?(event: PlayerInteractWithEntityAfterEvent): void {}
 
   /**
-   * This function will be called when a entity is removed.
+   * Fires before a player interacts with an entity.
+   * @param {PlayerInteractWithEntityBeforeEvent} event
+   */
+  onBeforeInteract?(event: PlayerInteractWithEntityBeforeEvent): void {}
+
+  /**
+   * Fires when a entity is removed.
    * @param {EntityRemoveBeforeEvent} event
    */
   onRemove?(event: EntityRemoveBeforeEvent): void {}
 
   /**
-   * This function will be called when a entity dies.
+   * Fires when a entity dies.
    * @param {EntityDieAfterEvent} event
    */
   onDie?(event: EntityDieAfterEvent): void {}
 
   /**
-   * This function will be called when a entity's health has changed.
+   * Fires when a entity's health has changed.
    * @param {EntityHealthChangedAfterEvent} event
    */
   onHealthChanged?(event: EntityHealthChangedAfterEvent): void {}
 
   /**
-   * This function will be called when a entity hits a block.
+   * Fires when a entity hits a block.
    * @param {EntityHitBlockAfterEvent} event
    */
   onHitBlock?(event: EntityHitBlockAfterEvent): void {}
 
   /**
-   *  This function will be called when a entity hits another entity.
+   *  Fires when a entity hits another entity.
    * @param {EntityHitEntityAfterEvent} event
    */
   onHitEntity?(event: EntityHitEntityAfterEvent): void {}
 
   /**
-   * This function will be called when a entity is hurt.
+   * Fires when a entity is hurt.
    * @param {EntityHurtAfterEvent} event
    */
   onHurt?(event: EntityHurtAfterEvent): void {}
 
   /**
-   * This function will be called when a entity is loaded.
+   * Fires when a entity is loaded.
    * @param {EntityLoadAfterEvent} event
    */
   onLoad?(event: EntityLoadAfterEvent): void {}
 
   /**
-   * This function will be called when a entity spawned.
+   * Fires when a entity spawned.
    * @param {EntitySpawnAfterEvent} event
    */
   onSpawn?(event: EntitySpawnAfterEvent): void {}
 
   /**
-   * This function will be called when a entity falls on a block.
+   * Fires when a entity falls on a block.
    * @param {EntityFallOnEvent} event
    */
   onFallOn?(event: EntityFallOnEvent): void {}
 
   /**
-   * This function will be called when a entity steps on a block.
+   * Fires when a entity steps on a block.
    * @param {EntityStepOnEvent} event
    */
   onStepOn?(event: EntityStepOnEvent): void {}
 
   /**
-   * This function will be called when a entity steps off a block.
+   * Fires when a entity steps off a block.
    * @param {EntityStepOffEvent} event
    */
   onStepOff?(event: EntityStepOffEvent): void;
 }
 
-function callHandle(
-  name: string,
-  entity: Entity | undefined,
-  event: any,
-): void {
+function callHandle(name: string, entity: Entity | undefined, event: any): void {
   if (!entity) return;
   for (const handler of EntityHandler.all.values()) {
-    if (!entity || !entity.isValid || !entity.matches(handler.options ?? {}))
-      continue;
+    if (!entity || !entity.isValid || !entity.matches(handler.options ?? {})) continue;
     const func = handler[name as keyof EntityHandler];
     if (!func) continue;
     if (typeof func !== "function") continue;
@@ -169,12 +190,11 @@ function callHandle(
   }
 }
 
-function setup() {
+function init() {
+  initialized = true;
+
   // CUSTOM EVENTS
 
-  EntityEvents.playerInventoryChanged.subscribe((event) => {
-    callHandle("onInventoryChanged", event.entity, event);
-  });
   EntityEvents.mount.subscribe((event) => {
     callHandle("onMount", event.entity, event);
   });
@@ -200,7 +220,10 @@ function setup() {
   // EVENTS
 
   world.afterEvents.playerInteractWithEntity.subscribe((event) => {
-    callHandle("onPlayerInteract", event.player, event);
+    callHandle("onInteract", event.target, event);
+  });
+  world.beforeEvents.playerInteractWithEntity.subscribe((event) => {
+    callHandle("onBeforeInteract", event.target, event);
   });
   world.beforeEvents.entityRemove.subscribe((event) => {
     callHandle("onRemove", event.removedEntity, event);
@@ -227,5 +250,3 @@ function setup() {
     callHandle("onSpawn", event.entity, event);
   });
 }
-
-setup();

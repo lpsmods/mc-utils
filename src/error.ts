@@ -1,7 +1,4 @@
-import {
-  LocationInUnloadedChunkError,
-  LocationOutOfWorldBoundariesError,
-} from "@minecraft/server";
+import { LocationInUnloadedChunkError, LocationOutOfWorldBoundariesError } from "@minecraft/server";
 
 export class ErrorUtils {
   /**
@@ -31,18 +28,14 @@ export class ErrorUtils {
     } catch (err) {
       if (!err) return;
       for (const error of errors) {
-        if (error && typeof error === "function" && err instanceof error)
-          return;
+        if (error && typeof error === "function" && err instanceof error) return;
       }
       throw err;
     }
   }
 
   static tryPos<T>(callback: () => T): T | undefined {
-    return this.wrapCatchAll<T>(
-      [LocationInUnloadedChunkError, LocationOutOfWorldBoundariesError],
-      callback,
-    );
+    return this.wrapCatchAll<T>([LocationInUnloadedChunkError, LocationOutOfWorldBoundariesError], callback);
   }
 }
 
@@ -64,9 +57,7 @@ export class ValidationError extends Error {
   }
 
   toString(): string {
-    return this.issues
-      .map((issue) => `• ${issue.path}: ${issue.message}`)
-      .join("\n");
+    return this.issues.map((issue) => `• ${issue.path}: ${issue.message}`).join("\n");
   }
 
   toJSON(): object {
@@ -77,12 +68,7 @@ export class ValidationError extends Error {
     };
   }
 
-  static valueError(
-    issues: ValidationIssue[],
-    path: string,
-    value: any,
-    types: string[],
-  ): boolean {
+  static valueError(issues: ValidationIssue[], path: string, value: any, types: string[]): boolean {
     const type = typeof value;
     if (types.includes(type)) return true;
     issues.push({
@@ -92,12 +78,7 @@ export class ValidationError extends Error {
     return false;
   }
 
-  static optionalValueError(
-    issues: ValidationIssue[],
-    path: string,
-    value: any,
-    types: string[],
-  ): boolean {
+  static optionalValueError(issues: ValidationIssue[], path: string, value: any, types: string[]): boolean {
     types.push("undefined");
     return this.valueError(issues, path, value, types);
   }

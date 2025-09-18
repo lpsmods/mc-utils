@@ -1,12 +1,20 @@
 import {
   BlockComponentPlayerInteractEvent,
+  BlockComponentTickEvent,
   CustomComponentParameters,
+  Entity,
+  EntityDamageCause,
+  system,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { ItemUtils } from "../item/utils";
 import { BlockUtils } from "../block/utils";
-import { Identifier } from "../misc/identifier";
+import { Identifier } from "../identifier";
 import { AddonUtils } from "../addon";
+import { BlockBaseComponent } from "./base";
+import { EntityInBlockTickEvent } from "../event";
+import { Hasher } from "../type";
+import { array, create, defaulted, object, optional, string, Struct } from "superstruct";
 
 export interface BushOptions {
   growth_state: keyof BlockStateSuperset;
@@ -32,58 +40,65 @@ export class HarvestLootTable {
   }
 }
 
-export class BushComponent {
-  static typeId = AddonUtils.makeId("bush");
+export class BushComponent extends BlockBaseComponent {
+  static readonly componentId = AddonUtils.makeId("bush");
+  struct: Struct<any, any> = object({
+    growth_state: defaulted(string(), "mcutils:growth"),
+    loot_tables: optional(array(string())),
+  });
 
   /**
    * Vanilla bush block behavior.
    */
   constructor() {
+    super();
+    this.onTick = this.onTick.bind(this);
     this.onPlayerInteract = this.onPlayerInteract.bind(this);
   }
 
-  // getItem(block: Block, options: BushOptions) {
-  //   return options.item ?? "minecraft:sweet_berries";
-  // }
-
-  pickBush(
-    event: BlockComponentPlayerInteractEvent,
-    options: BushOptions,
-  ): void {
+  pickBush(event: BlockComponentPlayerInteractEvent, options: BushOptions): void {
     const id = Identifier.parse(event.block);
     const growth = event.block.permutation.getState(options.growth_state);
     const lootTables = HarvestLootTable.parseAll(
-      options.loot_tables ?? [
-        `2,${id.namespace}/harvest/${id.path}_2`,
-        `3,${id.namespace}/harvest/${id.path}_3`,
-      ],
+      options.loot_tables ?? [`2,${id.namespace}/harvest/${id.path}_2`, `3,${id.namespace}/harvest/${id.path}_3`],
     );
     const { x, y, z } = event.block.location;
     var success = false;
 
     for (const lootTable of lootTables) {
       if (lootTable.growth !== growth) continue;
-      event.dimension.runCommand(
-        `loot spawn ${x} ${y} ${z} loot "${lootTable.lootTable}"`,
-      );
+      event.dimension.runCommand(`loot spawn ${x} ${y} ${z} loot "${lootTable.lootTable}"`);
       success = true;
     }
     if (!success) return;
-    event.dimension.playSound(
-      "block.sweet_berry_bush.pick",
-      event.block.location,
-    );
+    event.dimension.playSound("block.sweet_berry_bush.pick", event.block.location);
     BlockUtils.setState(event.block, options.growth_state, 1);
+  }
+
+  moved(entity: Entity) {
+    if (system.currentTick % 10 !== 0) return;
+    entity.applyDamage(1, { cause: EntityDamageCause.contact });
   }
 
   // EVENTS
 
-  onPlayerInteract(
-    event: BlockComponentPlayerInteractEvent,
-    args: CustomComponentParameters,
-  ): void {
-    const options = args.params as BushOptions;
+  onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
+    const options = create(args.params, this.struct) as BushOptions;
+
     if (ItemUtils.isHolding(event.player, "bone_meal")) return;
     this.pickBush(event, options);
+  }
+
+  onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
+    this.enterLeaveTick(event, args);
+  }
+
+  inBlockTick(event: EntityInBlockTickEvent, args: CustomComponentParameters): void {
+    const pos = Hasher.stringify(event.entity.location);
+    const lastPos = (event.entity.getDynamicProperty("mcutils:bush.lastPos") as string) ?? undefined;
+    if (pos !== lastPos) {
+      event.entity.setDynamicProperty("mcutils:bush.lastPos", pos);
+      this.moved(event.entity);
+    }
   }
 }

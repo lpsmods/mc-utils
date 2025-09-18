@@ -2,15 +2,7 @@
  * Generic types.
  */
 
-import {
-  Block,
-  Container,
-  ItemStack,
-  Vector2,
-  Vector3,
-  VectorXZ,
-  world,
-} from "@minecraft/server";
+import { Block, Container, ItemStack, Vector2, Vector3, VectorXZ, world } from "@minecraft/server";
 import { Chunk } from "./world/chunk";
 
 export enum TypingTypes {
@@ -24,9 +16,7 @@ export enum TypingTypes {
 }
 
 export class Typing {
-  static get(
-    value: Vector3 | Vector2 | VectorXZ | Container | Block | ItemStack | Chunk,
-  ): TypingTypes | undefined {
+  static get(value: Vector3 | Vector2 | VectorXZ | Container | Block | ItemStack | Chunk): TypingTypes | undefined {
     if (value instanceof Container) return TypingTypes.Container;
     if (value instanceof Block) return TypingTypes.Block;
     if (value instanceof ItemStack) return TypingTypes.ItemStack;
@@ -84,9 +74,7 @@ export class Hasher {
     return new Chunk(world.getDimension(dim), location);
   }
 
-  static stringify(
-    value: Vector3 | Vector2 | VectorXZ | Container | Block | Chunk | undefined,
-  ): string | undefined {
+  static stringify(value: Vector3 | Vector2 | VectorXZ | Container | Block | Chunk | undefined): string | undefined {
     if (!value) return value;
     const t = Typing.get(value);
     switch (t) {

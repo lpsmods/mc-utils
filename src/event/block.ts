@@ -1,9 +1,9 @@
 // TODO: Implement
 
-import { Block, Dimension, Entity } from "@minecraft/server";
+import { Block, Dimension } from "@minecraft/server";
 import { EventSignal } from "./utils";
 
-export class BlockEvent {
+export abstract class BlockEvent {
   constructor(block: Block, dimension?: Dimension) {
     this.block = block;
     this.dimension = dimension ?? block.dimension;
@@ -14,17 +14,8 @@ export class BlockEvent {
 }
 
 export class BlockNearbyEntityTickEvent extends BlockEvent {}
-export class BlockNeighborUpdateEvent extends BlockEvent {}
-export class BlockEnterEvent extends BlockEvent {}
-export class BlockLeaveEvent extends BlockEvent {}
-export class InBlockTickEvent extends BlockEvent {
-  constructor(block: Block, source: Entity) {
-    super(block);
-    this.source = source;
-  }
 
-  readonly source: Entity;
-}
+export class BlockNeighborUpdateEvent extends BlockEvent {}
 
 export class BlockNearbyEntityTickEventSignal extends EventSignal<BlockNearbyEntityTickEvent> {
   constructor() {
@@ -36,51 +27,29 @@ export class BlockNeighborUpdateEventSignal extends EventSignal<BlockNeighborUpd
     super();
   }
 }
-export class BlockEnterEventSignal extends EventSignal<BlockEnterEvent> {
-  constructor() {
-    super();
-  }
-}
-export class BlockLeaveEventSignal extends EventSignal<BlockLeaveEvent> {
-  constructor() {
-    super();
-  }
-}
-export class InBlockTickEventSignal extends EventSignal<InBlockTickEvent> {
-  constructor() {
-    super();
-  }
-}
-
+/**
+ * Custom block events.
+ */
 export class BlockEvents {
   private constructor() {}
 
   /**
    * This event fires every tick a entity is near a block.
+   * @eventProperty
    */
   static readonly nearbyEntityTick = new BlockNearbyEntityTickEventSignal();
 
   /**
    * This event fires when a block has updated.
+   * @eventProperty
    */
   static readonly neighborUpdate = new BlockNeighborUpdateEventSignal();
 
-  /**
-   * This event fires when an entity enters a block.
-   */
-  static readonly enter = new BlockEnterEventSignal();
-
-  /**
-   * This event fires when a entity leaves a block.
-   */
-  static readonly leave = new BlockLeaveEventSignal();
-
-  /**
-   * This event fires every tick a entity is in a block.
-   */
-  static readonly inBlockTick = new InBlockTickEventSignal();
+  static get size(): number {
+    return this.nearbyEntityTick.size + this.neighborUpdate.size;
+  }
 }
 
-function setup(): void {}
+function init() {}
 
-setup();
+init();

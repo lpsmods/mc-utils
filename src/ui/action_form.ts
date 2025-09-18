@@ -68,8 +68,7 @@ export interface ActionForm {
 
 function t(text: string | RawMessage): string | RawMessage {
   if (typeof text !== "string") return text;
-  const content =
-    text.charAt(0) == "#" ? { translate: text.toString().slice(1) } : text;
+  const content = text.charAt(0) == "#" ? { translate: text.toString().slice(1) } : text;
   return TextUtils.renderMarkdown(content);
 }
 
@@ -109,12 +108,10 @@ export class ActionFormHandler {
     if (this.form.buttons) {
       for (const btn of this.form.buttons) {
         if (btn.condition && !btn.condition(event)) continue;
-        if (btn.top_margin)
-          for (let c = 0; c < btn.top_margin; c++) ui.label("");
+        if (btn.top_margin) for (let c = 0; c < btn.top_margin; c++) ui.label("");
         if (btn.top_divider) ui.divider();
         ui.button(t(btn.label), btn.icon);
-        if (btn.bottom_margin)
-          for (let c = 0; c < btn.bottom_margin; c++) ui.label("");
+        if (btn.bottom_margin) for (let c = 0; c < btn.bottom_margin; c++) ui.label("");
         if (btn.bottom_divider) ui.divider();
         btns.push(btn);
       }

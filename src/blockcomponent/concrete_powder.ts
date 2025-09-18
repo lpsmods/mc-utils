@@ -1,11 +1,9 @@
-import {
-  Block,
-  BlockComponentTickEvent,
-  CustomComponentParameters,
-} from "@minecraft/server";
+import { Block, BlockComponentTickEvent, CustomComponentParameters } from "@minecraft/server";
 import { BlockUtils } from "../block/utils";
 import { BlockBaseComponent } from "./base";
 import { AddonUtils } from "../addon";
+import { create, object, optional, Struct } from "superstruct";
+import { isBlock } from "../validation";
 
 export interface ConcretePowderOptions {
   block?: string;
@@ -13,7 +11,10 @@ export interface ConcretePowderOptions {
 
 // TODO: Add gravity
 export class ConcretePowderComponent extends BlockBaseComponent {
-  static typeId = AddonUtils.makeId("concrete_powder");
+  static readonly componentId = AddonUtils.makeId("concrete_powder");
+  struct: Struct<any, any> = object({
+    block: optional(isBlock),
+  });
 
   /**
    * Vanilla concrete powder block behavior.
@@ -46,11 +47,8 @@ export class ConcretePowderComponent extends BlockBaseComponent {
   // EVENTS
 
   onTick(event: BlockComponentTickEvent, args: CustomComponentParameters) {
-    const options = args.params as ConcretePowderOptions;
+    const options = create(args.params, this.struct) as ConcretePowderOptions;
     if (!this.hasWater(event.block)) return;
-    BlockUtils.setType(
-      event.block,
-      this.getConcreteBlock(event.block, options),
-    );
+    BlockUtils.setType(event.block, this.getConcreteBlock(event.block, options));
   }
 }

@@ -25,12 +25,7 @@ export class StateController extends Ticking {
   currentState: string;
   states: { [key: string]: State };
 
-  constructor(
-    defaultState: string = "default",
-    tickInterval?: number,
-    prefix?: string,
-    id?: string,
-  ) {
+  constructor(defaultState: string = "default", tickInterval?: number, prefix?: string, id?: string) {
     super(tickInterval);
     this.id = `${prefix}.${id ?? this.#lastId++}`;
     this.defaultState = defaultState;

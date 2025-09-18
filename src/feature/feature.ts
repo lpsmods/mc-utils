@@ -2,7 +2,6 @@ import {
   Dimension,
   Entity,
   LocationInUnloadedChunkError,
-  LocationOutOfWorldBoundariesError,
   Structure,
   StructurePlaceOptions,
   StructureRotation,
@@ -17,7 +16,6 @@ import { Vector3Utils } from "@minecraft/math";
 import { ErrorUtils } from "../error";
 import { BlockUtils } from "../block/utils";
 import { REPLACEABLE_BLOCKS } from "../constants";
-import { FeatureUtils } from "./utils";
 
 export interface FeatureOptions {
   offset?: Vector3;
@@ -25,8 +23,11 @@ export interface FeatureOptions {
   debug?: boolean;
 }
 
+/**
+ * Defines a custom feature.
+ */
 export class Feature {
-  static typeId: string | null = "feature";
+  static readonly typeId: string;
   id: string | null = null;
   handler: FeatureHandler | null = null;
   readonly options: FeatureOptions;
@@ -98,9 +99,7 @@ export class Feature {
   debug(event: FeaturePlaceEvent): void {
     if (!this.options.debug) return;
     event.dimension.setBlockType(event.location, "lime_stained_glass");
-    console.log(
-      `Generated feature '${this.id}' at ${Hasher.stringify(event.location)}`,
-    );
+    console.log(`Generated feature '${this.id}' at ${Hasher.stringify(event.location)}`);
   }
 
   /**
@@ -108,8 +107,7 @@ export class Feature {
    * @param {FeaturePlaceEvent} event
    */
   *place(event: FeaturePlaceEvent): Generator<void, void, void> {
-    if (!this.handler)
-      throw new Error(`FeatureHandler not found for feature '${this.id}'`);
+    if (!this.handler) throw new Error(`FeatureHandler not found for feature '${this.id}'`);
     this.debug(event);
   }
 
@@ -182,12 +180,7 @@ export class StructureTemplate extends Feature {
       }
     }
 
-    world.structureManager.place(
-      this.structureName,
-      event.dimension,
-      event.location,
-      sOptions,
-    );
+    world.structureManager.place(this.structureName, event.dimension, event.location, sOptions);
     this.debug(event);
   }
 }
@@ -222,18 +215,12 @@ export class WeightedRandomFeature extends Feature {
     return res;
   }
 
-  addFeature(
-    identifier: string | Feature,
-    weight: number = 1,
-  ): WeightedRandomFeature {
+  addFeature(identifier: string | Feature, weight: number = 1): WeightedRandomFeature {
     this.features.add([identifier.toString(), weight]);
     return this;
   }
 
-  removeFeature(
-    identifier: string | Feature,
-    weight: number = 1,
-  ): WeightedRandomFeature {
+  removeFeature(identifier: string | Feature, weight: number = 1): WeightedRandomFeature {
     this.features.delete([identifier.toString(), weight]);
     return this;
   }
@@ -241,11 +228,7 @@ export class WeightedRandomFeature extends Feature {
   *place(event: FeaturePlaceEvent): Generator<void, void, void> {
     if (!this.handler) return;
     if (!this.nextFeature || !this.nextFeature.id) return;
-    this.handler.placeFeature(
-      this.nextFeature.id,
-      event.dimension,
-      event.location,
-    );
+    this.handler.placeFeature(this.nextFeature.id, event.dimension, event.location);
     this.debug(event);
   }
 }
@@ -260,11 +243,7 @@ export class ExtendedFeature extends Feature {
   static readonly typeId = "extended_feature";
   featureName: string;
   blockType: string;
-  constructor(
-    featureName: string,
-    blockType?: string,
-    options?: FeatureOptions,
-  ) {
+  constructor(featureName: string, blockType?: string, options?: FeatureOptions) {
     super(options);
     this.featureName = featureName;
     this.blockType = blockType ?? "cobblestone";

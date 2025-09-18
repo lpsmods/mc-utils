@@ -27,19 +27,31 @@ export function locationToChunk(location: Vector3): VectorXZ {
 }
 
 export abstract class WorldUtils {
-  private static biome2Name(
-    biomeId: number,
-    biomeMap?: { [key: string]: number },
-  ): string | undefined {
+  /**
+   * Convert the biomeId to the name.
+   * @param {number} biomeId
+   * @param {object} biomeMap
+   * @returns {string|undefined}
+   */
+  private static biome2Name(biomeId: number, biomeMap?: { [key: string]: number }): string | undefined {
     for (const [k, v] of Object.entries(biomeMap ?? BIOME_MAP)) {
       if (v === biomeId) return k;
     }
     return undefined;
   }
 
+  // TODO: Get seed
+  /**
+   * The world seed. (Returns 0)
+   * @returns {number}
+   */
+  static getSeed(): number {
+    return 0;
+  }
+
   // TODO: Cache 4x4x4 areas.
   /**
-   * Returns the ID of the biome.
+   * @deprecated This will be replaced with Dimension.getBiome (2.4.0)
    * @param {Dimension} dimension
    * @param {Vector3} location
    * @param {string} entityId
@@ -51,23 +63,14 @@ export abstract class WorldUtils {
     location: Vector3,
     entityId?: string,
     propertyName?: string,
-    biomeMap?: { [key: string]: number },
+    biomeMap?: { [key: string]: number }
   ): Biome | undefined {
-    const entity = dimension.spawnEntity(
-      entityId ?? "mcutils:biome_checker",
-      location,
-    );
-    const biome =
-      (entity.getProperty(propertyName ?? "mcutils:biome") as number) ?? 0;
+    const entity = dimension.spawnEntity(entityId ?? "mcutils:biome_checker", location);
+    const biome = (entity.getProperty(propertyName ?? "mcutils:biome") as number) ?? 0;
     entity.remove();
     const typeId = this.biome2Name(biome, biomeMap);
     if (!typeId) return undefined;
     return new Biome(typeId);
-  }
-
-  // TODO
-  static getSeed(): number {
-    return 0;
   }
 
   /**
@@ -77,11 +80,7 @@ export abstract class WorldUtils {
    * @param {*} defaultValue
    * @returns
    */
-  static tryGetScore(
-    objective: ScoreboardObjective,
-    name: ScoreboardIdentity,
-    defaultValue?: any,
-  ): number {
+  static tryGetScore(objective: ScoreboardObjective, name: ScoreboardIdentity, defaultValue?: any): number {
     try {
       var o = objective.getScore(name);
       if (o == undefined) return defaultValue;
@@ -140,27 +139,22 @@ export abstract class WorldUtils {
   }
 
   /**
-   * Convert direction to an axis.
-   * @param {string} dir
-   * @returns {string}
+   * Returns the primary cardinal direction from one location to another.
+   * @param {Vector3} origin
+   * @param {Vector3} target
+   * @returns {Direction|undefined}
    */
-  static getAxis(dir: string | undefined): string {
-    if (!dir) {
-      return "x";
-    }
-    if (typeof dir == "number") dir = WorldUtils.num2dir(dir);
-    switch (dir.toLowerCase()) {
-      case "north":
-      case "south":
-        return "x";
-      case "east":
-      case "west":
-        return "z";
-      case "top":
-      case "bottom":
-        return "y";
-      default:
-        return "x";
+  static relDir(origin: Vector3, target: Vector3): Direction | undefined {
+    const dx = target.x - origin.x;
+    const dy = target.y - origin.y;
+    const dz = target.z - origin.z;
+    if (dx === 0 && dy === 0 && dz === 0) return undefined;
+    if (Math.abs(dx) >= Math.abs(dy) && Math.abs(dx) >= Math.abs(dz)) {
+      return dx > 0 ? Direction.West : Direction.East;
+    } else if (Math.abs(dz) >= Math.abs(dx) && Math.abs(dz) >= Math.abs(dy)) {
+      return dz > 0 ? Direction.North : Direction.South;
+    } else {
+      return dy > 0 ? Direction.Down : Direction.Up;
     }
   }
 
@@ -193,6 +187,31 @@ export abstract class WorldUtils {
         return Direction.Up;
       default:
         return Direction.North;
+    }
+  }
+
+  /**
+   * Convert direction to an axis.
+   * @param {string} dir
+   * @returns {string}
+   */
+  static dir2Axis(dir: string | undefined): string {
+    if (!dir) {
+      return "x";
+    }
+    if (typeof dir == "number") dir = WorldUtils.num2dir(dir);
+    switch (dir.toLowerCase()) {
+      case "north":
+      case "south":
+        return "x";
+      case "east":
+      case "west":
+        return "z";
+      case "top":
+      case "bottom":
+        return "y";
+      default:
+        return "x";
     }
   }
 
@@ -304,14 +323,8 @@ export abstract class WorldUtils {
    * @param {Block} block
    * @returns {boolean}
    */
-  static trySetBlockType(
-    dimension: Dimension,
-    location: Vector3,
-    block: string,
-  ): void | undefined {
-    return ErrorUtils.wrapCatch<void>(LocationInUnloadedChunkError, () =>
-      dimension.setBlockType(location, block),
-    );
+  static trySetBlockType(dimension: Dimension, location: Vector3, block: string): void | undefined {
+    return ErrorUtils.wrapCatch<void>(LocationInUnloadedChunkError, () => dimension.setBlockType(location, block));
   }
 
   /**
@@ -324,10 +337,10 @@ export abstract class WorldUtils {
   static trySetBlockPermutation(
     dimension: Dimension,
     location: Vector3,
-    blockPermutation: BlockPermutation,
+    blockPermutation: BlockPermutation
   ): void | undefined {
     return ErrorUtils.wrapCatch<void>(LocationInUnloadedChunkError, () =>
-      dimension.setBlockPermutation(location, blockPermutation),
+      dimension.setBlockPermutation(location, blockPermutation)
     );
   }
 }
