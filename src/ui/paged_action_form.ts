@@ -1,9 +1,7 @@
-import { BlockTypes, EntityTypes, ItemTypes, Player, RawMessage, world } from "@minecraft/server";
+import { Player, RawMessage, world } from "@minecraft/server";
 import { ActionButton, ActionForm, ActionFormEvent, ActionFormHandler } from "./action_form";
 import { deepCopy } from "../utils";
 import { ValidationError, ValidationIssue } from "../error";
-import { AddonUtils } from "../addon";
-import { Identifier } from "../misc";
 
 export interface PageButton extends ActionButton {
   pageId?: string;
