@@ -13,12 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added custom block and item tags.
 - `WorldUtils.getBiome` caches biomes.
 
-## Fixes
+### Fixes
 
 - `movedTick` or `entityTick` no longer throws `LocationOutOfWorldBoundariesError`
 - `EntityLootHandler` no longer throws `InvalidActorError`
 
-## API
+### API
 
 - Added AreaDetectorOptions
 - Added ChunkUtils
