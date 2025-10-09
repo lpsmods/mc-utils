@@ -136,7 +136,7 @@ export class ProgressBar extends Ticking {
   private getBar(player: Player): string {
     let sf = this.style.fill;
     let se = this.style.empty;
-    let sw = (this.style.scale ?? 1.0) * 20; // TODO: Change 20 depending on isMobile.
+    let sw = (this.style.scale ?? 1.0) * 20;
     let slc = this.style.leftCap ?? "";
     let src = this.style.rightCap ?? "";
     const ratio = this.maxValue > 0 ? clampNumber(this.value / this.maxValue, 0, 1) : this.value > 0 ? 1 : 0;

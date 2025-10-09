@@ -1,4 +1,5 @@
 import { Dimension, system, Vector3, world, BlockPermutation } from "@minecraft/server";
+import { DataUtils } from "../data";
 
 type Request =
   | {
@@ -155,18 +156,10 @@ export class ChunkQueue {
    * */
   private save() {
     try {
-      const existing = (world.getDynamicProperty("dimQueue:data") as string) || "[]";
-      let allRequests: Request[] = [];
-      try {
-        allRequests = JSON.parse(existing);
-      } catch {
-        allRequests = [];
-      }
-
-      const others = allRequests.filter((r) => r.dimensionId !== this.dimensionId);
+      const data = DataUtils.getDynamicProperty(world, "dimQueue:data", []) as Request[];
+      const others = data.filter((r) => r.dimensionId !== this.dimensionId);
       const merged = [...others, ...this.requests];
-
-      world.setDynamicProperty("dimQueue:data", JSON.stringify(merged));
+      DataUtils.setDynamicProperty(world, "dimQueue:data", merged);
     } catch (e) {
       console.warn("Failed to save queue:", e);
     }
@@ -177,11 +170,8 @@ export class ChunkQueue {
    * */
   private load() {
     try {
-      const data = world.getDynamicProperty("dimQueue:data") as string;
-      if (data) {
-        const allRequests: Request[] = JSON.parse(data);
-        this.requests = allRequests.filter((r) => r.dimensionId === this.dimensionId);
-      }
+      const data = DataUtils.getDynamicProperty(world, "dimQueue:data", []) as Request[];
+      this.requests = data.filter((r) => r.dimensionId === this.dimensionId);
     } catch (e) {
       console.warn("Failed to load queue:", e);
       this.requests = [];

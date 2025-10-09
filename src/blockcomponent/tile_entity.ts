@@ -2,6 +2,7 @@ import {
   Block,
   BlockComponentOnPlaceEvent,
   BlockComponentPlayerBreakEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
   Entity,
 } from "@minecraft/server";
@@ -16,7 +17,7 @@ export interface TileEntityOptions {
   entity: string;
 }
 
-export class TileEntityComponent extends BlockBaseComponent {
+export class TileEntityComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("tile_entity");
   struct: Struct<any, any> = object({
     entity: isEntity,

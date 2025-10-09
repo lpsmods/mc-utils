@@ -1,4 +1,4 @@
-import { ItemUseOnEvent, Block, CustomComponentParameters } from "@minecraft/server";
+import { ItemUseOnEvent, Block, CustomComponentParameters, ItemCustomComponent } from "@minecraft/server";
 import { ToolComponent } from "./tool";
 import { offsetVolume } from "../utils";
 import { AddonUtils } from "../addon";
@@ -10,12 +10,12 @@ export interface ShovelOptions {
   block: string;
 }
 
-export class ShovelComponent extends ToolComponent {
+export class ShovelComponent extends ToolComponent implements ItemCustomComponent {
   static readonly componentId = AddonUtils.makeId("shovel");
 
   struct: Struct<any, any> = object({
     size: defaulted(number(), 1),
-    block: defaulted(isBlock, 'grass_path'),
+    block: defaulted(isBlock, "grass_path"),
   });
 
   /**

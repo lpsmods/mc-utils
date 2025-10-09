@@ -1,4 +1,9 @@
-import { Block, BlockComponentPlayerInteractEvent, CustomComponentParameters } from "@minecraft/server";
+import {
+  Block,
+  BlockComponentPlayerInteractEvent,
+  BlockCustomComponent,
+  CustomComponentParameters,
+} from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockBaseComponent } from "./base";
 import { BlockUtils } from "../block/utils";
@@ -13,10 +18,10 @@ export interface ToggleableOptions {
 }
 
 // TODO: Make it toggled by redstone
-export class ToggleableComponent extends BlockBaseComponent {
+export class ToggleableComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("toggleable");
   struct: Struct<any, any> = object({
-    toggle_state: defaulted(string(), 'mcutils:open'),
+    toggle_state: defaulted(string(), "mcutils:open"),
     true_sound_event: defaulted(string(), "use.stone"),
     false_sound_event: defaulted(string(), "use.stone"),
   });

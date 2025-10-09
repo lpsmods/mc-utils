@@ -1,4 +1,4 @@
-import { Block, BlockComponentTickEvent, CustomComponentParameters } from "@minecraft/server";
+import { Block, BlockComponentTickEvent, BlockCustomComponent, CustomComponentParameters } from "@minecraft/server";
 import { BlockUtils } from "../block/utils";
 import { BlockBaseComponent } from "./base";
 import { AddonUtils } from "../addon";
@@ -10,7 +10,7 @@ export interface ConcretePowderOptions {
 }
 
 // TODO: Add gravity
-export class ConcretePowderComponent extends BlockBaseComponent {
+export class ConcretePowderComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("concrete_powder");
   struct: Struct<any, any> = object({
     block: optional(isBlock),

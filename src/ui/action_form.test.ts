@@ -1,6 +1,6 @@
 import { CustomCommandOrigin } from "@minecraft/server";
 import { ActionForm, ActionFormEvent, ActionFormHandler } from "./action_form";
-import { unitTestMap } from "../command/test";
+import { UnitTestMap } from "../command/test";
 
 const actionForm: ActionForm = {
   title: "TITLE",
@@ -23,7 +23,7 @@ const actionForm: ActionForm = {
   ],
 };
 
-export default (units: unitTestMap) => {
+export default (units: UnitTestMap) => {
   const ui = new ActionFormHandler(actionForm);
   units.set("action_form", (ctx: CustomCommandOrigin) => {
     ui.showAll({ test: "hello, world!" });

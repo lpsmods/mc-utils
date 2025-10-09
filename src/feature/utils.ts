@@ -1,10 +1,10 @@
 import { Dimension, Vector3 } from "@minecraft/server";
-import { Feature } from "./feature";
+import { CustomFeature } from "./feature";
 import { Vector3Utils } from "@minecraft/math";
 
 export abstract class FeatureUtils {
   static underBlocks<T>(
-    feature: Feature,
+    feature: CustomFeature,
     dimension: Dimension,
     location: Vector3,
     callback: (pos: Vector3) => T,

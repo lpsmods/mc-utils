@@ -11,7 +11,7 @@ export enum PlacementPass {
   underground_pass = 3,
 }
 
-export interface FeatureRuleOptions {
+export interface CustomFeatureRuleOptions {
   placement_pass?: PlacementPass;
   scatter_chance?: number;
   min_y?: number;
@@ -30,15 +30,15 @@ export interface FeatureRuleOptions {
 /**
  * Defines a custom feature rule.
  */
-export class FeatureRule {
+export class CustomFeatureRule {
   static typeId: string | null = "feature_rule";
   id: string | null = null;
   handler: FeatureHandler | null = null;
 
   placesFeature: string;
-  readonly options: FeatureRuleOptions;
+  readonly options: CustomFeatureRuleOptions;
 
-  constructor(placesFeature: string, options?: FeatureRuleOptions) {
+  constructor(placesFeature: string, options?: CustomFeatureRuleOptions) {
     this.placesFeature = placesFeature;
     this.options = options ?? {};
   }

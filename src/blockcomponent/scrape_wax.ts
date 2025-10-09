@@ -1,6 +1,7 @@
 import {
   Block,
   BlockComponentPlayerInteractEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
   MolangVariableMap,
 } from "@minecraft/server";
@@ -17,7 +18,7 @@ export interface ScrapeWaxOptions {
   sound_effect: string;
 }
 
-export class ScrapeWaxComponent {
+export class ScrapeWaxComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("scrape_wax");
   struct: Struct<any, any> = object({
     block: optional(isBlock),
@@ -44,7 +45,7 @@ export class ScrapeWaxComponent {
   onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
     if (!event.player) return;
     const options = create(args.params, this.struct) as ScrapeWaxOptions;
-    if (!ItemUtils.holdingAxe(event.player)) return;
+    if (!ItemUtils.holding(event.player, "#is_axe")) return;
     this.convertBlock(event.block, options);
     const variables = new MolangVariableMap();
     variables.setColorRGB("color", { red: 1, green: 1, blue: 1 });

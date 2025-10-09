@@ -1,10 +1,10 @@
-import { ItemStack, PlayerSpawnAfterEvent, world } from "@minecraft/server";
+import { ItemCustomComponent, ItemStack, PlayerSpawnAfterEvent, world } from "@minecraft/server";
 import { InfoBookComponent } from "./info_book";
 import { ItemUtils } from "../item/utils";
 import { AddonUtils } from "../addon";
 import { Pages } from "../ui/paged_action_form";
 
-export class GuideBookComponent extends InfoBookComponent {
+export class GuideBookComponent extends InfoBookComponent implements ItemCustomComponent {
   static readonly componentId = AddonUtils.makeId("guide_book");
 
   /**

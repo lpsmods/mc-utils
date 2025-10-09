@@ -1,3 +1,6 @@
+import { BlockVolume, Vector3 } from "@minecraft/server";
+import { MathUtils } from "./math";
+
 export class Random {
   private seed: bigint = BigInt(0);
 
@@ -35,6 +38,19 @@ export class Random {
 }
 
 export class RandomUtils {
+  /**
+   * Chooses a random location in a block volume.
+   * @param {BlockVolume} volume
+   */
+  static posInVolume(volume: BlockVolume): Vector3 {
+    const bounds = MathUtils.getBounds(volume.from, volume.to);
+    return {
+      x: bounds.minX + Math.random() * (bounds.maxX - bounds.minX + 1),
+      y: bounds.minY + Math.random() * (bounds.maxY - bounds.minY + 1),
+      z: bounds.minZ + Math.random() * (bounds.maxZ - bounds.minZ + 1),
+    };
+  }
+
   /**
    * Create a random UUID.
    * @returns {string}

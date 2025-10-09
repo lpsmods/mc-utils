@@ -1,4 +1,4 @@
-import { BlockComponentRandomTickEvent, CustomComponentParameters } from "@minecraft/server";
+import { BlockComponentRandomTickEvent, BlockCustomComponent, CustomComponentParameters } from "@minecraft/server";
 import { RandomUtils } from "../random";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockBaseComponent } from "./base";
@@ -11,10 +11,10 @@ export interface CropOptions {
   max_stage: number;
 }
 
-export class CropComponent extends BlockBaseComponent {
+export class CropComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("crop");
   struct: Struct<any, any> = object({
-    growth_state: string(),
+    growth_state: defaulted(string(), "mcutils:growth"),
     max_stage: defaulted(number(), 7),
   });
 

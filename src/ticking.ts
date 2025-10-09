@@ -2,6 +2,7 @@ import { system } from "@minecraft/server";
 
 export abstract class Ticking {
   static all: Map<number, Ticking> = new Map<number, Ticking>();
+  enabled: boolean = false;
   readonly runId: number;
 
   constructor(tickInterval?: number) {
@@ -9,14 +10,17 @@ export abstract class Ticking {
     Ticking.all.set(this.runId, this);
   }
 
-  abstract tick(): void;
+  private pTick(): void {
+    if (!this.enabled) return;
+    if (this.tick) this.tick();
+  }
 
   /**
    * Creates the tick event.
    * @param {number} tickInterval An interval of every N ticks that the callback will be called upon.
    */
-  init(tickInterval?: number): number {
-    return system.runInterval(this.tick.bind(this), tickInterval);
+  private init(tickInterval?: number): number {
+    return system.runInterval(this.pTick.bind(this), tickInterval);
   }
 
   /**
@@ -27,4 +31,8 @@ export abstract class Ticking {
     system.clearRun(this.runId);
     Ticking.all.delete(this.runId);
   }
+
+  // EVENTS
+
+  tick?(): void;
 }

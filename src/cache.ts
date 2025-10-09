@@ -1,24 +1,31 @@
 import { MemoryTier, system } from "@minecraft/server";
 
+export interface LRUCacheOptions {
+  maxSize?: number;
+  debug?: boolean;
+}
+
 export class LRUCache<K, V> {
   private cache: Map<K, V>;
-  private maxSize: number;
+  readonly options: LRUCacheOptions;
 
   /**
    * Creates a new LRUCache instance.
-   * @param maxSize The maximum number of entries the cache can hold.
+   * @param {LRUCacheOptions} options
    */
-  constructor(maxSize?: number) {
+  constructor(options?: LRUCacheOptions) {
     this.cache = new Map<K, V>();
-    this.maxSize = maxSize ?? this.#getDefaultSize();
+    this.options = options ?? {};
+    if (this.options.maxSize === undefined) {
+      this.options.maxSize = this.#defaultSize();
+    }
 
-    if (this.maxSize <= 0) {
+    if (this.options.maxSize <= 0) {
       throw new Error("Cache size must be greater than 0");
     }
   }
 
-  // TODO: use memory tier
-  #getDefaultSize(): number {
+  #defaultSize(): number {
     switch (system.serverSystemInfo.memoryTier) {
       case MemoryTier.SuperLow:
         return 128;
@@ -64,7 +71,7 @@ export class LRUCache<K, V> {
     if (this.cache.has(key)) {
       // Remove the existing key to update its position
       this.cache.delete(key);
-    } else if (this.cache.size >= this.maxSize) {
+    } else if (this.cache.size >= (this.options.maxSize ?? this.#defaultSize())) {
       // Remove the least recently used entry (first key in the Map)
       const oldestKey = this.cache.keys().next().value;
       if (oldestKey) this.cache.delete(oldestKey);
@@ -114,6 +121,11 @@ export class LRUCache<K, V> {
    * @returns
    */
   getOrCompute(key: K, compute: (key: K) => V): V {
-    return this.get(key) ?? this.set(key, compute(key));
+    const value = this.get(key);
+    if (!value) {
+      return this.set(key, compute(key));
+    }
+    if (this.options.debug) console.log(`${key} from cache`);
+    return value;
   }
 }

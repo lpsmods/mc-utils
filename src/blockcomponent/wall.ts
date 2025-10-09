@@ -3,6 +3,7 @@ import {
   BlockComponentTickEvent,
   BlockComponentOnPlaceEvent,
   CustomComponentParameters,
+  BlockCustomComponent,
 } from "@minecraft/server";
 import { BlockBaseComponent, NeighborUpdateEvent } from "./base";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
@@ -18,7 +19,7 @@ export interface WallOptions {
   up_state: keyof BlockStateSuperset;
 }
 
-export class WallComponent extends BlockBaseComponent {
+export class WallComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("wall");
   struct: Struct<any, any> = object({
     north_state: defaulted(string(), "mcutils:north"),

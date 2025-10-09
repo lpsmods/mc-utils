@@ -3,6 +3,7 @@ import {
   Direction,
   BlockComponentPlayerInteractEvent,
   CustomComponentParameters,
+  BlockCustomComponent,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { getInteractSound } from "../utils";
@@ -14,10 +15,10 @@ export interface SlabOptions {
   double_state: keyof BlockStateSuperset;
 }
 
-export class SlabComponent extends BlockBaseComponent {
+export class SlabComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("slab");
   struct: Struct<any, any> = object({
-    double_state: defaulted(string(), 'mcutils:double'),
+    double_state: defaulted(string(), "mcutils:double"),
   });
 
   /**

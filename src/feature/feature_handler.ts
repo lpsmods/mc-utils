@@ -10,15 +10,15 @@ import {
 import { EntityHandler } from "../entity/entity_handler";
 import { Vector3Utils } from "@minecraft/math";
 import { ChunkEvents, PlayerChunkLoadEvent } from "../event/chunk";
-import { Feature, FeatureOptions } from "./feature";
-import { FeatureRule, FeatureRuleOptions, PlacementPass } from "./feature_rule";
+import { CustomFeature, CustomFeatureOptions } from "./feature";
+import { CustomFeatureRule, CustomFeatureRuleOptions, PlacementPass } from "./feature_rule";
 import { RandomUtils } from "../random";
 import { BIOME_MAP } from "../constants";
 
 let initialized = false;
 
 export abstract class FeatureEvent {
-  constructor(handle: FeatureHandler, dimension: Dimension, location: Vector3, options?: FeatureOptions) {
+  constructor(handle: FeatureHandler, dimension: Dimension, location: Vector3, options?: CustomFeatureOptions) {
     this.handle = handle;
     this.dimension = dimension;
     this.options = options ?? {};
@@ -28,13 +28,13 @@ export abstract class FeatureEvent {
   readonly handle: FeatureHandler;
   readonly dimension: Dimension;
   readonly location: Vector3;
-  readonly options: FeatureOptions;
+  readonly options: CustomFeatureOptions;
 }
 
 export class FeaturePlaceEvent extends FeatureEvent {}
 
 export abstract class FeatureRuleEvent {
-  constructor(handle: FeatureHandler, dimension: Dimension, location: Vector3, options?: FeatureRuleOptions) {
+  constructor(handle: FeatureHandler, dimension: Dimension, location: Vector3, options?: CustomFeatureRuleOptions) {
     this.handle = handle;
     this.dimension = dimension;
     this.options = options ?? {};
@@ -44,8 +44,8 @@ export abstract class FeatureRuleEvent {
   readonly handle: FeatureHandler;
   readonly dimension: Dimension;
   readonly location: Vector3;
-  readonly options: FeatureRuleOptions;
-} 
+  readonly options: CustomFeatureRuleOptions;
+}
 
 export class FeatureRulePlaceEvent extends FeatureRuleEvent {}
 
@@ -59,15 +59,15 @@ export class FeatureHandler extends EntityHandler {
   biomePropertyName?: string;
   debug?: boolean;
 
-  features = new Map<string, Feature>();
-  featureRules = new Map<string, FeatureRule>();
+  features = new Map<string, CustomFeature>();
+  featureRules = new Map<string, CustomFeatureRule>();
 
   constructor(
     options: EntityQueryOptions,
     featurePropertyName?: string,
     biomeMap?: { [key: string]: number },
     biomeEntityId?: string,
-    biomePropertyName?: string
+    biomePropertyName?: string,
   ) {
     super(options);
     this.featurePropertyName = featurePropertyName ?? "mcutils:feature";
@@ -97,9 +97,9 @@ export class FeatureHandler extends EntityHandler {
 
   /**
    * Register a new feature for this handler.
-   * @param {Feature} feature
+   * @param {CustomFeature} feature
    */
-  addFeature(identifier: string, feature: Feature): Feature {
+  addFeature(identifier: string, feature: CustomFeature): CustomFeature {
     feature.id = identifier;
     feature.handler = this;
     this.features.set(identifier, feature);
@@ -137,9 +137,9 @@ export class FeatureHandler extends EntityHandler {
 
   /**
    * Register a new feature rule for this handler.
-   * @param {Feature} featureRule
+   * @param {CustomFeature} featureRule
    */
-  addFeatureRule(identifier: string, featureRule: FeatureRule): FeatureRule {
+  addFeatureRule(identifier: string, featureRule: CustomFeatureRule): CustomFeatureRule {
     featureRule.id = identifier;
     featureRule.handler = this;
     this.featureRules.set(identifier, featureRule);
@@ -185,7 +185,7 @@ export class FeatureHandler extends EntityHandler {
   }
 }
 
-// TODO: replace with /mcutils:customplace command.
+// TODO: replace with /mcutils:custom-place command.
 function scriptEventReceive(event: ScriptEventCommandMessageAfterEvent): void {
   const pos = event.sourceEntity?.location ?? event.sourceBlock?.location ?? { x: 0, y: 0, z: 0 };
   const dimension = event.sourceEntity?.dimension ?? event.sourceBlock?.dimension ?? world.getDimension("overworld");

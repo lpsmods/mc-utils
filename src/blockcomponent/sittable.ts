@@ -1,6 +1,7 @@
 import {
   Block,
   BlockComponentPlayerInteractEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
   Dimension,
   Player,
@@ -34,7 +35,7 @@ export class SittableBlockEvent {
   cancel: boolean = false;
 }
 
-export class SittableComponent extends BlockBaseComponent {
+export class SittableComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("sittable");
   struct: Struct<any, any> = object({
     seat_position: defaulted(vec3, [0, 8, 0]),

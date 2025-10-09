@@ -14,7 +14,7 @@ import { forAllDimensions } from "../utils";
 import { Vector3Utils } from "@minecraft/math";
 import { Hasher } from "../type";
 import { ErrorUtils } from "../error";
-import { locationToChunk } from "../world";
+import { ChunkUtils } from "../chunk";
 
 export abstract class EntityEvent {
   constructor(entity: Entity) {
@@ -59,8 +59,8 @@ export class EntityMovedEvent extends EntityEvent {
     const pos = Vector3Utils.floor(entity.location);
     const prev = Vector3Utils.floor(prevLocation);
     this.movedBlock = !Vector3Utils.equals(pos, prev);
-    const cPos = locationToChunk(pos);
-    const cPrev = locationToChunk(prev);
+    const cPos = ChunkUtils.pos(pos);
+    const cPrev = ChunkUtils.pos(prev);
     this.movedChunk = cPos.x != cPrev.x || cPos.z != cPrev.z;
   }
 
@@ -288,8 +288,12 @@ function movedTick(event: EntityTickEvent): void {
   if (!movedEvent.movedBlock) return;
 
   // Enter block
-  const block = dim.getBlock(pos);
-  const prevBlock = dim.getBlock(prevPos);
+  let block = undefined;
+  let prevBlock = undefined;
+  try {
+    block = dim.getBlock(pos);
+    prevBlock = dim.getBlock(prevPos);
+  } catch (err) {}
   if (prevBlock) {
     EntityEvents.leaveBlock.apply(new EntityLeaveBlockEvent(event.entity, prevBlock, block));
   }
@@ -316,7 +320,10 @@ function entityTick(event: EntityTickEvent): void {
   movedTick(event);
 
   // in block
-  const block = event.entity.dimension.getBlock(event.entity.location);
+  let block = undefined;
+  try {
+    block = event.entity.dimension.getBlock(event.entity.location);
+  } catch (err) {}
   if (block) {
     EntityEvents.inBlockTick.apply(new EntityInBlockTickEvent(event.entity, block));
   }

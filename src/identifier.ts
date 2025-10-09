@@ -1,7 +1,17 @@
-import { Block, BlockPermutation, BlockType, Entity, EntityType, ItemStack, ItemType } from "@minecraft/server";
+import {
+  Block,
+  BlockPermutation,
+  BlockType,
+  EffectType,
+  EnchantmentType,
+  Entity,
+  EntityType,
+  ItemStack,
+  ItemType,
+} from "@minecraft/server";
 import { Biome } from "./biome/biome";
 
-export type id =
+export type Id =
   | string
   | Identifier
   | Block
@@ -11,7 +21,9 @@ export type id =
   | Biome
   | BlockType
   | EntityType
-  | ItemType;
+  | ItemType
+  | EffectType
+  | EnchantmentType;
 
 export class Identifier {
   namespace: string;
@@ -22,10 +34,12 @@ export class Identifier {
     this.path = path;
   }
 
-  matches(identifier: id): boolean {
-    const id = Identifier.parse(identifier);
+  equals(other: Id): boolean {
+    const id = Identifier.parse(other);
     return this.namespace === id.namespace && this.path === id.path;
   }
+
+  matches = this.equals;
 
   /**
    * Add text to the end of the path.
@@ -68,16 +82,18 @@ export class Identifier {
     return this;
   }
 
-  static parse(value: id): Identifier {
+  static parse(value: Id): Identifier {
     if (!value) return new Identifier("minecraft", "unknown");
-    if (value instanceof Block) return Identifier.parse(value.typeId);
     if (value instanceof BlockPermutation) return Identifier.parse(value.type.id);
+    if (value instanceof Block) return Identifier.parse(value.typeId);
     if (value instanceof ItemStack) return Identifier.parse(value.typeId);
     if (value instanceof Entity) return Identifier.parse(value.typeId);
     if (value instanceof Biome) return Identifier.parse(value.typeId);
     if (value instanceof BlockType) return Identifier.parse(value.id);
     if (value instanceof ItemType) return Identifier.parse(value.id);
     if (value instanceof EntityType) return Identifier.parse(value.id);
+    if (value instanceof EffectType) return Identifier.parse(value.getName());
+    if (value instanceof EnchantmentType) return Identifier.parse(value.id);
     if (value instanceof Identifier) return value;
     let parts = value.split(":");
     let namespace = "minecraft";
@@ -89,6 +105,10 @@ export class Identifier {
       path = parts[0];
     }
     return new Identifier(namespace, path);
+  }
+
+  static string(value: Id): string {
+    return this.parse(value).toString();
   }
 
   toString(): string {

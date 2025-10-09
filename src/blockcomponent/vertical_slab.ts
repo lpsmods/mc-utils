@@ -1,4 +1,4 @@
-import { BlockComponentPlayerInteractEvent, EquipmentSlot } from "@minecraft/server";
+import { BlockComponentPlayerInteractEvent, BlockCustomComponent, EquipmentSlot } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { SlabComponent, SlabOptions } from "./slab";
 import { WorldUtils } from "../world/utils";
@@ -9,7 +9,7 @@ export interface VerticalSlabOptions extends SlabOptions {
   direction_state: keyof BlockStateSuperset;
 }
 
-export class VerticalSlabComponent extends SlabComponent {
+export class VerticalSlabComponent extends SlabComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("vertical_slab");
 
   /**
@@ -20,7 +20,7 @@ export class VerticalSlabComponent extends SlabComponent {
     this.struct = assign(
       this.struct,
       object({
-        direction_state: defaulted(string(), 'minecraft:cardinal_direction'),
+        direction_state: defaulted(string(), "minecraft:cardinal_direction"),
       }),
     );
   }

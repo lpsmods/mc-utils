@@ -1,7 +1,7 @@
-import { unitTestMap } from "./command/test";
+import { UnitTestMap } from "./command/test";
 import { MolangUtils } from "./molang";
 
-export default (units: unitTestMap) => {
+export default (units: UnitTestMap) => {
   units.set("block_molang", (ctx, message) => {
     const block = ctx.sourceBlock ?? ctx.sourceEntity?.dimension.getBlock(ctx.sourceEntity.location)?.below();
     if (!block) return;

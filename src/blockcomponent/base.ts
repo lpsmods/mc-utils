@@ -13,6 +13,7 @@ import {
   BlockComponentStepOffEvent,
   BlockComponentStepOnEvent,
   Vector3,
+  BlockCustomComponent,
 } from "@minecraft/server";
 import { WorldUtils } from "../world/utils";
 import { Hasher } from "../type";
@@ -167,7 +168,7 @@ export abstract class BlockBaseComponent {
   after(
     block: Block,
     callback: (event: ScheduledBlockEvent, args: CustomComponentParameters) => void,
-    tickDelay: number
+    tickDelay: number,
   ) {
     this.scheduledEvents.add({
       callback: callback,
@@ -185,9 +186,8 @@ export abstract class BlockBaseComponent {
    */
   onNearbyEntityTick(event: NearbyEntityBlockEvent, args: CustomComponentParameters): void {}
 
-  // TODO: Is only called once. (if a block has 2 components with this it will only call one)
   /**
-   * This function will be called when a block has been placed/updated next to this block. (Requires neighborTick)
+   * @deprecated This function will be called when a block has been placed/updated next to this block. (Requires neighborTick)
    * @param {NeighborUpdateEvent} event
    */
   onNeighborUpdate?(event: NeighborUpdateEvent, args: CustomComponentParameters): void;
@@ -212,51 +212,4 @@ export abstract class BlockBaseComponent {
    * @param {CustomComponentParameters} args
    */
   inBlockTick?(event: EntityInBlockTickEvent, args: CustomComponentParameters): void;
-
-  // EVENTS
-
-  /**
-   * This function will be called before a player places the block.
-   */
-  beforeOnPlayerPlace?(event: BlockComponentPlayerPlaceBeforeEvent, args: CustomComponentParameters): void;
-
-  /**
-   * This function will be called when an entity falls onto the block that this custom component is bound to.
-   */
-  onEntityFallOn?(event: BlockComponentEntityFallOnEvent, args: CustomComponentParameters): void;
-
-  /**
-   * This function will be called when the block that this custom component is bound to is placed.
-   */
-  onPlace?(event: BlockComponentOnPlaceEvent, args: CustomComponentParameters): void;
-
-  /**
-   * This function will be called when a player breaks the block.
-   */
-  onPlayerBreak?(event: BlockComponentPlayerBreakEvent, args: CustomComponentParameters): void;
-
-  /**
-   * This function will be called when a player successfully interacts with the block that this custom component is bound to.
-   */
-  onPlayerInteract?(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void;
-
-  /**
-   * This function will be called when a block randomly ticks.
-   */
-  onRandomTick?(event: BlockComponentRandomTickEvent, args: CustomComponentParameters): void;
-
-  /**
-   * This function will be called when an entity steps off the block that this custom component is bound to.
-   */
-  onStepOff?(event: BlockComponentStepOffEvent, args: CustomComponentParameters): void;
-
-  /**
-   * This function will be called when an entity steps onto the block that this custom component is bound to.
-   */
-  onStepOn?(event: BlockComponentStepOnEvent, args: CustomComponentParameters): void;
-
-  /**
-   * This function will be called when a block ticks.
-   */
-  onTick?(event: BlockComponentTickEvent, args: CustomComponentParameters): void;
 }

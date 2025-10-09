@@ -4,6 +4,7 @@ import {
   BlockComponentPlayerInteractEvent,
   CustomComponentParameters,
   BlockPermutation,
+  BlockCustomComponent,
 } from "@minecraft/server";
 import { Parser } from "../parser";
 import { ItemUtils } from "../item/utils";
@@ -44,7 +45,7 @@ export class CauldronInteraction {
   }
 }
 
-export class CauldronComponent {
+export class CauldronComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("cauldron");
   struct: Struct<any, any> = object({
     interactions: array(string()),

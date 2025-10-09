@@ -1,6 +1,6 @@
 import { CustomCommandOrigin } from "@minecraft/server";
 import { ModalForm, ModalFormHandler, ModalFormOnSubmit } from "./modal_form";
-import { unitTestMap } from "../command/test";
+import { UnitTestMap } from "../command/test";
 
 const modalForm: ModalForm = {
   title: "TITLE",
@@ -19,7 +19,7 @@ const modalForm: ModalForm = {
   },
 };
 
-export default (units: unitTestMap) => {
+export default (units: UnitTestMap) => {
   const ui = new ModalFormHandler(modalForm);
   units.set("modal_form", (ctx: CustomCommandOrigin) => {
     ui.showAll({ test: "hello, world!" });

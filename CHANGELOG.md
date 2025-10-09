@@ -4,6 +4,163 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5] (Pre-release) - 10/9/2025
+
+### General
+
+- Added frameworks for custom status effects and enchantments.
+- Custom commands now use classes instead of functions and properties.
+- Added custom block and item tags.
+- `WorldUtils.getBiome` caches biomes.
+
+## Fixes
+
+- `movedTick` or `entityTick` no longer throws `LocationOutOfWorldBoundariesError`
+- `EntityLootHandler` no longer throws `InvalidActorError`
+
+## API
+
+- Added AreaDetectorOptions
+- Added ChunkUtils
+- Added ChunkVolume
+- Added CustomBlockTags
+- Added CustomCommandUtils
+- Added CustomEffect
+- Added CustomEffectCommand
+- Added CustomEffectUtils
+- Added CustomEffectUtilsOptions
+- Added CustomEffects
+- Added CustomEnchantCommand
+- Added CustomEnchantment
+- Added CustomEnchantmentInstance
+- Added CustomEnchantmentUtils
+- Added CustomEnchantments
+- Added CustomFeature
+- Added CustomFeatureOptions
+- Added CustomFeatureRule
+- Added CustomFeatureRuleOptions
+- Added CustomItemTags
+- Added CustomTagRegistry
+- Added CustomTags
+- Added DataUtils
+- Added FlattenableBlockRegistry
+- Added FlattenableOptions
+- Added Gateway
+- Added GatewayAreaDetector
+- Added HostSettingsPage
+- Added OxidizableBlocksRegistry
+- Added OxidizableOptions
+- Added PlaceCommand
+- Added PlayerChunkTickEventSignal
+- Added PlayerSettingsPage
+- Added Registry
+- Added RenderJsonOptions
+- Added ShearableBlocksRegistry
+- Added ShearableOptions
+- Added StrippableBlockRegistry
+- Added StrippableBlockRegistry
+- Added StrippableOptions
+- Added TestCommand
+- Added TillableBlockOptions
+- Added TillableBlockRegistry
+- Added VersionedDataSchema
+- Added VersionedDataStorage
+- Added WaxableBlockOptions
+- Added WaxableBlockRegistry
+- Added property customEffectRegistry
+- Added property customEnchantmentRegistry
+- Added property flattenableBlocks
+- Added property oxidizableBlocks
+- Added property shearableBlocks
+- Added property strippableBlocks
+- Added property tillableBlocks
+- Added property waxableBlocks
+- Added UnionShape
+- Remove function executePlaceCommand
+- Remove function executeTestCommand
+- Remove property placeCommand
+- Remove property testCommand
+- Removed Feature
+- Removed FeatureOptions
+- Removed FeatureRule
+- Removed FeatureRuleOptions
+- Removed RenderJSONOptions
+- Removed function locationToChunk
+- Renamed Arrow to ArrowShape
+- Renamed Box to BoxShape
+- Renamed Circle to CircleShape
+- Renamed Cone to ConeShape
+- Renamed Cylinder to CylinderShape
+- Renamed Dodecahedron to DodecahedronShape
+- Renamed Edges to EdgesShape
+- Renamed Extrude to ExtrudeShape
+- Renamed Icosahedron to IcosahedronShape
+- Renamed Lathe to LatheShape
+- Renamed Line to LineShape
+- Renamed Octahedron to OctahedronShape
+- Renamed Plane to PlaneShape
+- Renamed Polyhedron to PolyhedronShape
+- Renamed Ring to RingShape
+- Renamed Sphere to SphereShape
+- Renamed Tetrahedron to TetrahedronShape
+- Renamed Text to TextShape
+- Renamed Torus to TorusShape
+- Renamed TorusKnot to TorusKnotShape
+- Renamed Tube to TubeShape
+- Renamed Wireframe to WireframeShape
+- Changed Shape
+  - Renamed typeId to shapeId
+- Changed AreaEvent
+  - Added property dimension
+- Changed RandomUtils
+  - Added function posInVolume
+- Changed Ticking
+  - Added property enabled
+- Changed AreaDetector
+  - Added function isIn
+  - Added function isLoaded
+  - Added function getBlockVolume
+  - Added function getChunkVolume
+  - Removed parameter dimensionId
+  - Removed parameter prefix
+  - Removed parameter id
+  - Removed parameter tickInterval
+  - Added parameter options
+- Changed MathUtils
+  - Added function combineBlockVolumes
+- Changed WorldUtils
+  - Added function rot2dir
+  - Added function chunkVolume
+  - Added function fillBlocks
+- Changed EntityUtils
+  - Added function getFacingDirection
+  - Added function removeAll
+- Changed ItemUtils
+  - Added function clear
+  - Added function enchant
+  - Added function holding
+  - Removed isAxe
+  - Removed isHolding
+  - Removed holdingAxe
+  - Removed isIgnitable
+  - Removed hasIgnitable
+- Changed WorldSettings
+  - Added function show
+- Changed PlayerSettings
+  - Added function show
+- Changed BlockUtils
+  - Changed setType
+    - Added argument excludeStates
+- Changed Identifier
+  - Added function string
+- Changed Chunk
+  - Removed getMatrix
+  - Removed fromPos
+  - Removed fromBlock
+  - Removed fromEntity
+  - Removed getVolume
+  - Added getBlockVolume
+
 ## [0.0.4] (Pre-release) - 9/22/2025
 
 ### Fixes

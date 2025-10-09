@@ -1,13 +1,13 @@
 import { EntityDieAfterEvent, world } from "@minecraft/server";
 import { LootTableHandler } from "./loot_table_handler";
-import { Identifier, id } from "../identifier";
+import { Identifier, Id } from "../identifier";
 
 let initialized = false;
 
 export class EntityLootHandler extends LootTableHandler {
   entityId: Identifier;
 
-  constructor(entityId: id) {
+  constructor(entityId: Id) {
     super();
     this.entityId = Identifier.parse(entityId);
     this.tables.push(this.getDefaultTable());
@@ -21,6 +21,7 @@ export class EntityLootHandler extends LootTableHandler {
 
 function entityDie(event: EntityDieAfterEvent): void {
   const entity = event.deadEntity;
+  if (!entity || !entity.isValid) return;
   for (const handler of EntityLootHandler.all.values()) {
     if (handler instanceof EntityLootHandler) {
       if (entity.matches({ type: handler.entityId.toString() })) {

@@ -1,4 +1,6 @@
-import { Entity, ItemLockMode, Vector3 } from "@minecraft/server";
+import { Direction, Entity, EntityQueryOptions, ItemLockMode, Player, Vector3 } from "@minecraft/server";
+import { WorldUtils } from "../world";
+import { forAllDimensions } from "../utils";
 
 export abstract class EntityUtils {
   /**
@@ -16,5 +18,22 @@ export abstract class EntityUtils {
       entity.dimension.spawnItem(itemStack, location ?? entity.location);
     }
     return true;
+  }
+
+  /**
+   * Get the direction the entity is facing.
+   * @param {Entity} entity
+   * @returns {Direction}
+   */
+  static getFacingDirection(entity: Entity): Direction {
+    return WorldUtils.rot2dir(entity.getRotation());
+  }
+
+  /**
+   * Remove all entities from all dimensions that match options.
+   * @param {EntityQueryOptions} options
+   */
+  static removeAll(options: EntityQueryOptions) {
+    forAllDimensions((dim) => dim.getEntities(options).forEach((entity) => entity.remove()));
   }
 }

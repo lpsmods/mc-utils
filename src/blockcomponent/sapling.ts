@@ -1,4 +1,10 @@
-import { BlockComponentRandomTickEvent, BlockEvent, Block, CustomComponentParameters } from "@minecraft/server";
+import {
+  BlockComponentRandomTickEvent,
+  BlockEvent,
+  Block,
+  CustomComponentParameters,
+  BlockCustomComponent,
+} from "@minecraft/server";
 import { BlockBaseComponent } from "./base";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
@@ -11,10 +17,10 @@ export interface SaplingOptions {
   feature: string;
 }
 
-export class SaplingComponent extends BlockBaseComponent {
+export class SaplingComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("sapling");
   struct: Struct<any, any> = object({
-    growth_state: string(),
+    growth_state: defaulted(string(), "mcutils:growth"),
     max_stage: defaulted(number(), 2),
     feature: defaulted(string(), "minecraft:oak_tree_feature"),
   });

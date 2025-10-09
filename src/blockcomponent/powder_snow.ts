@@ -1,4 +1,10 @@
-import { BlockComponentTickEvent, CustomComponentParameters, Entity, EquipmentSlot } from "@minecraft/server";
+import {
+  BlockComponentTickEvent,
+  BlockCustomComponent,
+  CustomComponentParameters,
+  Entity,
+  EquipmentSlot,
+} from "@minecraft/server";
 import { BlockBaseComponent, NearbyEntityBlockEvent } from "./base";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
@@ -11,7 +17,7 @@ export interface PowderSnowOptions {
   fog_identifier?: string;
 }
 
-export class PowderSnowComponent extends BlockBaseComponent {
+export class PowderSnowComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("powder_snow");
   struct: Struct<any, any> = object({
     solid_state: defaulted(string(), "mcutils:solid"),

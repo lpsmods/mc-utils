@@ -1,4 +1,4 @@
-import { ItemUseOnEvent, Block, CustomComponentParameters } from "@minecraft/server";
+import { ItemUseOnEvent, Block, CustomComponentParameters, ItemCustomComponent } from "@minecraft/server";
 import { ToolComponent } from "./tool";
 import { offsetVolume } from "../utils";
 import { AddonUtils } from "../addon";
@@ -10,11 +10,11 @@ export interface HoeOptions {
   block: string;
 }
 
-export class HoeComponent extends ToolComponent {
+export class HoeComponent extends ToolComponent implements ItemCustomComponent {
   static readonly componentId = AddonUtils.makeId("hoe");
   struct: Struct<any, any> = object({
     size: defaulted(number(), 1),
-    block: defaulted(isBlock, 'farmland'),
+    block: defaulted(isBlock, "farmland"),
   });
 
   /**

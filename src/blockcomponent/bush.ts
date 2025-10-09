@@ -1,6 +1,7 @@
 import {
   BlockComponentPlayerInteractEvent,
   BlockComponentTickEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
   Entity,
   EntityDamageCause,
@@ -40,7 +41,7 @@ export class HarvestLootTable {
   }
 }
 
-export class BushComponent extends BlockBaseComponent {
+export class BushComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("bush");
   struct: Struct<any, any> = object({
     growth_state: defaulted(string(), "mcutils:growth"),
@@ -85,7 +86,7 @@ export class BushComponent extends BlockBaseComponent {
   onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
     const options = create(args.params, this.struct) as BushOptions;
 
-    if (ItemUtils.isHolding(event.player, "bone_meal")) return;
+    if (!event.player || ItemUtils.holding(event.player, "bone_meal")) return;
     this.pickBush(event, options);
   }
 

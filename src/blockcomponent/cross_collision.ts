@@ -3,6 +3,7 @@ import {
   Block,
   BlockComponentOnPlaceEvent,
   BlockComponentTickEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
@@ -17,13 +18,13 @@ export interface CrossCollisionOptions {
   west_state: keyof BlockStateSuperset;
 }
 
-export class CrossCollisionComponent extends BlockBaseComponent {
+export class CrossCollisionComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("cross_collision");
   struct: Struct<any, any> = object({
-    north_state: defaulted(string(), 'mcutils:north'),
-    east_state: defaulted(string(), 'mcutils:east'),
-    south_state: defaulted(string(), 'mcutils:south'),
-    west_state: defaulted(string(), 'mcutils:west'),
+    north_state: defaulted(string(), "mcutils:north"),
+    east_state: defaulted(string(), "mcutils:east"),
+    south_state: defaulted(string(), "mcutils:south"),
+    west_state: defaulted(string(), "mcutils:west"),
   });
 
   /**

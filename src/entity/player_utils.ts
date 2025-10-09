@@ -3,7 +3,7 @@
  */
 
 import { Block, EquipmentSlot, ItemStack, Player, system, Vector2, Vector3, world } from "@minecraft/server";
-import { Chunk } from "../world/chunk";
+import { Chunk } from "../chunk/base";
 import { MathUtils } from "../math";
 
 export class ArmorSetEvent {
@@ -65,7 +65,6 @@ export class PlayerUtils {
     return chunks;
   }
 
-  // TODO: radius should default to simulation distance.
   /**
    * Gets all blocks around a player within the specified radius.
    * @param {Player} player - The player to search around.

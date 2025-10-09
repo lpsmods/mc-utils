@@ -33,7 +33,6 @@ export class WorldBorder extends Ticking {
     this.#init();
   }
 
-  // TODO: Events
   #init() {
     world.beforeEvents.playerBreakBlock.subscribe(this.#playerBreakBlock.bind(this));
     world.afterEvents.playerPlaceBlock.subscribe(this.#playerPlaceBlock.bind(this));

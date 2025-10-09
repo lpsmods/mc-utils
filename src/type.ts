@@ -2,8 +2,27 @@
  * Generic types.
  */
 
-import { Block, Container, ItemStack, Vector2, Vector3, VectorXZ, world } from "@minecraft/server";
-import { Chunk } from "./world/chunk";
+import {
+  Block,
+  BlockPermutation,
+  BlockType,
+  Container,
+  Dimension,
+  DimensionType,
+  EasingType,
+  EffectType,
+  EnchantmentType,
+  Entity,
+  EntityType,
+  FluidType,
+  ItemStack,
+  ItemType,
+  Vector2,
+  Vector3,
+  VectorXZ,
+  world,
+} from "@minecraft/server";
+import { Chunk } from "./chunk/base";
 
 export enum TypingTypes {
   Container = "container",
@@ -13,20 +32,60 @@ export enum TypingTypes {
   Vector3 = "vector3",
   Vector2 = "vector2",
   Chunk = "chunk",
+  Entity = "entity",
+  Dimension = "dimension",
+  BlockType = "blockType",
+  ItemType = "itemType",
+  EntityType = "entityType",
+  EffectType = "effectType",
+  DimensionType = "dimensionType",
+  EnchantmentType = "enchantmentType",
+  BlockPermutation = "blockPermutation",
+
+  Array = "array",
+  Object = "object",
+
+  BigInt = "bigint",
+  Boolean = "boolean",
+  Number = "number",
+  String = "string",
+  Undefined = "undefined",
 }
 
 export class Typing {
-  static get(value: Vector3 | Vector2 | VectorXZ | Container | Block | ItemStack | Chunk): TypingTypes | undefined {
+  static get(value: any): TypingTypes | undefined {
+    const type = typeof value;
+    if (Array.isArray(value)) return TypingTypes.Array;
     if (value instanceof Container) return TypingTypes.Container;
     if (value instanceof Block) return TypingTypes.Block;
     if (value instanceof ItemStack) return TypingTypes.ItemStack;
     if (value instanceof Chunk) return TypingTypes.Chunk;
-    if (typeof value === "object") {
-      if (!("y" in value)) return TypingTypes.VectorXZ;
-      if ("z" in value) return TypingTypes.Vector3;
-      return TypingTypes.Vector2;
+    if (value instanceof Entity) return TypingTypes.Entity;
+    if (value instanceof Dimension) return TypingTypes.Dimension;
+    if (value instanceof BlockType) return TypingTypes.BlockType;
+    if (value instanceof ItemType) return TypingTypes.ItemType;
+    if (value instanceof EntityType) return TypingTypes.EntityType;
+    if (value instanceof EffectType) return TypingTypes.EffectType;
+    if (value instanceof DimensionType) return TypingTypes.DimensionType;
+    if (value instanceof EnchantmentType) return TypingTypes.EnchantmentType;
+    if (value instanceof BlockPermutation) return TypingTypes.BlockPermutation;
+    switch (type) {
+      case "bigint":
+        return TypingTypes.BigInt;
+      case "boolean":
+        return TypingTypes.Boolean;
+      case "number":
+        return TypingTypes.Number;
+      case "object":
+        if ("x" in value && "y" in value && "z" in value) return TypingTypes.Vector3;
+        if ("x" in value && "y" in value) return TypingTypes.Vector2;
+        if ("x" in value && "z" in value) return TypingTypes.VectorXZ;
+        return TypingTypes.Object;
+      case "string":
+        return TypingTypes.String;
+      case "undefined":
+        return TypingTypes.Undefined;
     }
-    return undefined;
   }
 }
 

@@ -1,4 +1,9 @@
-import { BlockComponentPlayerInteractEvent, CustomComponentParameters, EquipmentSlot } from "@minecraft/server";
+import {
+  BlockComponentPlayerInteractEvent,
+  BlockCustomComponent,
+  CustomComponentParameters,
+  EquipmentSlot,
+} from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
 import { AddonUtils } from "../addon";
@@ -10,10 +15,10 @@ export interface FlowerBedOptions {
 }
 
 // TODO: pink pedals, leaf litter.
-export class FlowerBedComponent {
+export class FlowerBedComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("flower_bed");
   struct: Struct<any, any> = object({
-    flowers_state: defaulted(string(), 'mcutils:flowers'),
+    flowers_state: defaulted(string(), "mcutils:flowers"),
     max_flowers: defaulted(number(), 4),
   });
 

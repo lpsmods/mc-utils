@@ -1,6 +1,6 @@
-import { Dimension, Player, PlayerJoinAfterEventSignal, system, world } from "@minecraft/server";
+import { Dimension, Entity, Player, system, world } from "@minecraft/server";
 import { EventSignal } from "./utils";
-import { Chunk } from "../world/chunk";
+import { Chunk } from "../chunk/base";
 import { PlayerUtils } from "../entity/player_utils";
 import { Hasher } from "../type";
 import { differenceArray, removeItems } from "../utils";
@@ -50,14 +50,13 @@ export class PlayerChunkUnloadEventSignal extends EventSignal<PlayerChunkUnloadE
   }
 }
 
-export class ChunkTickEventSignal extends EventSignal<ChunkTickEvent> {
+export class PlayerChunkTickEventSignal extends EventSignal<ChunkTickEvent> {
   subscribe(callback: (event: ChunkTickEvent) => void): (event: ChunkTickEvent) => void {
     return super.subscribe(callback);
   }
 }
 
-// TODO:
-// Use entity.hasComponent('tick_world') to tick entities.
+// TODO: Use entity.hasComponent('tick_world') to tick entities.
 
 /**
  * Custom chunk events.
@@ -78,10 +77,10 @@ export class ChunkEvents {
   static readonly playerUnload = new PlayerChunkUnloadEventSignal();
 
   /**
-   * This event fires every tick for loaded chunks.
+   * This event fires every tick for player loaded chunks.
    * @eventProperty
    */
-  static readonly loadedTick = new ChunkTickEventSignal();
+  static readonly loadedTick = new PlayerChunkTickEventSignal();
 
   static get size(): number {
     return this.playerLoad.size + this.playerUnload.size + this.loadedTick.size;

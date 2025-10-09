@@ -1,4 +1,4 @@
-import { unitTestMap } from "../command/test";
+import { UnitTestMap } from "../command/test";
 import { Pages, PagedActionForm, PagedActionFormOptions } from "./paged_action_form";
 
 const pages: Pages = {
@@ -34,7 +34,7 @@ const options: PagedActionFormOptions = {
   back_button: {},
 };
 
-export default (units: unitTestMap) => {
+export default (units: UnitTestMap) => {
   const ui = new PagedActionForm(pages);
   units.set("paged_action_form", (ctx, message) => {
     ui.showAll(undefined, options);

@@ -1,6 +1,7 @@
 import {
   Block,
   BlockComponentPlayerInteractEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
   EquipmentSlot,
   GameMode,
@@ -22,10 +23,10 @@ export interface FertilizableOptions {
   items: string[];
 }
 
-export class FertilizableComponent extends BlockBaseComponent {
+export class FertilizableComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("fertilizable");
   struct: Struct<any, any> = object({
-    growth_state: string(),
+    growth_state: defaulted(string(), "mcutils:growth"),
     max_stage: defaulted(number(), 7),
     items: defaulted(array(string()), ["bone_meal"]),
   });

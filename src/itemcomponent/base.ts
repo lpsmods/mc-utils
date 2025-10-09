@@ -10,12 +10,13 @@ import {
   ItemComponentUseEvent,
   ItemComponentUseOnEvent,
   EntityHitBlockAfterEvent,
+  ItemCustomComponent,
 } from "@minecraft/server";
 import { Ticking } from "../ticking";
 import { ItemEvent, ItemHoldEvent } from "../event/item";
 import { object, Struct } from "superstruct";
 
-export abstract class ItemBaseComponent extends Ticking {
+export abstract class ItemBaseComponent extends Ticking implements ItemCustomComponent {
   static readonly componentId: string;
 
   static components: ItemBaseComponent[] = [];

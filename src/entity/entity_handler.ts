@@ -29,7 +29,6 @@ import { forAllDimensions } from "../utils";
 
 let initialized = false;
 
-// TODO: Error when falling block falls from a high height.
 export class EntityHandler {
   static all = new Map<string, EntityHandler>();
   options: EntityQueryOptions;
@@ -137,10 +136,16 @@ export class EntityHandler {
   onHitBlock?(event: EntityHitBlockAfterEvent): void {}
 
   /**
-   *  Fires when a entity hits another entity.
+   *  Fires when this entity hits another entity.
    * @param {EntityHitEntityAfterEvent} event
    */
   onHitEntity?(event: EntityHitEntityAfterEvent): void {}
+
+  /**
+   *  Fires when this entity has been hit.
+   * @param {EntityHitEntityAfterEvent} event
+   */
+  onHit?(event: EntityHitEntityAfterEvent): void {}
 
   /**
    * Fires when a entity is hurt.
@@ -238,6 +243,7 @@ function init() {
     callHandle("onHitBlock", event.damagingEntity, event);
   });
   world.afterEvents.entityHitEntity.subscribe((event) => {
+    callHandle("onHit", event.hitEntity, event);
     callHandle("onHitEntity", event.damagingEntity, event);
   });
   world.afterEvents.entityHurt.subscribe((event) => {

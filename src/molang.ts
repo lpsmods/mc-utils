@@ -31,7 +31,6 @@ export abstract class MolangUtils {
     const dim = block.dimension;
     let defaultEnv = {
       query: {
-        // TODO:
         cardinal_facing: "down",
         cardinal_facing_2d: "north",
         cardinal_player_facing: "down",

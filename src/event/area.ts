@@ -1,14 +1,16 @@
-import { Entity } from "@minecraft/server";
+import { Dimension, Entity, world } from "@minecraft/server";
 import { EventSignal } from "./utils";
 import { AreaDetector } from "../area_detector";
 
 export abstract class AreaEvent {
   readonly entity: Entity;
+  readonly dimension: Dimension;
   readonly area: AreaDetector;
 
   constructor(entity: Entity, area: AreaDetector) {
     this.entity = entity;
     this.area = area;
+    this.dimension = world.getDimension(area.dimensionId);
   }
 }
 

@@ -1,6 +1,7 @@
 import {
   Block,
   BlockComponentPlayerInteractEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
   MolangVariableMap,
 } from "@minecraft/server";
@@ -18,7 +19,7 @@ export interface ScrapeOxidizationOptions {
   sound_effect: string;
 }
 
-export class ScrapeOxidizationComponent {
+export class ScrapeOxidizationComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("scrape_oxidization");
   struct: Struct<any, any> = object({
     block: optional(isBlock),
@@ -55,7 +56,7 @@ export class ScrapeOxidizationComponent {
   onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
     if (!event.player) return;
     const options = create(args.params, this.struct) as ScrapeOxidizationOptions;
-    if (!ItemUtils.holdingAxe(event.player)) return;
+    if (!ItemUtils.holding(event.player, "#is_axe")) return;
     this.convertBlock(event.block, options);
     const variables = new MolangVariableMap();
     variables.setColorRGB("color", { red: 0, green: 0, blue: 0 });

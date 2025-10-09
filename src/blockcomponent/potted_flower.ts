@@ -1,4 +1,10 @@
-import { BlockComponentPlayerInteractEvent, ItemStack, Block, CustomComponentParameters } from "@minecraft/server";
+import {
+  BlockComponentPlayerInteractEvent,
+  ItemStack,
+  Block,
+  CustomComponentParameters,
+  BlockCustomComponent,
+} from "@minecraft/server";
 import { AddonUtils } from "../addon";
 import { create, defaulted, object, optional, Struct } from "superstruct";
 import { isBlock, isItem } from "../validation";
@@ -8,11 +14,11 @@ export interface PottedFlowerOptions {
   block: string;
 }
 
-export class PottedFlowerComponent {
+export class PottedFlowerComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("potted_flower");
   struct: Struct<any, any> = object({
     item: optional(isItem),
-    block: defaulted(isBlock, 'flower_pot'),
+    block: defaulted(isBlock, "flower_pot"),
   });
 
   /**
@@ -31,8 +37,6 @@ export class PottedFlowerComponent {
   onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
     const options = create(args.params, this.struct) as PottedFlowerOptions;
     const e = event.player?.getComponent("inventory");
-    e &&
-      (e.container?.addItem(new ItemStack(this.getItem(event.block, options))),
-      event.block.setType(options.block));
+    e && (e.container?.addItem(new ItemStack(this.getItem(event.block, options))), event.block.setType(options.block));
   }
 }

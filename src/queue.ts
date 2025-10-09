@@ -1,6 +1,6 @@
-// TODO: Add option to preserve queue between reloads. (dynamic property)
-
 import { system, world } from "@minecraft/server";
+import { DataUtils } from "./data";
+import { PropertyValue } from "./constants";
 
 export class QueueJob<T> {
   readonly queue: Queue<T>;
@@ -12,20 +12,24 @@ export class QueueJob<T> {
   }
 }
 
+export interface QueueOptions {
+  size?: number;
+  id?: string;
+  persistent?: boolean;
+}
+
 export class Queue<T> {
   private static lastId = 0;
   static all = new Map<string, Queue<any>>();
 
   items: T[] = [];
   lock: boolean = false;
-  size: number | undefined;
-  persistent: boolean;
+  readonly options: QueueOptions;
   readonly id: string;
 
-  constructor(size?: number, id?: string, persistent?: boolean) {
-    this.size = size;
-    this.id = id ?? (Queue.lastId++).toString();
-    this.persistent = persistent ?? false;
+  constructor(options?: QueueOptions) {
+    this.options = options ?? {};
+    this.id = this.options.id ?? (Queue.lastId++).toString();
     Queue.all.set(this.id, this);
     this.load();
   }
@@ -93,7 +97,7 @@ export class Queue<T> {
    * @returns {boolean}
    */
   full(): boolean {
-    return this.size !== undefined && this.items.length >= this.size;
+    return this.options.size !== undefined && this.items.length >= this.options.size;
   }
 
   /**
@@ -134,8 +138,8 @@ export class Queue<T> {
    * @param {string} data
    * @returns {T[]}
    */
-  parse(data: string): T[] {
-    return JSON.parse(data);
+  parse(data: PropertyValue): T[] {
+    return DataUtils.load(data);
   }
 
   /**
@@ -143,15 +147,15 @@ export class Queue<T> {
    * @param items
    * @returns {string}
    */
-  stringify(items: T[]): string {
-    return JSON.stringify(items);
+  stringify(items: T[]): PropertyValue {
+    return DataUtils.dump(items);
   }
 
   /**
    * Save to storage if persistent.
    */
   save(): void {
-    if (!this.persistent) return;
+    if (!this.options.persistent) return;
     const data = this.stringify(this.items);
     world.setDynamicProperty(`mcutils:queue.${this.id}`, data);
   }
@@ -160,7 +164,7 @@ export class Queue<T> {
    * Load from storage if persistent.
    */
   load(): void {
-    if (!this.persistent) return;
+    if (!this.options.persistent) return;
     const data = (world.getDynamicProperty(`mcutils:queue.${this.id}`) as string) ?? "[]";
     this.items = this.parse(data);
   }
@@ -174,17 +178,4 @@ export class Queue<T> {
       system.runJob(callback(job));
     });
   }
-}
-
-function test() {
-  const queue = new Queue<string>();
-  queue.put("job");
-
-  queue.run(function* (job: QueueJob<string>): Generator<void> {
-    // Process item.
-    console.warn(job.item);
-
-    // Mark as complete.
-    job.queue.done();
-  });
 }

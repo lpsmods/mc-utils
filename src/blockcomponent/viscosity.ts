@@ -1,4 +1,4 @@
-import { BlockComponentTickEvent, CustomComponentParameters } from "@minecraft/server";
+import { BlockComponentTickEvent, BlockCustomComponent, CustomComponentParameters } from "@minecraft/server";
 import { BlockBaseComponent } from "./base";
 import { AddonUtils } from "../addon";
 import { MAX_EFFECT } from "../constants";
@@ -9,7 +9,7 @@ export interface ViscosityOptions {
   value: number;
 }
 
-export class ViscosityComponent extends BlockBaseComponent {
+export class ViscosityComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("viscosity");
   struct: Struct<any, any> = object({
     value: number(),

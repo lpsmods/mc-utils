@@ -1,4 +1,9 @@
-import { BlockComponentPlayerInteractEvent, CustomComponentParameters, EquipmentSlot } from "@minecraft/server";
+import {
+  BlockComponentPlayerInteractEvent,
+  BlockCustomComponent,
+  CustomComponentParameters,
+  EquipmentSlot,
+} from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { ItemUtils } from "../item/utils";
 import { AddonUtils } from "../addon";
@@ -32,7 +37,7 @@ export interface CakeOptions {
 }
 
 // TODO: Check players hunger.
-export class CakeComponent {
+export class CakeComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("cake");
   struct: Struct<any, any> = object({
     slice_state: defaulted(string(), "mcutils:slices"),
@@ -78,7 +83,7 @@ export class CakeComponent {
     const hunger = event.player.getComponent("player.hunger");
     if (hunger) {
       hunger.setCurrentValue(
-        clampNumber(hunger.currentValue + options.nutrition, hunger.effectiveMin, hunger.effectiveMax)
+        clampNumber(hunger.currentValue + options.nutrition, hunger.effectiveMin, hunger.effectiveMax),
       );
     }
     var slice = event.block.permutation.getState(options.slice_state) as number;

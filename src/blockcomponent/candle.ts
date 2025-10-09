@@ -2,6 +2,7 @@ import {
   Block,
   BlockComponentPlayerInteractEvent,
   BlockComponentTickEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
   EquipmentSlot,
   system,
@@ -48,15 +49,15 @@ export class CandleFlamePosition {
 }
 
 // TODO: Ambient sounds
-export class CandleComponent extends BlockBaseComponent {
+export class CandleComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("candle");
   struct: Struct<any, any> = object({
-    candles_state: string(),
-    lit_state: string(),
-    max_candles: number(),
+    candles_state: defaulted(string(), "mcutils:candles"),
+    lit_state: defaulted(string(), "mcutils:lit"),
+    max_candles: defaulted(number(), 4),
     item: optional(isItem),
     flame_particle: defaulted(string(), "minecraft:candle_flame_particle"),
-    flame_positions: defaulted(array(vec3), []),
+    flame_positions: defaulted(array(vec3), [0, 0, 0]),
   });
 
   /**
@@ -108,7 +109,7 @@ export class CandleComponent extends BlockBaseComponent {
       return;
     }
 
-    if (!lit && mainhand && ItemUtils.isIgnitable(mainhand)) {
+    if (!lit && mainhand && ItemUtils.matches(mainhand, "#ignitable")) {
       BlockUtils.setState(event.block, options.lit_state, true);
       ItemUtils.usedIgnitable(event.player, mainhand, event.block.location);
       return;

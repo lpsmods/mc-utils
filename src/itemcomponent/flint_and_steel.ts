@@ -1,4 +1,4 @@
-import { ItemUseOnEvent, Block, CustomComponentParameters } from "@minecraft/server";
+import { ItemUseOnEvent, Block, CustomComponentParameters, ItemCustomComponent } from "@minecraft/server";
 import { ToolComponent } from "./tool";
 import { offsetVolume } from "../utils";
 import { AddonUtils } from "../addon";
@@ -10,7 +10,7 @@ export interface FlintAndSteelOptions {
   size: number;
 }
 
-export class FlintAndSteelComponent extends ToolComponent {
+export class FlintAndSteelComponent extends ToolComponent implements ItemCustomComponent {
   static readonly componentId = AddonUtils.makeId("flint_and_steel");
   struct: Struct<any, any> = object({
     block: optional(isBlock),

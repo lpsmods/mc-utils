@@ -1,4 +1,10 @@
-import { system, ItemComponentUseEvent, CustomComponentParameters, RawMessage } from "@minecraft/server";
+import {
+  system,
+  ItemComponentUseEvent,
+  CustomComponentParameters,
+  RawMessage,
+  ItemCustomComponent,
+} from "@minecraft/server";
 import { ItemBaseComponent } from "./base";
 import { AddonUtils } from "../addon";
 import { boolean, create, defaulted, number, object, optional, string, Struct } from "superstruct";
@@ -16,7 +22,7 @@ export interface InfoBookOptions extends PagedActionFormOptions {
   translation_pattern: string;
 }
 
-export class InfoBookComponent extends ItemBaseComponent {
+export class InfoBookComponent extends ItemBaseComponent implements ItemCustomComponent {
   static readonly componentId = AddonUtils.makeId("info_book");
   struct: Struct<any, any> = object({
     developer_mode: defaulted(boolean(), false),
@@ -54,7 +60,7 @@ export class InfoBookComponent extends ItemBaseComponent {
    */
   constructor(pages?: Pages) {
     super();
-    this.ui = new PagedActionForm(pages, InfoBookComponent.componentId);
+    this.ui = new PagedActionForm(pages, { id: InfoBookComponent.componentId });
     this.ui.t = this.t;
     this.onUse = this.onUse.bind(this);
   }
@@ -64,12 +70,7 @@ export class InfoBookComponent extends ItemBaseComponent {
     if (typeof key !== "string") return key;
     if (key.charAt(0) == "#") {
       const namespace = Identifier.parse(event?.ctx?.itemId ?? InfoBookComponent.componentId).namespace;
-      return (
-        "#" +
-        (options.translation_pattern)
-          .replace("{NAMESPACE}", namespace)
-          .replace("{KEY}", key.slice(1))
-      );
+      return "#" + options.translation_pattern.replace("{NAMESPACE}", namespace).replace("{KEY}", key.slice(1));
     }
     return key;
   }

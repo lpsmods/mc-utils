@@ -1,8 +1,8 @@
-import { BlockComponentPlayerInteractEvent, CustomComponentParameters } from "@minecraft/server";
+import { BlockComponentPlayerInteractEvent, BlockCustomComponent, CustomComponentParameters } from "@minecraft/server";
 import { BlockBaseComponent } from "./base";
 import { AddonUtils } from "../addon";
 
-export class DebugBlockComponent extends BlockBaseComponent {
+export class DebugBlockComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("debug");
 
   constructor() {

@@ -3,10 +3,13 @@
 import { Block, Dimension } from "@minecraft/server";
 import { EventSignal } from "./utils";
 
+let initialized = false;
+
 export abstract class BlockEvent {
   constructor(block: Block, dimension?: Dimension) {
     this.block = block;
     this.dimension = dimension ?? block.dimension;
+    if (!initialized) init();
   }
 
   readonly block: Block;
@@ -50,6 +53,6 @@ export class BlockEvents {
   }
 }
 
-function init() {}
-
-init();
+function init() {
+  initialized = true;
+}

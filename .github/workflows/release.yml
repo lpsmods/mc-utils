@@ -1,0 +1,25 @@
+name: Release Workflow
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install modules
+        run: npm ci
+      - name: Build release
+        run: npm run build
+      - name: Upload release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            dist/mc-utils.js
+            dist/mc-utils.min.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

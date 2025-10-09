@@ -1,5 +1,5 @@
 import { BlockBaseComponent, NeighborUpdateEvent } from "./base";
-import { BlockComponentTickEvent, CustomComponentParameters } from "@minecraft/server";
+import { BlockComponentTickEvent, BlockCustomComponent, CustomComponentParameters } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
 import { AddonUtils } from "../addon";
@@ -10,11 +10,11 @@ export interface CopperBulbOptions {
   powered_state: keyof BlockStateSuperset;
 }
 
-export class CopperBulbComponent extends BlockBaseComponent {
+export class CopperBulbComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("copper_bulb");
   struct: Struct<any, any> = object({
-    lit_state: defaulted(string(), 'mcutils:lit'),
-    powered_state: defaulted(string(), 'mcutils:powered'),
+    lit_state: defaulted(string(), "mcutils:lit"),
+    powered_state: defaulted(string(), "mcutils:powered"),
   });
 
   /**

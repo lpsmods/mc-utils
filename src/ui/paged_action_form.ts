@@ -1,7 +1,9 @@
-import { Player, RawMessage, world } from "@minecraft/server";
+import { CommandPermissionLevel, Player, RawMessage, world } from "@minecraft/server";
 import { ActionButton, ActionForm, ActionFormEvent, ActionFormHandler } from "./action_form";
 import { deepCopy } from "../utils";
 import { ValidationError, ValidationIssue } from "../error";
+import { PlayerSettings } from "../settings";
+import { DataUtils } from "../data";
 
 export interface PageButton extends ActionButton {
   pageId?: string;
@@ -114,12 +116,32 @@ export class PagedActionFormEvent {
   }
 }
 
+// CUSTOM PAGES
+
 export abstract class CustomPage {
   static readonly pageId: string;
   ui?: PagedActionForm;
 
   abstract getButton(event: PagedActionFormEvent): ActionButton;
   abstract show(event: PagedActionFormEvent): void;
+}
+
+export class PlayerSettingsPage extends CustomPage {
+  static readonly pageId = "mcutils:player_settings";
+
+  getButton(event: PagedActionFormEvent): ActionButton {
+    return {
+      label: "Player Settings",
+      icon: "textures/ui/icon_setting.png",
+      onClick: (clickEvent) => {
+        this.show(event);
+      },
+    };
+  }
+
+  show(event: PagedActionFormEvent): void {
+    new PlayerSettings(event.player).show();
+  }
 }
 
 // /**
@@ -240,15 +262,22 @@ export abstract class CustomPage {
 //   }
 // }
 
+export interface PagedActionFormOptions {
+  id?: string;
+}
+
 export class PagedActionForm {
-  private static lastId: number;
+  private static lastId: number = 0;
   readonly id: string;
+  readonly options: PagedActionFormOptions;
   readonly pages: Pages;
   customPages = new Map<string, CustomPage>();
 
-  constructor(pages?: Pages, id?: string) {
-    this.id = id ?? (PagedActionForm.lastId++).toString();
+  constructor(pages?: Pages, options?: PagedActionFormOptions) {
+    this.options = options ?? {};
+    this.id = this.options.id ?? `mcutils:${PagedActionForm.lastId++}`;
     this.pages = pages ?? {};
+    this.customPage(PlayerSettingsPage.pageId, new PlayerSettingsPage());
   }
 
   private convert(page: PageData, event: PagedActionFormEvent): ActionForm {
@@ -317,11 +346,11 @@ export class PagedActionForm {
   }
 
   getHistory(player: Player): string[] {
-    return JSON.parse((player.getDynamicProperty(this.id + ".history") as string) ?? "[]");
+    return DataUtils.getDynamicProperty(player, `${this.id}.history`, []);
   }
 
   setHistory(player: Player, history: string[]): void {
-    player.setDynamicProperty(this.id + ".history", JSON.stringify(history));
+    DataUtils.setDynamicProperty(player, `${this.id}.history`, history);
   }
 
   clearHistory(player: Player): void {
@@ -422,6 +451,8 @@ export class PagedActionForm {
   }
 
   show(player: Player, pageId?: string, options?: PagedActionFormOptions, ctx?: any): void {
+    ctx = ctx === undefined ? {} : ctx;
+    ctx.handler = this;
     const event = new PagedActionFormEvent(player, this.pages, pageId, options, ctx);
     const history = this.getHistory(player);
     history.push(event.pageId);

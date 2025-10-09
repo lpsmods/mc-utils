@@ -1,4 +1,4 @@
-import { Block, BlockComponentTickEvent, CustomComponentParameters } from "@minecraft/server";
+import { Block, BlockComponentTickEvent, BlockCustomComponent, CustomComponentParameters } from "@minecraft/server";
 import { LRUCache } from "../cache";
 import { Identifier } from "../identifier";
 import { BlockUtils } from "../block/utils";
@@ -11,7 +11,7 @@ export interface CoralOptions {
   block?: string;
 }
 
-export class CoralComponent {
+export class CoralComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("coral");
   struct: Struct<any, any> = object({
     delay: defaulted(number(), 60),

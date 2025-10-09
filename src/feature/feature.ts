@@ -17,7 +17,7 @@ import { ErrorUtils } from "../error";
 import { BlockUtils } from "../block/utils";
 import { REPLACEABLE_BLOCKS } from "../constants";
 
-export interface FeatureOptions {
+export interface CustomFeatureOptions {
   offset?: Vector3;
   grounded?: boolean;
   debug?: boolean;
@@ -26,13 +26,13 @@ export interface FeatureOptions {
 /**
  * Defines a custom feature.
  */
-export class Feature {
+export class CustomFeature {
   static readonly typeId: string;
   id: string | null = null;
   handler: FeatureHandler | null = null;
-  readonly options: FeatureOptions;
+  readonly options: CustomFeatureOptions;
 
-  constructor(options?: FeatureOptions) {
+  constructor(options?: CustomFeatureOptions) {
     this.options = options ?? {};
   }
 
@@ -124,12 +124,12 @@ export enum FacingDirection {
   Random = "random",
 }
 
-export interface StructureTemplateOptions extends FeatureOptions {
+export interface StructureTemplateOptions extends CustomFeatureOptions {
   structureOptions?: StructurePlaceOptions;
   facing_direction?: FacingDirection;
 }
 
-export class StructureTemplate extends Feature {
+export class StructureTemplate extends CustomFeature {
   static readonly typeId = "structure_template_feature";
   structureName: string;
   structure?: Structure;
@@ -186,12 +186,12 @@ export class StructureTemplate extends Feature {
 }
 
 // TODO: Return the size of the feature. Choose the feature its going to place before it places it.
-export class WeightedRandomFeature extends Feature {
+export class WeightedRandomFeature extends CustomFeature {
   static readonly typeId = "weighted_random_feature";
   features: Set<[string, number]>;
-  nextFeature?: Feature;
+  nextFeature?: CustomFeature;
 
-  constructor(features?: Array<[string, number]>, options?: FeatureOptions) {
+  constructor(features?: Array<[string, number]>, options?: CustomFeatureOptions) {
     super(options);
     this.features = new Set<[string, number]>(features ?? []);
   }
@@ -215,12 +215,12 @@ export class WeightedRandomFeature extends Feature {
     return res;
   }
 
-  addFeature(identifier: string | Feature, weight: number = 1): WeightedRandomFeature {
+  addFeature(identifier: string | CustomFeature, weight: number = 1): WeightedRandomFeature {
     this.features.add([identifier.toString(), weight]);
     return this;
   }
 
-  removeFeature(identifier: string | Feature, weight: number = 1): WeightedRandomFeature {
+  removeFeature(identifier: string | CustomFeature, weight: number = 1): WeightedRandomFeature {
     this.features.delete([identifier.toString(), weight]);
     return this;
   }
@@ -239,11 +239,11 @@ export class WeightedRandomFeature extends Feature {
 // }
 
 // TODO:
-export class ExtendedFeature extends Feature {
+export class ExtendedFeature extends CustomFeature {
   static readonly typeId = "extended_feature";
   featureName: string;
   blockType: string;
-  constructor(featureName: string, blockType?: string, options?: FeatureOptions) {
+  constructor(featureName: string, blockType?: string, options?: CustomFeatureOptions) {
     super(options);
     this.featureName = featureName;
     this.blockType = blockType ?? "cobblestone";

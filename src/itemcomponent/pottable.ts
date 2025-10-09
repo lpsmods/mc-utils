@@ -1,4 +1,4 @@
-import { CustomComponentParameters, ItemComponentUseOnEvent, ItemStack } from "@minecraft/server";
+import { CustomComponentParameters, ItemComponentUseOnEvent, ItemCustomComponent, ItemStack } from "@minecraft/server";
 import { Identifier } from "../identifier";
 import { AddonUtils } from "../addon";
 import { create, defaulted, object, optional, Struct } from "superstruct";
@@ -9,7 +9,7 @@ export interface PottableOptions {
   flower_pot: string;
 }
 
-export class PottableComponent {
+export class PottableComponent implements ItemCustomComponent {
   static readonly componentId = AddonUtils.makeId("pottable");
 
   struct: Struct<any, any> = object({

@@ -1,4 +1,17 @@
-import { BlockType, BlockTypes, EntityType, EntityTypes, ItemType, ItemTypes } from "@minecraft/server";
+import {
+  BlockType,
+  BlockTypes,
+  DimensionType,
+  DimensionTypes,
+  EffectType,
+  EffectTypes,
+  EnchantmentType,
+  EnchantmentTypes,
+  EntityType,
+  EntityTypes,
+  ItemType,
+  ItemTypes,
+} from "@minecraft/server";
 import { array, assign, boolean, define, number, object, optional, string } from "superstruct";
 
 export const isBlock = define("BlockType", (value: any) => {
@@ -11,6 +24,18 @@ export const isItem = define("ItemType", (value: any) => {
 
 export const isEntity = define("EntityType", (value: any) => {
   return EntityTypes.get(value instanceof EntityType ? value.id : value) !== undefined;
+});
+
+export const isEffect = define("EffectType", (value: any) => {
+  return EffectTypes.get(value instanceof EffectType ? value.getName() : value) !== undefined;
+});
+
+export const isEnchant = define("EnchantmentType", (value: any) => {
+  return EnchantmentTypes.get(value instanceof EnchantmentType ? value.id : value) !== undefined;
+});
+
+export const isDimension = define("DimensionType", (value: any) => {
+  return DimensionTypes.get(value instanceof DimensionType ? value.typeId : value) !== undefined;
 });
 
 export const vec3 = define("Vector3", (value: any) => {
@@ -64,5 +89,5 @@ export const entityQuery = assign(
     maxDistance: optional(number()),
     minDistance: optional(number()),
     volume: optional(vec3),
-  })
+  }),
 );

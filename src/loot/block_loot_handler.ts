@@ -1,14 +1,14 @@
 import { GameMode, PlayerBreakBlockBeforeEvent, system, world } from "@minecraft/server";
 import { LootTableHandler } from "./loot_table_handler";
 import { Vector3Utils } from "@minecraft/math";
-import { Identifier, id } from "../identifier";
+import { Identifier, Id } from "../identifier";
 
 let initialized = false;
 
 export class BlockLootHandler extends LootTableHandler {
   blockId: Identifier;
 
-  constructor(blockId: id) {
+  constructor(blockId: Id) {
     super();
     this.blockId = Identifier.parse(blockId);
     this.tables.push(this.getDefaultTable());

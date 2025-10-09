@@ -1,4 +1,9 @@
-import { Block, BlockComponentRandomTickEvent, CustomComponentParameters } from "@minecraft/server";
+import {
+  Block,
+  BlockComponentRandomTickEvent,
+  BlockCustomComponent,
+  CustomComponentParameters,
+} from "@minecraft/server";
 import { Identifier } from "../identifier";
 import { BlockUtils } from "../block/utils";
 import { Oxidization } from "../constants";
@@ -6,12 +11,12 @@ import { AddonUtils } from "../addon";
 import { create, object, optional, Struct } from "superstruct";
 import { isBlock } from "../validation";
 
-export interface OxidizableOptions {
+export interface OxidizableComponentOptions {
   block?: string;
 }
 
 // TODO: Make way slower.
-export class OxidizableComponent {
+export class OxidizableComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("oxidizable");
   struct: Struct<any, any> = object({
     block: optional(isBlock),
@@ -24,7 +29,7 @@ export class OxidizableComponent {
     this.onRandomTick = this.onRandomTick.bind(this);
   }
 
-  getBlock(block: Block, options: OxidizableOptions) {
+  getBlock(block: Block, options: OxidizableComponentOptions) {
     if (options.block) return options.block;
     const typeId = Identifier.parse(block.typeId);
     const age = BlockUtils.guessOxidization(block);
@@ -39,14 +44,14 @@ export class OxidizableComponent {
     return typeId.toString();
   }
 
-  convertBlock(block: Block, options: OxidizableOptions): void {
+  convertBlock(block: Block, options: OxidizableComponentOptions): void {
     BlockUtils.setType(block, this.getBlock(block, options));
   }
 
   // EVENTS
 
   onRandomTick(event: BlockComponentRandomTickEvent, args: CustomComponentParameters): void {
-    const options = create(args.params, this.struct) as OxidizableOptions;
+    const options = create(args.params, this.struct) as OxidizableComponentOptions;
     this.convertBlock(event.block, options);
   }
 }

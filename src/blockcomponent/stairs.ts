@@ -3,6 +3,7 @@ import {
   Block,
   BlockComponentOnPlaceEvent,
   BlockComponentTickEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
@@ -18,12 +19,12 @@ export interface StairsOptions {
   shape_state: keyof BlockStateSuperset;
 }
 
-export class StairsComponent extends BlockBaseComponent {
+export class StairsComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("stairs");
   struct: Struct<any, any> = object({
-    direction_state: defaulted(string(), 'minecraft:cardinal_direction'),
-    half_state: defaulted(string(), 'minecraft:vertical_half'),
-    shape_state: defaulted(string(), 'mcutils:shape'),
+    direction_state: defaulted(string(), "minecraft:cardinal_direction"),
+    half_state: defaulted(string(), "minecraft:vertical_half"),
+    shape_state: defaulted(string(), "mcutils:shape"),
   });
 
   /**

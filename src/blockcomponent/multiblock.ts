@@ -4,6 +4,7 @@ import {
   BlockComponentOnPlaceEvent,
   BlockComponentPlayerBreakEvent,
   BlockComponentPlayerPlaceBeforeEvent,
+  BlockCustomComponent,
   BlockPermutation,
   CustomComponentParameters,
   Dimension,
@@ -110,10 +111,10 @@ export class MultiBlockReceiveEvent {
   readonly data: { [key: string]: any };
 }
 
-export class MultiblockComponent extends BlockBaseComponent {
+export class MultiblockComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("multiblock");
   struct: Struct<any, any> = object({
-    part_state: defaulted(string(), 'mcutils:part'),
+    part_state: defaulted(string(), "mcutils:part"),
     direction_state: optional(string()),
     sync_states: defaulted(boolean(), false),
     parts: defaulted(array(string()), []),

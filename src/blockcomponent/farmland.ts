@@ -2,6 +2,7 @@ import {
   Block,
   BlockComponentEntityFallOnEvent,
   BlockComponentRandomTickEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
@@ -18,7 +19,7 @@ export interface FarmlandOptions {
   block: string;
 }
 
-export class FarmlandComponent extends BlockBaseComponent {
+export class FarmlandComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("farmland");
   struct: Struct<any, any> = object({
     moisture_state: defaulted(string(), "mcutils:moisture"),

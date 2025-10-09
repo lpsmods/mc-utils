@@ -1,8 +1,8 @@
-import { ItemUseOnEvent, Block, CustomComponentParameters, Vector3 } from "@minecraft/server";
+import { ItemUseOnEvent, Block, CustomComponentParameters, ItemCustomComponent } from "@minecraft/server";
 import { ToolComponent } from "./tool";
 import { offsetVolume } from "../utils";
 import { AddonUtils } from "../addon";
-import { array, create, defaulted, number, object, optional, string, Struct } from "superstruct";
+import { array, create, defaulted, number, object, string, Struct } from "superstruct";
 import { isBlock } from "../validation";
 
 export interface AxeInteraction {
@@ -16,7 +16,7 @@ export interface AxeOptions {
   sound_event: string;
 }
 
-export class AxeComponent extends ToolComponent {
+export class AxeComponent extends ToolComponent implements ItemCustomComponent {
   static readonly componentId = AddonUtils.makeId("axe");
 
   struct: Struct<any, any> = object({
@@ -27,9 +27,9 @@ export class AxeComponent extends ToolComponent {
         object({
           block: isBlock,
           converted_block: isBlock,
-        })
+        }),
       ),
-      []
+      [],
     ),
   });
   interactions: { [key: string]: string } = AxeComponent.defaultInteractions();

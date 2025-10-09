@@ -1,6 +1,8 @@
 import {
-  Block,
+  BlockFillOptions,
   BlockPermutation,
+  BlockType,
+  BlockVolume,
   Dimension,
   Direction,
   LocationInUnloadedChunkError,
@@ -8,23 +10,13 @@ import {
   ScoreboardObjective,
   Vector2,
   Vector3,
-  VectorXZ,
 } from "@minecraft/server";
 import { ErrorUtils } from "../error";
 import { BIOME_MAP } from "../constants";
 import { Biome } from "../biome/biome";
-
-/**
- * Converts a block pos to a chunk pos.
- * @param {Vector3} location
- * @returns {VectorXZ}
- */
-export function locationToChunk(location: Vector3): VectorXZ {
-  return {
-    x: Math.floor(location.x / 16),
-    z: Math.floor(location.z / 16),
-  };
-}
+import { LRUCache } from "../cache";
+import { Hasher } from "../type";
+import { Vector3Utils } from "@minecraft/math";
 
 export abstract class WorldUtils {
   /**
@@ -40,7 +32,6 @@ export abstract class WorldUtils {
     return undefined;
   }
 
-  // TODO: Get seed
   /**
    * The world seed. (Returns 0)
    * @returns {number}
@@ -49,7 +40,8 @@ export abstract class WorldUtils {
     return 0;
   }
 
-  // TODO: Cache 4x4x4 areas.
+  private static biomeCache = new LRUCache<string, Biome | undefined>({ debug: true });
+
   /**
    * @deprecated This will be replaced with Dimension.getBiome (2.4.0)
    * @param {Dimension} dimension
@@ -65,12 +57,16 @@ export abstract class WorldUtils {
     propertyName?: string,
     biomeMap?: { [key: string]: number }
   ): Biome | undefined {
-    const entity = dimension.spawnEntity(entityId ?? "mcutils:biome_checker", location);
-    const biome = (entity.getProperty(propertyName ?? "mcutils:biome") as number) ?? 0;
-    entity.remove();
-    const typeId = this.biome2Name(biome, biomeMap);
-    if (!typeId) return undefined;
-    return new Biome(typeId);
+    const key = Hasher.stringify(Vector3Utils.floor({ x: location.x / 4, y: location.y / 4, z: location.z / 4 }));
+    if (!key) return undefined;
+    return this.biomeCache.getOrCompute(key, () => {
+      const entity = dimension.spawnEntity(entityId ?? "mcutils:biome_checker", location);
+      const biome = (entity.getProperty(propertyName ?? "mcutils:biome") as number) ?? 0;
+      entity.remove();
+      const typeId = this.biome2Name(biome, biomeMap);
+      if (!typeId) return undefined;
+      return new Biome(typeId);
+    });
   }
 
   /**
@@ -88,6 +84,17 @@ export abstract class WorldUtils {
     } catch (err) {
       return defaultValue;
     }
+  }
+
+  static rot2dir(rotation: Vector2): Direction {
+    const { x: pitch, y: yaw } = rotation;
+    if (pitch <= -45) return Direction.Up;
+    if (pitch >= 45) return Direction.Down;
+    const norm = (((yaw % 360) + 540) % 360) - 180;
+    if (norm >= -45 && norm < 45) return Direction.South;
+    if (norm >= 45 && norm < 135) return Direction.West;
+    if (norm >= -135 && norm < -45) return Direction.East;
+    return Direction.North;
   }
 
   /**
@@ -342,5 +349,57 @@ export abstract class WorldUtils {
     return ErrorUtils.wrapCatch<void>(LocationInUnloadedChunkError, () =>
       dimension.setBlockPermutation(location, blockPermutation)
     );
+  }
+
+  /**
+   * Splits a block volume into smaller chunks.
+   * @param {BlockVolume} volume
+   * @param {number} maxBlocks
+   * @returns {BlockVolume[]}
+   */
+  static chunkVolume(volume: BlockVolume, maxBlocks: number = 32000): BlockVolume[] {
+    const min = volume.getMin();
+    const max = volume.getMax();
+    const sizeX = max.x - min.x + 1;
+    const sizeY = max.y - min.y + 1;
+    const sizeZ = max.z - min.z + 1;
+    const total = sizeX * sizeY * sizeZ;
+    if (total <= maxBlocks) return [volume];
+    const maxDim = Math.floor(Math.cbrt(maxBlocks));
+    const chunks = [];
+    for (let x = min.x; x <= max.x; x += maxDim) {
+      for (let y = min.y; y <= max.y; y += maxDim) {
+        for (let z = min.z; z <= max.z; z += maxDim) {
+          const to = {
+            x: Math.min(x + maxDim - 1, max.x),
+            y: Math.min(y + maxDim - 1, max.y),
+            z: Math.min(z + maxDim - 1, max.z),
+          };
+          chunks.push(new BlockVolume({ x, y, z }, to));
+        }
+      }
+    }
+
+    return chunks;
+  }
+
+  /**
+   * Like Dimension.fillBlocks but splits it up to override the max blocks.
+   * @param {Dimension} dimension
+   * @param {BlockVolume} volume
+   * @param {BlockType | BlockPermutation | string} block
+   * @param {BlockFillOptions} options
+   */
+  static *fillBlocks(
+    dimension: Dimension,
+    volume: BlockVolume,
+    block: BlockType | BlockPermutation | string,
+    options?: BlockFillOptions
+  ): Generator<any> {
+    const chunks = this.chunkVolume(volume);
+    for (const chunk of chunks) {
+      dimension.fillBlocks(chunk, block, options);
+      yield;
+    }
   }
 }

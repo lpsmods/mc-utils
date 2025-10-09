@@ -4,7 +4,7 @@ import { Font, Fonts } from "./font";
 import { Drawer } from "./drawer";
 
 export abstract class Shape {
-  static readonly typeId: string;
+  static readonly shapeId: string;
 
   drawer?: Drawer = undefined;
 
@@ -85,8 +85,31 @@ export abstract class Shape {
   onTick?(shape: Shape): void;
 }
 
-export class Box extends Shape {
-  static readonly typeId = 'box';
+export class UnionShape {
+  static readonly shapeId = "union";
+  shapes: Shape[] = [];
+
+  /**
+   * Add a new shape.
+   * @param {Shape} shape
+   * @returns {UnionShape}
+   */
+  addShape(shape: Shape): UnionShape {
+    this.shapes.push(shape);
+    return this;
+  }
+
+  getPoints(): Vector3[] {
+    const points = [];
+    for (const shape of this.shapes) {
+      points.push(...shape.getPoints());
+    }
+    return points;
+  }
+}
+
+export class BoxShape extends Shape {
+  static readonly shapeId = "box";
 
   bound: Vector3;
 
@@ -128,9 +151,9 @@ export class Box extends Shape {
   }
 }
 
-export class Line extends Shape {
-  static readonly typeId: string = 'line';
-  
+export class LineShape extends Shape {
+  static readonly shapeId: string = "line";
+
   endLocation: Vector3;
 
   constructor(location: Vector3, endLocation: Vector3) {
@@ -218,9 +241,9 @@ export class Line extends Shape {
   }
 }
 
-export class Arrow extends Line {
-  static readonly typeId = 'arrow';
-  
+export class ArrowShape extends LineShape {
+  static readonly shapeId = "arrow";
+
   headLength: number = 1;
   headRadius: number = 1;
   headSegments: number = 1;
@@ -232,9 +255,9 @@ export class Arrow extends Line {
   }
 }
 
-export class Circle extends Shape {
-  static readonly typeId = 'circle';
-  
+export class CircleShape extends Shape {
+  static readonly shapeId = "circle";
+
   getPoints(): Vector3[] {
     const points: Vector3[] = [];
     const { x: cx, y: cy, z: cz } = this.location;
@@ -253,9 +276,9 @@ export class Circle extends Shape {
   }
 }
 
-export class Sphere extends Shape {
-  static readonly typeId = 'sphere';
-  
+export class SphereShape extends Shape {
+  static readonly shapeId = "sphere";
+
   getPoints(): Vector3[] {
     const points: Vector3[] = [];
     const { x: cx, y: cy, z: cz } = this.location;
@@ -278,9 +301,9 @@ export class Sphere extends Shape {
   }
 }
 
-export class Text extends Shape {
-  static readonly typeId = 'text';
-  
+export class TextShape extends Shape {
+  static readonly shapeId = "text";
+
   text: string;
   font: Fonts = Fonts.Default;
 
@@ -326,9 +349,9 @@ export class Text extends Shape {
 }
 
 // TODO: Adjust shape
-export class Cone extends Shape {
-  static readonly typeId = 'cone';
-  
+export class ConeShape extends Shape {
+  static readonly shapeId = "cone";
+
   radius: number;
   height: number;
 
@@ -365,9 +388,9 @@ export class Cone extends Shape {
 }
 
 // TODO: Adjust shape
-export class Cylinder extends Shape {
-  static readonly typeId = 'cylinder';
-  
+export class CylinderShape extends Shape {
+  static readonly shapeId = "cylinder";
+
   radius: number;
   height: number;
 
@@ -409,9 +432,9 @@ export class Cylinder extends Shape {
 }
 
 // TODO: Implement shape
-export class Dodecahedron extends Shape {
-  static readonly typeId = 'dodecahedron';
-  
+export class DodecahedronShape extends Shape {
+  static readonly shapeId = "dodecahedron";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -423,9 +446,9 @@ export class Dodecahedron extends Shape {
 }
 
 // TODO: Implement shape
-export class Edges extends Shape {
-  static readonly typeId = 'edges';
-  
+export class EdgesShape extends Shape {
+  static readonly shapeId = "edges";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -437,9 +460,9 @@ export class Edges extends Shape {
 }
 
 // TODO: Implement shape
-export class Extrude extends Shape {
-  static readonly typeId = 'extrude';
-  
+export class ExtrudeShape extends Shape {
+  static readonly shapeId = "extrude";
+
   shape: Shape;
 
   constructor(shape: Shape) {
@@ -455,8 +478,8 @@ export class Extrude extends Shape {
 
 // TODO: Implement shape
 export class Icosahedron extends Shape {
-  static readonly typeId = 'icosahedron';
-  
+  static readonly shapeId = "icosahedron";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -468,9 +491,9 @@ export class Icosahedron extends Shape {
 }
 
 // TODO: Implement shape
-export class Lathe extends Shape {
-  static readonly typeId = 'lathe';
-  
+export class LatheShape extends Shape {
+  static readonly shapeId = "lathe";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -482,9 +505,9 @@ export class Lathe extends Shape {
 }
 
 // TODO: Implement shape
-export class Octahedron extends Shape {
-  static readonly typeId = 'octahedron';
-  
+export class OctahedronShape extends Shape {
+  static readonly shapeId = "octahedron";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -496,9 +519,9 @@ export class Octahedron extends Shape {
 }
 
 // TODO: Implement shape
-export class Plane extends Shape {
-  static readonly typeId = 'plane';
-  
+export class PlaneShape extends Shape {
+  static readonly shapeId = "plane";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -510,9 +533,9 @@ export class Plane extends Shape {
 }
 
 // TODO: Implement shape
-export class Polyhedron extends Shape {
-  static readonly typeId = 'polyhedron';
-  
+export class PolyhedronShape extends Shape {
+  static readonly shapeId = "polyhedron";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -524,9 +547,9 @@ export class Polyhedron extends Shape {
 }
 
 // TODO: Implement shape
-export class Ring extends Shape {
-  static readonly typeId = 'ring';
-  
+export class RingShape extends Shape {
+  static readonly shapeId = "ring";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -538,9 +561,9 @@ export class Ring extends Shape {
 }
 
 // TODO: Implement shape
-export class Tetrahedron extends Shape {
-  static readonly typeId = 'tetrahedron';
-  
+export class TetrahedronShape extends Shape {
+  static readonly shapeId = "tetrahedron";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -553,8 +576,8 @@ export class Tetrahedron extends Shape {
 
 // TODO: Implement shape
 export class Torus extends Shape {
-  static readonly typeId = 'torus';
-  
+  static readonly shapeId = "torus";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -566,9 +589,9 @@ export class Torus extends Shape {
 }
 
 // TODO: Implement shape
-export class TorusKnot extends Shape {
-  static readonly typeId = 'torus_knot';
-  
+export class TorusKnotShape extends Shape {
+  static readonly shapeId = "torus_knot";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -580,9 +603,9 @@ export class TorusKnot extends Shape {
 }
 
 // TODO: Implement shape
-export class Tube extends Shape {
-  static readonly typeId = 'tube';
-  
+export class TubeShape extends Shape {
+  static readonly shapeId = "tube";
+
   constructor(location: Vector3) {
     super(location);
   }
@@ -594,9 +617,9 @@ export class Tube extends Shape {
 }
 
 // TODO: Implement shape
-export class Wireframe extends Shape {
-  static readonly typeId = 'wireframe';
-  
+export class WireframeShape extends Shape {
+  static readonly shapeId = "wireframe";
+
   shape: Shape;
 
   constructor(shape: Shape) {
@@ -613,8 +636,8 @@ export class Wireframe extends Shape {
 // TODO: Implement shape
 //  https://threejs.org/docs/#api/en/geometries/ShapeGeometry
 export class CustomShape extends Shape {
-  static readonly typeId = 'custom_shape';
-  
+  static readonly shapeId = "custom_shape";
+
   constructor(location: Vector3) {
     super(location);
   }

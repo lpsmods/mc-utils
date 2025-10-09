@@ -7,6 +7,7 @@ import {
   CustomComponentParameters,
   BlockComponentTickEvent,
   system,
+  BlockCustomComponent,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { CANDLES, COLORS } from "../constants";
@@ -30,7 +31,7 @@ export interface CandleCakeOptions {
   flame_particle: string;
 }
 
-export class CandleCakeComponent extends BlockBaseComponent {
+export class CandleCakeComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("candle_cake");
   struct: Struct<any, any> = object({
     candle: isItem,
@@ -81,24 +82,18 @@ export class CandleCakeComponent extends BlockBaseComponent {
     event.block.setPermutation(BLOCK.withState(options.slice_state, 1));
   }
 
-  hasLight(event: BlockComponentPlayerInteractEvent): boolean {
-    if (!event.player) return false;
-    const equ = event.player.getComponent("equippable");
-    if (!equ) return false;
-    const mainhand = equ.getEquipment(EquipmentSlot.Mainhand);
-    return ItemUtils.isIgnitable(mainhand);
-  }
-
   // EVENTS
 
   onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): boolean | void {
     const options = create(args.params, this.struct) as CandleCakeOptions;
     const LIT = event.block.permutation.getState(options.lit_state);
-    if (this.hasLight(event)) {
+    if (!event.player) return;
+    const bl = ItemUtils.holding(event.player, "#ignitable");
+    if (bl) {
       this.setLit(event, true, options);
       return true;
     }
-    if (LIT && !this.hasLight(event)) {
+    if (LIT && !bl) {
       this.setLit(event, false, options);
     } else {
       this.eat(event, options);

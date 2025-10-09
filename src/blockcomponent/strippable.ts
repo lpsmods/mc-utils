@@ -1,6 +1,7 @@
 import {
   Block,
   BlockComponentPlayerInteractEvent,
+  BlockCustomComponent,
   BlockPermutation,
   CustomComponentParameters,
 } from "@minecraft/server";
@@ -11,12 +12,12 @@ import { AddonUtils } from "../addon";
 import { create, defaulted, object, optional, string, Struct } from "superstruct";
 import { isBlock } from "../validation";
 
-export interface StrippableOptions {
+export interface StrippableComponentOptions {
   block?: string;
   sound_event: string;
 }
 
-export class StrippableComponent {
+export class StrippableComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("strippable");
   struct: Struct<any, any> = object({
     block: optional(isBlock),
@@ -32,7 +33,7 @@ export class StrippableComponent {
     this.onPlayerInteract = this.onPlayerInteract.bind(this);
   }
 
-  getStrippedBlock(block: Block, options: StrippableOptions): string {
+  getStrippedBlock(block: Block, options: StrippableComponentOptions): string {
     return (
       options.block ??
       StrippableComponent.CACHE.getOrCompute(block.typeId, (key) => {
@@ -42,7 +43,7 @@ export class StrippableComponent {
     );
   }
 
-  stripBlock(block: Block, options: StrippableOptions): void {
+  stripBlock(block: Block, options: StrippableComponentOptions): void {
     block.setPermutation(
       BlockPermutation.resolve(this.getStrippedBlock(block, options), block.permutation.getAllStates()),
     );
@@ -52,8 +53,8 @@ export class StrippableComponent {
   // EVENTS
 
   onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
-    const options = create(args.params, this.struct) as StrippableOptions;
-    if (!event.player || !ItemUtils.holdingAxe(event.player)) return;
+    const options = create(args.params, this.struct) as StrippableComponentOptions;
+    if (!event.player || !ItemUtils.holding(event.player, "#is_axe")) return;
 
     this.stripBlock(event.block, options);
   }

@@ -1,6 +1,7 @@
 import {
   Block,
   BlockComponentTickEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
   Entity,
   EntityFilter,
@@ -23,7 +24,7 @@ export interface PressurePlateOptions {
 }
 
 // TODO: Extend BlockBase and use onEnter and onLeave instead.
-export class PressurePlateComponent extends BlockBaseComponent {
+export class PressurePlateComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("pressure_plate");
   struct: Struct<any, any> = object({
     filter: defaulted(entityFilter, { type: "player" }),
@@ -60,7 +61,7 @@ export class PressurePlateComponent extends BlockBaseComponent {
         (entity) =>
           Math.floor(entity.location.x) == block.location.x &&
           Math.floor(entity.location.y) == block.location.y &&
-          Math.floor(entity.location.z) == block.location.z
+          Math.floor(entity.location.z) == block.location.z,
       );
   }
 

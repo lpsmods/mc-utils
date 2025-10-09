@@ -1,4 +1,9 @@
-import { Block, BlockComponentRandomTickEvent, CustomComponentParameters } from "@minecraft/server";
+import {
+  Block,
+  BlockComponentRandomTickEvent,
+  BlockCustomComponent,
+  CustomComponentParameters,
+} from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
 import { AddonUtils } from "../addon";
@@ -11,10 +16,10 @@ export interface FrostedIceOptions {
   converts_to: string;
 }
 
-export class FrostedIceComponent {
+export class FrostedIceComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("frosted_ice");
   struct: Struct<any, any> = object({
-    age_state: string(),
+    age_state: defaulted(string(), "mcutils:age"),
     max_age: defaulted(number(), 7),
     converts_to: defaulted(isBlock, "water"),
   });

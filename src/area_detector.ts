@@ -1,7 +1,18 @@
-import { Entity, Vector3, world } from "@minecraft/server";
+import { BlockVolume, Direction, Entity, Vector3, world } from "@minecraft/server";
 import { Ticking } from "./ticking";
 import { MathUtils } from "./math";
 import { AreaEnterEvent, AreaEvents, AreaLeaveEvent, AreaTickEvent } from "./event/area";
+import { Vector3Utils } from "@minecraft/math";
+import { Chunk, ChunkVolume, WorldUtils } from "./world";
+import { ChunkUtils } from "./chunk";
+
+// import * as debug from "@minecraft/debug-utilities";
+
+export interface AreaDetectorOptions {
+  id?: string;
+  dimensionId?: string;
+  tickInterval?: number;
+}
 
 export abstract class AreaDetector extends Ticking {
   static readonly typeId: string;
@@ -13,10 +24,10 @@ export abstract class AreaDetector extends Ticking {
   readonly areaId: string;
   readonly dimensionId: string;
 
-  constructor(dimensionId?: string, prefix?: string, id?: string, tickInterval?: number) {
-    super(tickInterval);
-    this.dimensionId = dimensionId ?? "overworld";
-    this.areaId = `${prefix ?? "area"}.${id ?? (AreaDetector.#lastId++).toString()}`;
+  constructor(options: AreaDetectorOptions = {}) {
+    super(options.tickInterval);
+    this.dimensionId = options.dimensionId ?? "overworld";
+    this.areaId = options.id ?? `area.${AreaDetector.#lastId++}`;
     AreaDetector.areas.set(this.areaId, this);
   }
 
@@ -24,22 +35,33 @@ export abstract class AreaDetector extends Ticking {
     return this.areaId;
   }
 
-  _enter(entity: Entity): void {
+  enter(entity: Entity): void {
+    entity.addTag(this.areaId);
     const event = new AreaEnterEvent(entity, this);
     if (this.onEnter) this.onEnter(event);
     AreaEvents.entityEnter.apply(event);
   }
 
-  _leave(entity: Entity): void {
+  leave(entity: Entity): void {
+    entity.removeTag(this.areaId);
     const event = new AreaLeaveEvent(entity, this);
     if (this.onLeave) this.onLeave(event);
     AreaEvents.entityLeave.apply(event);
   }
 
-  _tick(entity: Entity): void {
+  baseTick(entity: Entity): void {
     const event = new AreaTickEvent(entity, this);
     if (this.onTick) this.onTick(event);
     AreaEvents.entityTick.apply(event);
+  }
+
+  /**
+   * Whether or not the entity is in the area.
+   * @param {Entity} entity
+   * @returns {boolean}
+   */
+  isIn(entity: Entity): boolean {
+    return entity.hasTag(this.areaId);
   }
 
   /**
@@ -60,6 +82,41 @@ export abstract class AreaDetector extends Ticking {
   }
 
   /**
+   * Whether or not the area is ticking.
+   */
+  isLoaded(): boolean {
+    const chunks = [];
+    const dim = world.getDimension(this.dimensionId);
+    for (const pos of this.getChunkVolume().getChunkLocationIterator()) {
+      chunks.push(new Chunk(dim, pos));
+    }
+    return chunks.every((chunk) => chunk.isLoaded());
+  }
+
+  getChunkVolume(): ChunkVolume {
+    const vol = this.getBlockVolume();
+    const from = ChunkUtils.pos(vol.from);
+    const to = ChunkUtils.pos(vol.to);
+    return new ChunkVolume(from, to);
+  }
+
+  // ABSTRACT
+
+  abstract getBlockVolume(): BlockVolume;
+
+  /**
+   * Get all entities in this area.
+   */
+  abstract getEntities(): Entity[];
+
+  /**
+   * Debug method to show the area in-game.
+   */
+  abstract show(): void;
+
+  // EVENTS
+
+  /**
    * Called every tick for entities that are in the area.
    * @param {AreaTickEvent} event
    */
@@ -76,16 +133,6 @@ export abstract class AreaDetector extends Ticking {
    * @param {AreaLeaveEvent} event
    */
   onLeave?(event: AreaLeaveEvent): void;
-
-  /**
-   * Get all entities in this area.
-   */
-  abstract getEntities(): Entity[];
-
-  /**
-   * Debug method to show the area in-game.
-   */
-  abstract show(): void;
 }
 
 /**
@@ -99,29 +146,32 @@ export class RectangleAreaDetector extends AreaDetector {
    * @param {Vector3} location2 The second location.
    * @param {string} id The unique id for this area.
    */
-  location1: Vector3;
-  location2: Vector3;
+  "from": Vector3;
+  to: Vector3;
 
-  constructor(location1: Vector3, location2: Vector3, dimensionId?: string, prefix?: string, id?: string) {
-    super(dimensionId, prefix, id);
-    this.location1 = location1;
-    this.location2 = location2;
+  constructor(from: Vector3, to: Vector3, options?: AreaDetectorOptions) {
+    super(options);
+    const bounds = MathUtils.getBounds(from, to);
+    this.from = { x: bounds.minX, y: bounds.minY, z: bounds.minZ };
+    this.to = { x: bounds.maxX, y: bounds.maxY, z: bounds.maxZ };
+  }
+
+  getBlockVolume(): BlockVolume {
+    return new BlockVolume(this.from, this.to);
   }
 
   tick(): void {
     if (!this.enabled) return;
     for (const entity of this.getEntities()) {
-      if (MathUtils.isInRect(entity, this.location1, this.location2)) {
-        if (!entity.hasTag(this.areaId)) {
-          entity.addTag(this.areaId);
-          this._enter(entity);
+      if (MathUtils.isInRect(entity, this.from, this.to)) {
+        if (!this.isIn(entity)) {
+          this.enter(entity);
         }
-        this._tick(entity);
+        this.baseTick(entity);
         return;
       }
-      if (entity.hasTag(this.areaId)) {
-        entity.removeTag(this.areaId);
-        this._leave(entity);
+      if (this.isIn(entity)) {
+        this.leave(entity);
       }
     }
   }
@@ -132,12 +182,33 @@ export class RectangleAreaDetector extends AreaDetector {
     for (const entity of dim.getEntities()) {
       if (!entity) continue;
       if (!this.condition(entity)) continue;
-      const { from, to } = MathUtils.expandRegion(this.location1, this.location2, this.padding);
+      const { from, to } = MathUtils.expandRegion(this.from, this.to, this.padding);
       if (!MathUtils.isInRect(entity, from, to)) continue;
       results.push(entity);
     }
     return results;
   }
+
+  // Requires debug-utilities
+  // show(): void {
+  //   // @ts-ignore:
+  //   const box = new debug.DebugBox(this.from);
+  //   box.bound = MathUtils.getSize(this.from, this.to);
+  //   // @ts-ignore:
+  //   const padding = new debug.DebugBox(
+  //     Vector3Utils.subtract(this.from, { x: this.padding, y: this.padding, z: this.padding }),
+  //   );
+  //   padding.bound = Vector3Utils.add(box.bound, { x: this.padding * 2, y: this.padding * 2, z: this.padding * 2 });
+  //   padding.color = { red: 123, green: 0, blue: 0 };
+  //   // @ts-ignore:
+  //   debug.debugDrawer.addShape(box);
+  //   // @ts-ignore:
+  //   debug.debugDrawer.addShape(padding);
+  //   system.runTimeout(() => {
+  //     box.remove();
+  //     padding.remove();
+  //   }, 10 * 20);
+  // }
 
   /**
    * Debug method to show the area in-game.
@@ -145,112 +216,103 @@ export class RectangleAreaDetector extends AreaDetector {
    */
   show(particle: string = "minecraft:endrod", steps: number = 32): void {
     const dim = world.getDimension(this.dimensionId);
-    const { x: x1, y: y1, z: z1 } = this.location1;
-    const { x: x2, y: y2, z: z2 } = this.location2;
-
-    const minX = Math.min(x1, x2);
-    const maxX = Math.max(x1, x2);
-    const minY = Math.min(y1, y2);
-    const maxY = Math.max(y1, y2);
-    const minZ = Math.min(z1, z2);
-    const maxZ = Math.max(z1, z2);
-
-    const stepX = (maxX - minX) / steps;
-    const stepY = (maxY - minY) / steps;
-    const stepZ = (maxZ - minZ) / steps;
+    const bounds = MathUtils.getBounds(this.from, this.to);
+    const stepX = (bounds.maxX - bounds.minX) / steps;
+    const stepY = (bounds.maxY - bounds.minY) / steps;
+    const stepZ = (bounds.maxZ - bounds.minZ) / steps;
 
     // Wireframe outline: edges only
     // Bottom and top edges (x-z plane)
-    for (let x = minX; x <= maxX; x += stepX) {
+    for (let x = bounds.minX; x <= bounds.maxX; x += stepX) {
       try {
         dim.spawnParticle(particle, {
           x: x + 0.5,
-          y: minY + 0.5,
-          z: minZ + 0.5,
+          y: bounds.minY + 0.5,
+          z: bounds.minZ + 0.5,
         });
       } catch (err) {}
       try {
         dim.spawnParticle(particle, {
           x: x + 0.5,
-          y: minY + 0.5,
-          z: maxZ + 0.5,
+          y: bounds.minY + 0.5,
+          z: bounds.maxZ + 0.5,
         });
       } catch (err) {}
       try {
         dim.spawnParticle(particle, {
           x: x + 0.5,
-          y: maxY + 0.5,
-          z: minZ + 0.5,
+          y: bounds.maxY + 0.5,
+          z: bounds.minZ + 0.5,
         });
       } catch (err) {}
       try {
         dim.spawnParticle(particle, {
           x: x + 0.5,
-          y: maxY + 0.5,
-          z: maxZ + 0.5,
+          y: bounds.maxY + 0.5,
+          z: bounds.maxZ + 0.5,
         });
       } catch (err) {}
     }
 
-    for (let z = minZ; z <= maxZ; z += stepZ) {
+    for (let z = bounds.minZ; z <= bounds.maxZ; z += stepZ) {
       try {
         dim.spawnParticle(particle, {
-          x: minX + 0.5,
-          y: minY + 0.5,
+          x: bounds.minX + 0.5,
+          y: bounds.minY + 0.5,
           z: z + 0.5,
         });
       } catch (err) {}
       try {
         dim.spawnParticle(particle, {
-          x: maxX + 0.5,
-          y: minY + 0.5,
+          x: bounds.maxX + 0.5,
+          y: bounds.minY + 0.5,
           z: z + 0.5,
         });
       } catch (err) {}
       try {
         dim.spawnParticle(particle, {
-          x: minX + 0.5,
-          y: maxY + 0.5,
+          x: bounds.minX + 0.5,
+          y: bounds.maxY + 0.5,
           z: z + 0.5,
         });
       } catch (err) {}
       try {
         dim.spawnParticle(particle, {
-          x: maxX + 0.5,
-          y: maxY + 0.5,
+          x: bounds.maxX + 0.5,
+          y: bounds.maxY + 0.5,
           z: z + 0.5,
         });
       } catch (err) {}
     }
 
     // Vertical edges (y-axis)
-    for (let y = minY; y <= maxY; y += stepY) {
+    for (let y = bounds.minY; y <= bounds.maxY; y += stepY) {
       try {
         dim.spawnParticle(particle, {
-          x: minX + 0.5,
+          x: bounds.minX + 0.5,
           y: y + 0.5,
-          z: minZ + 0.5,
+          z: bounds.minZ + 0.5,
         });
       } catch (err) {}
       try {
         dim.spawnParticle(particle, {
-          x: minX + 0.5,
+          x: bounds.minX + 0.5,
           y: y + 0.5,
-          z: maxZ + 0.5,
+          z: bounds.maxZ + 0.5,
         });
       } catch (err) {}
       try {
         dim.spawnParticle(particle, {
-          x: maxX + 0.5,
+          x: bounds.maxX + 0.5,
           y: y + 0.5,
-          z: minZ + 0.5,
+          z: bounds.minZ + 0.5,
         });
       } catch (err) {}
       try {
         dim.spawnParticle(particle, {
-          x: maxX + 0.5,
+          x: bounds.maxX + 0.5,
           y: y + 0.5,
-          z: maxZ + 0.5,
+          z: bounds.maxZ + 0.5,
         });
       } catch (err) {}
     }
@@ -271,25 +333,29 @@ export class SphereAreaDetector extends AreaDetector {
   center: Vector3;
   radius: number;
 
-  constructor(center: Vector3, radius: number, dimensionId?: string, prefix?: string, id?: string) {
-    super(dimensionId, prefix, id);
+  constructor(center: Vector3, radius: number, options?: AreaDetectorOptions) {
+    super(options);
     this.center = center;
     this.radius = radius;
+  }
+
+  getBlockVolume(): BlockVolume {
+    const from = { x: this.center.x - this.radius, y: this.center.y - this.radius, z: this.center.z - this.radius };
+    const to = { x: this.center.x + this.radius, y: this.center.y + this.radius, z: this.center.z + this.radius };
+    return new BlockVolume(from, to);
   }
 
   tick(): void {
     for (const entity of this.getEntities()) {
       if (entity.matches({ location: this.center, maxDistance: this.radius })) {
-        if (!entity.hasTag(this.areaId)) {
-          entity.addTag(this.areaId);
-          this._enter(entity);
+        if (!this.isIn(entity)) {
+          this.enter(entity);
         }
-        this._tick(entity);
+        this.baseTick(entity);
         return;
       }
-      if (entity.hasTag(this.areaId)) {
-        entity.removeTag(this.areaId);
-        this._leave(entity);
+      if (this.isIn(entity)) {
+        this.leave(entity);
       }
     }
   }
@@ -307,6 +373,25 @@ export class SphereAreaDetector extends AreaDetector {
     }
     return results;
   }
+
+  // Requires debug-utilities
+  // show(): void {
+  //   // @ts-ignore:
+  //   const sphere = new debug.DebugSphere(this.center);
+  //   sphere.scale = 0.5 * (this.radius * 2);
+  //   // @ts-ignore:
+  //   const padding = new debug.DebugSphere(this.center);
+  //   padding.scale = 0.5 * ((this.radius + this.padding) * 2);
+  //   padding.color = { red: 123, green: 0, blue: 0 };
+  //   // @ts-ignore:
+  //   debug.debugDrawer.addShape(sphere);
+  //   // @ts-ignore:
+  //   debug.debugDrawer.addShape(padding);
+  //   system.runTimeout(() => {
+  //     sphere.remove();
+  //     padding.remove();
+  //   }, 10 * 20);
+  // }
 
   /**
    * Debug method to show the area in-game.
@@ -329,4 +414,107 @@ export class SphereAreaDetector extends AreaDetector {
       }
     }
   }
+}
+
+export interface Gateway {
+  from: Vector3;
+  to: Vector3;
+  direction: Direction;
+}
+
+/**
+ * Detects if an entity enters and exits a gateway.
+ */
+export class GatewayAreaDetector extends AreaDetector {
+  static readonly typeId = "gateway";
+  private gateways: Gateway[] = [];
+
+  constructor(options?: AreaDetectorOptions) {
+    super(options);
+  }
+
+  getBlockVolume(): BlockVolume {
+    return MathUtils.combineBlockVolumes(this.gateways.map(({ from, to }) => new BlockVolume(from, to)));
+  }
+
+  addGateway(from: Vector3, to: Vector3, direction: Direction): GatewayAreaDetector {
+    const bounds = MathUtils.getBounds(from, to);
+    this.gateways.push({
+      from: { x: bounds.minX, y: bounds.minY, z: bounds.minZ },
+      to: { x: bounds.maxX, y: bounds.maxY, z: bounds.maxZ },
+      direction,
+    });
+    return this;
+  }
+
+  getEntities(): Entity[] {
+    const dim = world.getDimension(this.dimensionId);
+    const results = [];
+    for (const entity of dim.getEntities()) {
+      if (!entity || !entity.isValid) continue;
+      if (!this.condition(entity)) continue;
+      results.push(entity);
+    }
+    return results;
+  }
+
+  tick(): void {
+    if (!this.enabled) return;
+    for (const entity of this.getEntities()) {
+      const pos = Vector3Utils.floor(entity.location);
+      const bl = this.gateways.some((gateway) => MathUtils.isInRect(pos, gateway.from, gateway.to));
+      if (bl) {
+        if (!this.isIn(entity)) {
+          this.enter(entity);
+        }
+        return;
+      }
+      if (this.isIn(entity)) {
+        this.baseTick(entity);
+      }
+
+      const bl2 = this.gateways.some((gateway) => {
+        const offset = WorldUtils.dir2Offset(gateway.direction);
+        const exitFrom = Vector3Utils.subtract(gateway.from, offset);
+        const exitTo = Vector3Utils.subtract(gateway.to, offset);
+        return MathUtils.isInRect(pos, exitFrom, exitTo);
+      });
+      if (bl2) {
+        if (this.isIn(entity)) {
+          this.leave(entity);
+        }
+      }
+    }
+  }
+
+  // Requires debug-utilities
+  // show(): void {
+  //   // @ts-ignore:
+  //   const shapes: debug.DebugShape = [];
+  //   for (const gateway of this.gateways) {
+  //     // @ts-ignore:
+  //     const box = new debug.DebugBox(gateway.from);
+  //     box.bound = MathUtils.getSize(gateway.from, gateway.to);
+
+  //     const offset = WorldUtils.dir2Offset(gateway.direction);
+  //     const from = Vector3Utils.subtract(gateway.from, offset);
+  //     const to = Vector3Utils.subtract(gateway.to, offset);
+  //     // @ts-ignore:
+  //     const padding = new debug.DebugBox(from);
+  //     padding.bound = MathUtils.getSize(from, to);
+  //     padding.color = { red: 123, green: 0, blue: 0 };
+
+  //     shapes.push(box);
+  //     shapes.push(padding);
+  //   }
+  //   // @ts-ignore:
+  //   shapes.forEach((shape) => debug.debugDrawer.addShape(shape));
+
+  //   system.runTimeout(() => {
+  //     // @ts-ignore:
+  //     shapes.forEach((shape) => shape.remove());
+  //   }, 10 * 20);
+  // }
+
+  show(): void {}
 }

@@ -1,9 +1,7 @@
 import { Player, RawMessage, world } from "@minecraft/server";
 import { ModalFormData } from "@minecraft/server-ui";
-import { DataStorage } from "../data_storage";
+import { DataStorage } from "../data/data_storage";
 import { TextUtils } from "../text";
-
-// TODO: Save options
 
 function t(text: string | RawMessage): string | RawMessage {
   if (typeof text !== "string") return text;
@@ -89,17 +87,24 @@ export interface ModalForm {
   onSubmit?: (event: ModalFormOnSubmit) => void;
 }
 
+export interface ModalFormHandlerOptions {
+  id?: string;
+  saveValues?: boolean;
+}
+
 export class ModalFormHandler {
   form: ModalForm;
   saveValues: boolean;
   readonly id: string;
   readonly store: DataStorage;
+  readonly options: ModalFormHandlerOptions;
   static #lastId: number = 0;
 
-  constructor(form: ModalForm, id?: string, saveValues: boolean = true) {
+  constructor(form: ModalForm, options?: ModalFormHandlerOptions) {
+    this.options = options ?? {};
     this.form = form;
-    this.saveValues = saveValues;
-    this.id = id ?? `${ModalFormHandler.#lastId++}`;
+    this.saveValues = this.options.saveValues ?? true;
+    this.id = this.options.id ?? `${ModalFormHandler.#lastId++}`;
     this.store = new DataStorage(`mcutils:form_${this.id}`);
   }
 

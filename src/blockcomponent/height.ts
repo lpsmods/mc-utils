@@ -3,6 +3,7 @@ import {
   Direction,
   BlockComponentPlayerInteractEvent,
   CustomComponentParameters,
+  BlockCustomComponent,
 } from "@minecraft/server";
 import { getInteractSound } from "../utils";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
@@ -14,10 +15,10 @@ export interface HeightOptions {
   max_layers: number;
 }
 
-export class HeightComponent {
+export class HeightComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("height");
   struct: Struct<any, any> = object({
-    layers_state: defaulted(string(), 'mcutils:layers'),
+    layers_state: defaulted(string(), "mcutils:layers"),
     max_layers: defaulted(number(), 8),
   });
 

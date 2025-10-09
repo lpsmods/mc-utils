@@ -1,8 +1,8 @@
-import { CustomCommandOrigin, Player, world } from "@minecraft/server";
+import { CustomCommandOrigin, Player } from "@minecraft/server";
 import { DeveloperTools } from "./developer_tools";
-import { unitTestMap } from "./command/test";
+import { UnitTestMap } from "./command/test";
 
-export default (units: unitTestMap) => {
+export default (units: UnitTestMap) => {
   const dev = new DeveloperTools();
 
   units.set("dev", (ctx: CustomCommandOrigin) => {

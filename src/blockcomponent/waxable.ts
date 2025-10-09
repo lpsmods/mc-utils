@@ -1,6 +1,7 @@
 import {
   Block,
   BlockComponentPlayerInteractEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
   MolangVariableMap,
 } from "@minecraft/server";
@@ -18,7 +19,7 @@ export interface WaxableOptions {
   sound_effect: string;
 }
 
-export class WaxableComponent {
+export class WaxableComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("waxable");
   struct: Struct<any, any> = object({
     block: optional(isBlock),
@@ -45,7 +46,7 @@ export class WaxableComponent {
 
   onPlayerInteract(event: BlockComponentPlayerInteractEvent, args: CustomComponentParameters): void {
     const options = create(args.params, this.struct) as WaxableOptions;
-    if (!ItemUtils.isHolding(event.player, options.items ?? [])) return;
+    if (!event.player || !ItemUtils.holding(event.player, options.items ?? [])) return;
     this.convertBlock(event.block, options);
     const variables = new MolangVariableMap();
     variables.setColorRGB("color", { red: 1, green: 1, blue: 1 });

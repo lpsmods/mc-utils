@@ -1,38 +1,6 @@
 import { system, Block, Vector3, Dimension, DimensionTypes, world } from "@minecraft/server";
 import { LRUCache } from "./cache";
 
-// const CACHED_SOUNDS: { [key: string]: string } = {};
-
-// TODO: Use @cache() decorator
-/**
- * Add a block sound to cache.
- * @param {string} blockId
- * @param {string} soundEvent
- * @returns {string}
- */
-// function cacheSound(blockId: string, soundEvent: string): string {
-//   CACHED_SOUNDS[blockId] = soundEvent;
-//   return soundEvent;
-// }
-
-// export function getInteractSound(block: Block, defaultSound: string = "dig.stone"): string {
-//   if (!block) return "dig.stone";
-//   const id = block.typeId;
-//   const snd = CACHED_SOUNDS[id];
-//   if (snd) return snd;
-//   // TODO: Use array
-//   const sounds = {
-//     "dig.gravel": ["dirt", "farmland", "gravel"],
-//     "dig.stem": ["crimson", "warped"],
-//     "break.cherry_wood": ["cherry"],
-//   };
-//   if (id.includes("dirt") || id.includes("farmland") || id.includes("gravel"))
-//     return cacheSound(id, "dig.gravel");
-//   if (id.includes("crimson") || id.includes("warped")) return cacheSound(id, "dig.stem");
-//   if (id.includes("cherry")) return cacheSound(id, "break.cherry_wood");
-//   return cacheSound(id, defaultSound);
-// }
-
 const soundCache = new LRUCache<string, string>();
 /**
  * Returns the sound event that should be used for the block. Cached to improve speed.
@@ -44,12 +12,6 @@ export function getInteractSound(block: Block, defaultSound: string = "dig.stone
   if (!block) return "dig.stone";
   const key = block.typeId;
   if (soundCache.has(key)) return soundCache.get(key) ?? defaultSound;
-  // TODO: Use array
-  const sounds = {
-    "dig.gravel": ["dirt", "farmland", "gravel"],
-    "dig.stem": ["crimson", "warped"],
-    "break.cherry_wood": ["cherry"],
-  };
   if (key.includes("dirt") || key.includes("farmland") || key.includes("gravel"))
     return soundCache.set(key, "dig.gravel");
   if (key.includes("crimson") || key.includes("warped")) return soundCache.set(key, "dig.stem");

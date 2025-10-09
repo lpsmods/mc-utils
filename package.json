@@ -1,12 +1,13 @@
 {
   "name": "@lpsmods/mc-utils",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "author": "legopitstop",
   "license": "MIT",
   "description": "Utilities for making Minecraft: Bedrock Edition scripts",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
+    "build": "node build.mjs",
     "copy": "xcopy \"src\" \"%UserProfile%\\Documents\\GitHub\\Minecraft\\mcutils-example\\scripts\\mc-utils\" /s /y /I",
     "rebuild": "npm run copy && echo Done!",
     "dev": "chokidar \"src/**/*\" -c \"npm run rebuild\" -d"
@@ -28,9 +29,11 @@
     "scripting"
   ],
   "dependencies": {
+    "@minecraft/debug-utilities": "^1.0.0-beta.1.20.70-preview.20",
     "@minecraft/math": "^2.2.6",
-    "@minecraft/server": "^2.1.0",
+    "@minecraft/server": "^2.2.0",
     "@minecraft/server-ui": "^2.0.0",
+    "esbuild": "^0.25.10",
     "molang": "^2.0.1",
     "superstruct": "^2.0.2"
   },

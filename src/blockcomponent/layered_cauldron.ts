@@ -5,6 +5,7 @@ import {
   BlockComponentPlayerInteractEvent,
   CustomComponentParameters,
   BlockPermutation,
+  BlockCustomComponent,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { ItemUtils } from "../item/utils";
@@ -67,11 +68,11 @@ export class LayeredCauldronInteraction {
   }
 }
 
-export class LayeredCauldronComponent {
+export class LayeredCauldronComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("layered_cauldron");
   struct: Struct<any, any> = object({
-    block: defaulted(isBlock, 'cauldron'),
-    level_state: defaulted(string(), 'mcutils:level'),
+    block: defaulted(isBlock, "cauldron"),
+    level_state: defaulted(string(), "mcutils:level"),
     max_level: defaulted(number(), 3),
     interactions: defaulted(array(string()), []),
   });

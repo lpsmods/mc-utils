@@ -1,7 +1,36 @@
 import { Vector3Utils } from "@minecraft/math";
-import { Entity, Vector3 } from "@minecraft/server";
+import { BlockVolume, Entity, Vector3 } from "@minecraft/server";
 
 export class MathUtils {
+  /**
+   * Combines multiple block volumes into one bounding box.
+   * @param {BlockVolume[]} volumes
+   * @returns {BlockVolume}
+   */
+  static combineBlockVolumes(volumes: BlockVolume[]): BlockVolume {
+    if (volumes.length === 0) {
+      throw new Error("Volume array cannot be empty");
+    }
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let minZ = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    let maxZ = -Infinity;
+
+    for (const { from, to } of volumes) {
+      const bounds = this.getBounds(from, to);
+      if (bounds.minX < minX) minX = bounds.minX;
+      if (bounds.minY < minY) minY = bounds.minY;
+      if (bounds.minZ < minZ) minZ = bounds.minZ;
+      if (bounds.maxX > maxX) maxX = bounds.maxX;
+      if (bounds.maxY > maxY) maxY = bounds.maxY;
+      if (bounds.maxZ > maxZ) maxZ = bounds.maxZ;
+    }
+    return new BlockVolume({ x: minX, y: minY, z: minZ }, { x: maxX, y: maxY, z: maxZ });
+  }
+
   /**
    * Whether or not the VALUE is within MIN and MAX.
    * @param {number} value
@@ -57,14 +86,57 @@ export class MathUtils {
    * @returns {boolean}
    */
   static isInRect(origin: Entity | Vector3, from: Vector3, to: Vector3): boolean {
+    const bounds = MathUtils.getBounds(from, to);
+    let loc = origin instanceof Entity ? Vector3Utils.floor(origin.location) : origin;
+    return (
+      loc.x >= bounds.minX &&
+      loc.x <= bounds.maxX &&
+      loc.y >= bounds.minY &&
+      loc.y <= bounds.maxY &&
+      loc.z >= bounds.minZ &&
+      loc.z <= bounds.maxZ
+    );
+  }
+
+  /**
+   * Normalizes the min and max locations.
+   * @param {Vector3} from
+   * @param {Vector3} to
+   * @returns
+   */
+  static getBounds(
+    from: Vector3,
+    to: Vector3,
+  ): { minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number } {
     const minX = Math.min(from.x, to.x);
     const maxX = Math.max(from.x, to.x);
     const minY = Math.min(from.y, to.y);
     const maxY = Math.max(from.y, to.y);
     const minZ = Math.min(from.z, to.z);
     const maxZ = Math.max(from.z, to.z);
-    let loc = origin instanceof Entity ? origin.location : origin;
-    return loc.x >= minX && loc.x <= maxX && loc.y >= minY && loc.y <= maxY && loc.z >= minZ && loc.z <= maxZ;
+    return {
+      minX,
+      maxX,
+      minY,
+      maxY,
+      minZ,
+      maxZ,
+    };
+  }
+
+  /**
+   * Calculates the size of the box.
+   * @param {Vector3} from
+   * @param {Vector3} to
+   * @returns {Vector3}
+   */
+  static getSize(from: Vector3, to: Vector3): Vector3 {
+    const bounds = MathUtils.getBounds(from, to);
+    return {
+      x: bounds.maxX - bounds.minX + 1,
+      y: bounds.maxY - bounds.minY + 1,
+      z: bounds.maxZ - bounds.minZ + 1,
+    };
   }
 
   /**

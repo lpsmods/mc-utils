@@ -1,4 +1,4 @@
-import { unitTestMap } from "./command/test";
+import { UnitTestMap } from "./command/test";
 import { Queue } from "./queue";
 
 const queue = new Queue<string>();
@@ -10,7 +10,7 @@ queue.run(function* (job) {
   job.queue.done();
 });
 
-export default (units: unitTestMap) => {
+export default (units: UnitTestMap) => {
   units.set("queue", (ctx, message) => {
     queue.put(message ?? "apple");
   });

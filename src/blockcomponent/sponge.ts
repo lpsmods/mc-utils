@@ -1,4 +1,4 @@
-import { Block, BlockComponentOnPlaceEvent, CustomComponentParameters } from "@minecraft/server";
+import { Block, BlockComponentOnPlaceEvent, BlockCustomComponent, CustomComponentParameters } from "@minecraft/server";
 import { Identifier } from "../identifier";
 import { MathUtils } from "../math";
 import { AddonUtils } from "../addon";
@@ -12,7 +12,7 @@ export interface SpongeOptions {
   size: number;
 }
 
-export class SpongeComponent {
+export class SpongeComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("sponge");
   struct: Struct<any, any> = object({
     block: optional(isBlock),

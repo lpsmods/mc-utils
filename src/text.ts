@@ -5,7 +5,7 @@
 import { RawMessage } from "@minecraft/server";
 import { ChatColor } from "./constants";
 
-export interface RenderJSONOptions {
+export interface RenderJsonOptions {
   indent?: number;
   defaultColor?: ChatColor | string;
   keyColor?: ChatColor | string;
@@ -26,8 +26,7 @@ export class TextUtils {
     return text.replace(regex, "");
   }
 
-  // TODO:
-  // - Add support for HTML `<em>Italic</em>`
+  // TODO: Add support for HTML `<em>Italic</em>`
   /**
    * Uses markdown to format text.
    * @param {string} text
@@ -138,7 +137,13 @@ export class TextUtils {
     return clampedSnippets.join(" ... ").trim();
   }
 
-  static renderJSON(data: unknown, options?: RenderJSONOptions): string {
+  /**
+   * Highlight JSON.
+   * @param {unknown} data
+   * @param {RenderJsonOptions} options
+   * @returns {string}
+   */
+  static renderJSON(data: unknown, options?: RenderJsonOptions): string {
     const json = JSON.stringify(data, null, options?.indent ?? 2);
     const stringColor = options?.stringColor ?? ChatColor.MaterialCopper;
     const keyColor = options?.keyColor ?? ChatColor.Aqua;
@@ -152,5 +157,41 @@ export class TextUtils {
       .replace(/\bnull\b/g, `§7null§r`)
       .replace(/([\{\}\[\]])/g, `${defaultColor}$1§r`)
       .replace(/,/g, `${defaultColor},§r`);
+  }
+
+  /**
+   * Converts a number to roman numerals.
+   * @param {number} num 1-3999
+   * @returns {string}
+   */
+  static toRoman(num: number): string {
+    if (num <= 0 || num >= 4000) {
+      throw new RangeError("Number must be between 1 and 3999");
+    }
+
+    const romanMap: [number, string][] = [
+      [1000, "M"],
+      [900, "CM"],
+      [500, "D"],
+      [400, "CD"],
+      [100, "C"],
+      [90, "XC"],
+      [50, "L"],
+      [40, "XL"],
+      [10, "X"],
+      [9, "IX"],
+      [5, "V"],
+      [4, "IV"],
+      [1, "I"],
+    ];
+
+    let result = "";
+    for (const [value, numeral] of romanMap) {
+      while (num >= value) {
+        result += numeral;
+        num -= value;
+      }
+    }
+    return result;
   }
 }

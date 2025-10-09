@@ -2,6 +2,7 @@ import {
   Block,
   BlockComponentPlayerInteractEvent,
   BlockComponentTickEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
@@ -16,7 +17,7 @@ export interface ButtonOptions {
   click_off_sound_event?: string;
 }
 
-export class ButtonComponent {
+export class ButtonComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("button");
   struct: Struct<any, any> = object({
     powered_state: defaulted(string(), "mcutils:powered"),

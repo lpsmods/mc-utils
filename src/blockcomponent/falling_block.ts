@@ -2,6 +2,7 @@ import {
   Block,
   BlockComponentOnPlaceEvent,
   BlockComponentTickEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
   Direction,
 } from "@minecraft/server";
@@ -15,7 +16,7 @@ export interface FallingBlockOptions {
   entity: string;
 }
 
-export class FallingBlockComponent extends BlockBaseComponent {
+export class FallingBlockComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("falling_block");
   struct: Struct<any, any> = object({
     entity: isEntity,

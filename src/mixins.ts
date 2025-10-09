@@ -1,6 +1,6 @@
 import { ItemStack, Block, ScoreboardObjective, Vector3, Player, Dimension, Entity } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
-import { DataStorage } from "./data_storage";
+import { DataStorage } from "./data/data_storage";
 import { PlayerUtils, ArmorSet, ArmorSetEvent } from "./entity/player_utils";
 import { ItemUtils } from "./item/utils";
 import { WorldUtils } from "./world/utils";
@@ -130,7 +130,6 @@ declare global {
 
 // ITEM STACK
 
-// TODO: Port some common item stack data like "damage"
 ItemStack.prototype.startCooldown = function (player) {
   ItemUtils.startCooldown(this, player);
 };

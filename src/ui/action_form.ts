@@ -72,14 +72,20 @@ function t(text: string | RawMessage): string | RawMessage {
   return TextUtils.renderMarkdown(content);
 }
 
+export interface ActionFormHandlerOptions {
+  id?: string;
+}
+
 export class ActionFormHandler {
   form: ActionForm;
+  readonly options: ActionFormHandlerOptions;
   readonly id: string;
   static #lastId: number = 0;
 
-  constructor(form: ActionForm, id?: string) {
+  constructor(form: ActionForm, options?: ActionFormHandlerOptions) {
+    this.options = options ?? {};
     this.form = form;
-    this.id = id ?? `${ActionFormHandler.#lastId++}`;
+    this.id = this.options.id ?? `${ActionFormHandler.#lastId++}`;
   }
 
   /**

@@ -7,14 +7,29 @@ import {
   system,
   Vector3,
   VectorXZ,
+  world,
 } from "@minecraft/server";
-import { locationToChunk } from "./utils";
 import { ParticleDrawer } from "../drawer";
-import { Box } from "../shape";
-import { DataStorage } from "../data_storage";
+import { BoxShape } from "../shape";
+import { DataStorage, VersionedDataStorage } from "../data/data_storage";
 import { Hasher } from "../type";
 import { Random } from "../random";
-import { WorldUtils } from "./utils";
+import { WorldUtils } from "../world/utils";
+import { Vector3Utils } from "@minecraft/math";
+
+// import * as debug from "@minecraft/debug-utilities";
+
+function updateChunkData(chunk: Chunk): DataStorage {
+  const k = Hasher.stringify(chunk.location) ?? "unknown";
+  const old = world.getDynamicProperty(k) as string;
+  const nData = new VersionedDataStorage(`mcutils:chunk.${k}`, 2);
+  // Update legacy (pre-versioned)
+  if (old) {
+    const data = JSON.parse(old);
+    nData.update(data);
+  }
+  return nData;
+}
 
 /**
  * Defines a chunk the world.
@@ -27,7 +42,7 @@ export class Chunk {
   constructor(dimension: Dimension, location: VectorXZ) {
     this.dimension = dimension;
     this.location = { x: Math.floor(location.x), z: Math.floor(location.z) };
-    this.store = new DataStorage(Hasher.stringify(location) ?? "unknown");
+    this.store = updateChunkData(this);
   }
 
   get origin(): Vector3 {
@@ -60,8 +75,8 @@ export class Chunk {
 
   /**
    * Tests if this chunk matches another.
-   * @param chunk 
-   * @returns 
+   * @param chunk
+   * @returns
    */
   matches(chunk: Chunk): boolean {
     if (!(chunk instanceof Chunk)) return false;
@@ -71,9 +86,8 @@ export class Chunk {
   /**
    * @deprecated Use Chunk.matches instead.
    */
-  equals = this.matches
+  equals = this.matches;
 
-  // TODO: Test in-game.
   /**
    * Whether or not this chunk spawns slimes.
    * @returns {boolean}
@@ -201,35 +215,36 @@ export class Chunk {
 
   // ENTITY
 
-  // TODO: Test in-game
   /**
    * Get all entities in this chunk.
    * @param {EntityQueryOptions} options
    * @returns {Entity[]}
    */
   getEntities(options: EntityQueryOptions): Entity[] {
+    const vol = this.getBlockVolume();
     return this.dimension
-      .getEntities({ location: this.from, volume: this.to })
+      .getEntities({ location: vol.from, volume: vol.to })
       .filter((entity) => entity.matches(options));
+  }
+
+  getChunkVolume(): ChunkVolume {
+    return new ChunkVolume(this.from, this.to);
   }
 
   // BLOCK
 
-  // TODO: Test in-game
   /**
    * Get all blocks in this chunk.
    * @returns {Block[]}
    */
   getBlocks(): Block[] {
     const results = [];
-    for (const arg of this.getMatrix()) {
-      for (const pos of arg) {
-        try {
-          const block = this.dimension.getBlock(pos);
-          if (!block) continue;
-          results.push(block);
-        } catch (err) {}
-      }
+    for (const pos of this.getBlockVolume().getBlockLocationIterator()) {
+      try {
+        const block = this.dimension.getBlock(pos);
+        if (!block) continue;
+        results.push(block);
+      } catch (err) {}
     }
     return results;
   }
@@ -251,35 +266,34 @@ export class Chunk {
   }
 
   /**
-   * A matrix of all block locations inside this chunk.
-   * @returns {Vector3[][]}
-   */
-  getMatrix(): Vector3[][] {
-    const matrix: Vector3[][] = [];
-    for (let x = this.from.x; x <= this.to.x; x++) {
-      const row: Vector3[] = [];
-      for (let z = this.from.z; z <= this.to.z; z++) {
-        row.push({ x, y: this.from.y, z });
-      }
-      matrix.push(row);
-    }
-    return matrix;
-  }
-
-  /**
    * Get this chunk as a BlockVolume.
    * @returns {BlockVolume}
    */
-  getVolume(): BlockVolume {
+  getBlockVolume(): BlockVolume {
     return new BlockVolume(this.from, this.to);
   }
+
+
+  // show(): void {
+  //   // @ts-ignore
+  //   const shapes: debug.DebugShape = [];
+  //   // @ts-ignore
+  //   const shape = new debug.Box(this.from, this.to);
+  //   // @ts-ignore
+  //   debug.debugDrawer.addShape(shape);
+
+  //   system.runTimeout(() => {
+  //     // @ts-ignore
+  //     shapes.forEach((shape) => shape.remove());
+  //   }, 20);
+  // }
 
   /**
    * Show the chunk borders.
    * @param {string} particle
    */
   show(particle: string = "minecraft:endrod"): void {
-    const shape = new Box(this.from, this.to);
+    const shape = new BoxShape(this.from, this.to);
     shape.material = particle;
     shape.totalTimeLeft = 0.1;
     const drawer = new ParticleDrawer(this.dimension.id, 22, true);
@@ -305,33 +319,107 @@ export class Chunk {
       }, 1);
     });
   }
+}
 
-  /**
-   * Get the chunk from a position in the world.
-   * @param {Dimension} dimension
-   * @param {Vector3} location
-   * @returns {Chunk}
-   */
-  static fromPos(dimension: Dimension, location: Vector3): Chunk {
-    const pos = locationToChunk(location);
-    return new Chunk(dimension, pos);
+export class ChunkVolume {
+  "from": VectorXZ;
+  to: VectorXZ;
+
+  constructor(from: VectorXZ, to: VectorXZ) {
+    this.from = from;
+    this.to = to;
   }
 
   /**
-   * Get the chunk the block is in.
-   * @param {Block} block
-   * @returns {Chunk}
+   * Returns an iterator that yields all chunk positions in the volume.
    */
-  static fromBlock(block: Block): Chunk {
-    return Chunk.fromPos(block.dimension, block.location);
+  getChunkLocationIterator(): IterableIterator<VectorXZ> {
+    const min = this.getMin();
+    const max = this.getMax();
+
+    function* generator() {
+      for (let x = min.x; x <= max.x; x++) {
+        for (let z = min.z; z <= max.z; z++) {
+          yield { x, z };
+        }
+      }
+    }
+    return generator();
   }
 
   /**
-   * Get the chunk the entity is in.
-   * @param {Entity} entity
-   * @returns {Chunk}
+   * Get this chunk volume as a block volume.
+   * @returns {BlockVolume}
    */
-  static fromEntity(entity: Entity): Chunk {
-    return Chunk.fromPos(entity.dimension, entity.location);
+  getBlockVolume(): BlockVolume {
+    const from = { x: this.from.x * 16, y: -64, z: this.from.z * 16 };
+    const to = { x: this.to.x * 16, y: 320, z: this.to.z * 16 };
+    return new BlockVolume(from, Vector3Utils.add(to, { x: 16, y: 0, z: 16 }));
+  }
+
+  /**
+   * @remarks
+   * Return the capacity (volume) of the ChunkVolume (W*H)
+   *
+   */
+  getCapacity(): number {
+    const span = this.getSpan();
+    return span.x * span.z;
+  }
+
+  /**
+   * @remarks
+   * Get the largest corner position of the volume (guaranteed to
+   * be >= min)
+   */
+  getMax(): VectorXZ {
+    const x = Math.max(this.from.x, this.to.x);
+    const z = Math.max(this.from.z, this.to.z);
+    return { x, z };
+  }
+
+  /**
+   * @remarks
+   * Get the smallest corner position of the volume (guaranteed
+   * to be <= max)
+   */
+  getMin(): VectorXZ {
+    const x = Math.min(this.from.x, this.to.x);
+    const z = Math.min(this.from.z, this.to.z);
+    return { x, z };
+  }
+
+  /**
+   * @remarks
+   * Get a {@link Vector3} object where each component represents
+   * the number of blocks along that axis
+   *
+   */
+  getSpan(): VectorXZ {
+    const min = this.getMin();
+    const max = this.getMax();
+    return { x: max.x - min.x, z: max.z - min.z };
+  }
+
+  /**
+   * @remarks
+   * Check to see if a given world block location is inside a
+   * ChunkVolume
+   *
+   */
+  isInside(location: Vector3): boolean {
+    return false;
+  }
+
+  /**
+   * @remarks
+   * Move a ChunkVolume by a specified amount
+   *
+   * @param delta
+   * Amount of chunks to move by
+   */
+  translate(delta: VectorXZ): void {
+    this.from = { x: this.from.x + delta.x, z: this.from.z + delta.z };
+    this.to = { x: this.to.x + delta.x, z: this.to.z + delta.z };
   }
 }

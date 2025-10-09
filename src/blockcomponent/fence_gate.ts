@@ -2,6 +2,7 @@ import {
   BlockComponentOnPlaceEvent,
   BlockComponentPlayerInteractEvent,
   BlockComponentTickEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
@@ -19,7 +20,7 @@ export interface FenceGateOptions extends ToggleableOptions {
   direction_state: keyof BlockStateSuperset;
 }
 
-export class FenceGateComponent extends ToggleableComponent {
+export class FenceGateComponent extends ToggleableComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("fence_gate");
 
   /**
@@ -33,8 +34,8 @@ export class FenceGateComponent extends ToggleableComponent {
     this.struct = assign(
       this.struct,
       object({
-        in_wall_state: defaulted(string(), 'mcutils:in_wall'),
-        direction_state: defaulted(string(), 'minecraft:cardinal_direction'),
+        in_wall_state: defaulted(string(), "mcutils:in_wall"),
+        direction_state: defaulted(string(), "minecraft:cardinal_direction"),
       }),
     );
   }

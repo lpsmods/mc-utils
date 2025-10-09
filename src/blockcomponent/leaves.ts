@@ -1,4 +1,9 @@
-import { BlockComponentRandomTickEvent, BlockComponentTickEvent, CustomComponentParameters } from "@minecraft/server";
+import {
+  BlockComponentRandomTickEvent,
+  BlockComponentTickEvent,
+  BlockCustomComponent,
+  CustomComponentParameters,
+} from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { AddonUtils } from "../addon";
 import { create, defaulted, number, object, string, Struct } from "superstruct";
@@ -9,11 +14,11 @@ export interface LeavesOptions {
   delay: number;
 }
 
-export class LeavesComponent {
+export class LeavesComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("leaves");
   struct: Struct<any, any> = object({
-    distance_state: defaulted(string(), 'mcutils:distance'),
-    persistent_state: defaulted(string(), 'mcutils:persistent'),
+    distance_state: defaulted(string(), "mcutils:distance"),
+    persistent_state: defaulted(string(), "mcutils:persistent"),
     delay: defaulted(number(), 0),
   });
 

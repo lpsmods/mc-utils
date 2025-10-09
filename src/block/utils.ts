@@ -9,6 +9,7 @@ import {
   BlockType,
   Direction,
   GameMode,
+  MolangVariableMap,
   Player,
   Vector3,
 } from "@minecraft/server";
@@ -19,6 +20,7 @@ import { Oxidization } from "../constants";
 import { Identifier } from "../identifier";
 import { Hasher } from "../type";
 import { Vector3Utils } from "@minecraft/math";
+import { CustomTags } from "../registry";
 
 export enum ExposedDirection {
   Above = "above",
@@ -33,9 +35,17 @@ export abstract class BlockUtils {
    * @param {string} typeId
    * @returns {Block}
    */
-  static setType(block: Block, typeId?: string | BlockType): void {
+  static setType(block: Block, typeId?: string | BlockType, excludeStates?: string[]): void {
     const blockName = typeId instanceof BlockType ? typeId.id : typeId;
-    block.setPermutation(BlockPermutation.resolve(blockName ?? "air", block.permutation.getAllStates()));
+    const states = block.permutation.getAllStates();
+    for (const state of excludeStates ?? []) {
+      delete states[state];
+    }
+    try {
+      block.setPermutation(BlockPermutation.resolve(blockName ?? "air", states));
+    } catch (err) {
+      block.setType(blockName ?? "air");
+    }
   }
 
   /**
@@ -98,10 +108,6 @@ export abstract class BlockUtils {
     );
   }
 
-  // TODO:
-  // - Use LRUCache
-  // - doesn't update above and below
-  // 'x,y,z': [north, south, east, west, above, below]
   static MAX_CACHE: number = 512;
   static CACHE: { [key: string]: Array<BlockPermutation | undefined> } = {};
   /**
@@ -257,7 +263,8 @@ export abstract class BlockUtils {
    */
   static matches(block: Block, blockPredicate: string, states?: Record<string, string | number | boolean>): boolean {
     if (blockPredicate.charAt(0) === "#") {
-      return block.hasTag(blockPredicate.slice(1));
+      const tag = blockPredicate.slice(1);
+      return block.hasTag(tag) || CustomTags.blocks.matches(tag, block.typeId);
     }
     if (blockPredicate.charAt(0) === "!") {
       return !block.matches(blockPredicate.slice(1), states);

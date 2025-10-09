@@ -4,6 +4,7 @@ import {
   BlockComponentPlayerInteractEvent,
   CustomComponentParameters,
   BlockPermutation,
+  BlockCustomComponent,
 } from "@minecraft/server";
 import { ItemUtils } from "../item/utils";
 import { AddonUtils } from "../addon";
@@ -41,10 +42,10 @@ export class LavaCauldronInteraction {
   }
 }
 
-export class LavaCauldronComponent {
+export class LavaCauldronComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("lava_cauldron");
   struct: Struct<any, any> = object({
-    block: defaulted(isBlock, 'cauldron'),
+    block: defaulted(isBlock, "cauldron"),
     interactions: defaulted(array(string()), []),
   });
 

@@ -1,4 +1,4 @@
-import { BlockComponentTickEvent, Block, CustomComponentParameters } from "@minecraft/server";
+import { BlockComponentTickEvent, Block, CustomComponentParameters, BlockCustomComponent } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockBaseComponent, NeighborUpdateEvent } from "./base";
 import { MathUtils } from "../math";
@@ -10,10 +10,10 @@ export interface RedstoneLampOptions {
   delay: number;
 }
 
-export class RedstoneLampComponent extends BlockBaseComponent {
+export class RedstoneLampComponent extends BlockBaseComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("redstone_lamp");
   struct: Struct<any, any> = object({
-    lit_state: defaulted(string(), 'mcutils:lit'),
+    lit_state: defaulted(string(), "mcutils:lit"),
     delay: defaulted(number(), 0),
   });
 

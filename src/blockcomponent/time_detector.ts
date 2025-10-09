@@ -1,6 +1,7 @@
 import {
   BlockComponentPlayerInteractEvent,
   BlockComponentTickEvent,
+  BlockCustomComponent,
   CustomComponentParameters,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
@@ -16,11 +17,11 @@ export interface TimeDetectorOptions {
 }
 
 // TODO:
-export class TimeDetectorComponent {
+export class TimeDetectorComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("time_detector");
   struct: Struct<any, any> = object({
-    inverted_state: defaulted(string(), 'mcutils:inverted'),
-    powered_state: defaulted(string(), 'mcutils:powered'),
+    inverted_state: defaulted(string(), "mcutils:inverted"),
+    powered_state: defaulted(string(), "mcutils:powered"),
     time_interval: defaulted(vec2, [0, 0]),
   });
 

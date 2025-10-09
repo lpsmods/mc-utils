@@ -1,4 +1,9 @@
-import { ItemComponentMineBlockEvent, ItemComponentHitEntityEvent, CustomComponentParameters } from "@minecraft/server";
+import {
+  ItemComponentMineBlockEvent,
+  ItemComponentHitEntityEvent,
+  CustomComponentParameters,
+  ItemCustomComponent,
+} from "@minecraft/server";
 import { ItemUtils } from "../item/utils";
 import { AddonUtils } from "../addon";
 import { boolean, create, defaulted, object, Struct } from "superstruct";
@@ -8,7 +13,7 @@ export interface ToolOptions {
   damage_when_hit: boolean;
 }
 
-export class ToolComponent {
+export class ToolComponent implements ItemCustomComponent {
   static readonly componentId = AddonUtils.makeId("tool");
   struct: Struct<any, any> = object({
     damage_when_mined: defaulted(boolean(), false),

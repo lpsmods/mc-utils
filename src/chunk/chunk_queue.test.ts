@@ -1,8 +1,8 @@
 import { CustomCommandOrigin } from "@minecraft/server";
+import { UnitTestMap } from "../command/test";
 import { ChunkQueue } from "./chunk_queue";
-import { unitTestMap } from "../command/test";
 
-export default (units: unitTestMap) => {
+export default (units: UnitTestMap) => {
   let queue: ChunkQueue | undefined = undefined;
 
   units.set("chunk_queue", (ctx: CustomCommandOrigin) => {

@@ -1,6 +1,6 @@
 import { Vector3 } from "@minecraft/server";
 
-export type propertyType = string | number | boolean | Vector3 | undefined;
+export type PropertyValue = string | number | boolean | Vector3 | undefined;
 
 export const MAX_EFFECT = 20000000;
 

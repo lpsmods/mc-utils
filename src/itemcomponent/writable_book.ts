@@ -1,4 +1,11 @@
-import { CustomComponentParameters, EquipmentSlot, ItemComponentUseEvent, ItemStack, Player } from "@minecraft/server";
+import {
+  CustomComponentParameters,
+  EquipmentSlot,
+  ItemComponentUseEvent,
+  ItemCustomComponent,
+  ItemStack,
+  Player,
+} from "@minecraft/server";
 import { ActionForm, ActionFormEvent, ActionFormHandler } from "../ui/action_form";
 import { ModalForm, ModalFormHandler } from "../ui/modal_form";
 import { TextUtils } from "../text";
@@ -9,7 +16,7 @@ export interface WritableBookOptions {
   max_pages: number;
 }
 
-export class WritableBookComponent {
+export class WritableBookComponent implements ItemCustomComponent {
   static readonly componentId = AddonUtils.makeId("writable_book");
   struct: Struct<any, any> = object({
     max_pages: defaulted(number(), 50),
