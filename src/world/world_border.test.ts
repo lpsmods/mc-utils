@@ -1,9 +1,10 @@
 import { Player } from "@minecraft/server";
 import { WorldBorder } from "./world_border";
+import { VECTOR2_ZERO } from "@minecraft/math";
 
 class Border extends WorldBorder {
   constructor() {
-    super({ x: 0, y: 0 }, 50, 50, {
+    super(VECTOR2_ZERO, 50, 50, {
       canBreakBlocks: false,
       canPlaceBlocks: false,
     });

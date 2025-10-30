@@ -1,7 +1,7 @@
 import { Block, BlockComponentOnPlaceEvent, BlockCustomComponent, CustomComponentParameters } from "@minecraft/server";
 import { Identifier } from "../identifier";
-import { MathUtils } from "../math";
-import { AddonUtils } from "../addon";
+import { MathUtils } from "../utils/math";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, number, object, optional, Struct } from "superstruct";
 import { isBlock } from "../validation";
 

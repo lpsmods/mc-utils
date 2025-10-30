@@ -1,4 +1,4 @@
-import { UnitTestMap } from "./command/test";
+import { UnitTestMap } from "../command/test";
 import { MolangUtils } from "./molang";
 
 export default (units: UnitTestMap) => {

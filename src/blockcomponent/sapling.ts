@@ -8,7 +8,7 @@ import {
 import { BlockBaseComponent } from "./base";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, number, object, string, Struct } from "superstruct";
 
 export interface SaplingOptions {

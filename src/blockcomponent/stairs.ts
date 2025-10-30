@@ -7,11 +7,11 @@ import {
   CustomComponentParameters,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
-import { WorldUtils } from "../world/utils";
 import { BlockUtils } from "../block/utils";
-import { TextUtils } from "../text";
-import { AddonUtils } from "../addon";
+import { TextUtils } from "../utils/text";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, object, string, Struct } from "superstruct";
+import { DirectionUtils } from "../utils/direction";
 
 export interface StairsOptions {
   direction_state: keyof BlockStateSuperset;
@@ -41,7 +41,7 @@ export class StairsComponent extends BlockBaseComponent implements BlockCustomCo
   }
 
   isDifferentOrientation(block: Block, dir: string, options: StairsOptions): boolean | undefined {
-    var blockState = block.offset(WorldUtils.dir2Offset(dir));
+    var blockState = block.offset(DirectionUtils.toOffset(dir));
     if (!blockState) return;
     return (
       !this.isStairs(blockState) ||
@@ -56,32 +56,32 @@ export class StairsComponent extends BlockBaseComponent implements BlockCustomCo
 
     // Back
     var direction = block.permutation.getState(options.direction_state) as string;
-    var blockState = block.offset(WorldUtils.dir2Offset(direction));
+    var blockState = block.offset(DirectionUtils.toOffset(direction));
     if (!blockState) return "straight";
     if (
       this.isStairs(blockState) &&
       BlockUtils.matchState(block, blockState, options.half_state) &&
-      WorldUtils.dir2Axis((direction2 = blockState.permutation.getState(options.direction_state) as string)) !=
-        WorldUtils.dir2Axis(block.permutation.getState(options.direction_state) as string) &&
-      this.isDifferentOrientation(block, WorldUtils.getOpposite(direction2), options)
+      DirectionUtils.toAxis((direction2 = blockState.permutation.getState(options.direction_state) as string)) !=
+        DirectionUtils.toAxis(block.permutation.getState(options.direction_state) as string) &&
+      this.isDifferentOrientation(block, DirectionUtils.getOpposite(direction2), options)
     ) {
-      if (TextUtils.titleCase(direction2) == WorldUtils.rotateYCounterclockwise(direction)) {
+      if (TextUtils.titleCase(direction2) == DirectionUtils.rotateYCounterclockwise(direction)) {
         return "inner_right";
       }
       return "inner_left";
     }
 
     // Front
-    var blockState2 = block.offset(WorldUtils.dir2Offset(WorldUtils.getOpposite(direction)));
+    var blockState2 = block.offset(DirectionUtils.toOffset(DirectionUtils.getOpposite(direction)));
     if (!blockState2) return "straight";
     if (
       this.isStairs(blockState2) &&
       BlockUtils.matchState(block, blockState2, options.half_state) &&
-      WorldUtils.dir2Axis((direction3 = blockState2.permutation.getState(options.direction_state) as string)) !=
-        WorldUtils.dir2Axis(block.permutation.getState(options.direction_state) as string) &&
+      DirectionUtils.toAxis((direction3 = blockState2.permutation.getState(options.direction_state) as string)) !=
+        DirectionUtils.toAxis(block.permutation.getState(options.direction_state) as string) &&
       this.isDifferentOrientation(block, direction3, options)
     ) {
-      if (TextUtils.titleCase(direction3) == WorldUtils.rotateYCounterclockwise(direction)) {
+      if (TextUtils.titleCase(direction3) == DirectionUtils.rotateYCounterclockwise(direction)) {
         return "outer_right";
       }
       return "outer_left";

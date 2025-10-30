@@ -8,15 +8,6 @@ Minecraft utility functions and components to help create add-ons.
 
 > NOTE: This project is still under heavy development. Features may be removed or changed in future releases.
 
-## Manifest
-
-```json
-[
-  { "module_name": "@minecraft/server", "version": "2.1.0" },
-  { "module_name": "@minecraft/server-ui", "version": "2.0.0" }
-]
-```
-
 ## Dependencies
 
 - [@minecraft/math](https://www.npmjs.com/package/@minecraft/math)

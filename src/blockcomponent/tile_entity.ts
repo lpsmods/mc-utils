@@ -6,7 +6,7 @@ import {
   CustomComponentParameters,
   Entity,
 } from "@minecraft/server";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { BlockBaseComponent } from "./base";
 import { create, object, Struct } from "superstruct";
 import { isEntity } from "../validation";

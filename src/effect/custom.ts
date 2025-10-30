@@ -25,7 +25,7 @@ import {
   EntityStepOffEvent,
   EntityStepOnEvent,
 } from "../event";
-import { any, boolean, create, defaulted, max, min, number, object, string, Struct } from "superstruct";
+import { boolean, defaulted, max, min, number, object, string, Struct } from "superstruct";
 
 let initialized = false;
 
@@ -94,8 +94,9 @@ export class CustomEffectUtils {
    * @param {string} effectType Custom effect id.
    * @param {number} duration
    * @param {CustomEffectUtilsOptions} options
+   * @returns {boolean}
    */
-  static add(entity: Entity, effectType: string, duration: number, options?: CustomEffectUtilsOptions): void {
+  static add(entity: Entity, effectType: string, duration: number, options?: CustomEffectUtilsOptions): boolean {
     const effect = customEffectRegistry.get(effectType);
     if (!effect) throw new Error(`Effect "${effectType}" not found!`);
     const instance: CustomEffectInstance = this.struct.create({
@@ -107,7 +108,7 @@ export class CustomEffectUtils {
     });
     const event = new CustomEffectStartEvent(entity, instance);
     if (effect.onStart) effect.onStart(event);
-    if (event.cancel) return;
+    if (event.cancel) return false;
 
     const effects = this.getAll(entity);
     const instance2 = effects.find((effect) => effect.effect === effectType);
@@ -119,6 +120,7 @@ export class CustomEffectUtils {
     }
     const store = this.getStorage(entity);
     store.set("active_effects", effects);
+    return true;
   }
 
   /**

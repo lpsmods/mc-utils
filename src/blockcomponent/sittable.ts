@@ -5,14 +5,13 @@ import {
   CustomComponentParameters,
   Dimension,
   Player,
-  system,
   Vector2,
   Vector3,
 } from "@minecraft/server";
 import { BlockBaseComponent } from "./base";
 import { Vector3Utils } from "@minecraft/math";
 import { PlayerUtils } from "../entity/player_utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { array, create, defaulted, object, string, Struct } from "superstruct";
 import { vec3 } from "../validation";
 import { CENTER_ENTITY } from "../constants";

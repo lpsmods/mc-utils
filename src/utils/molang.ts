@@ -1,3 +1,7 @@
+/**
+ * Generic molang functions.
+ */
+
 import {
   Block,
   Dimension,
@@ -12,7 +16,7 @@ import {
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { Molang } from "molang";
-import { deepMerge } from "./utils";
+import { deepMerge } from "../utils";
 
 export interface MolangEnvironment {
   query?: Record<string, unknown>;

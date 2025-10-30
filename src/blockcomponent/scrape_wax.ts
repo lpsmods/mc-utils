@@ -8,7 +8,7 @@ import {
 import { Identifier } from "../identifier";
 import { ItemUtils } from "../item/utils";
 import { BlockUtils } from "../block/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, object, optional, string, Struct } from "superstruct";
 import { isBlock } from "../validation";
 

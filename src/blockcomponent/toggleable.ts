@@ -7,14 +7,14 @@ import {
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockBaseComponent } from "./base";
 import { BlockUtils } from "../block/utils";
-import { AddonUtils } from "../addon";
-import { create, defaulted, object, string, Struct } from "superstruct";
+import { AddonUtils } from "../utils/addon";
+import { boolean, create, defaulted, object, string, Struct } from "superstruct";
 
 export interface ToggleableOptions {
   toggle_state: keyof BlockStateSuperset;
   true_sound_event: string;
   false_sound_event: string;
-  // toggled_by_redstone?: boolean;
+  toggled_by_redstone?: boolean;
 }
 
 // TODO: Make it toggled by redstone
@@ -24,6 +24,7 @@ export class ToggleableComponent extends BlockBaseComponent implements BlockCust
     toggle_state: defaulted(string(), "mcutils:open"),
     true_sound_event: defaulted(string(), "use.stone"),
     false_sound_event: defaulted(string(), "use.stone"),
+    toggled_by_redstone: defaulted(boolean(), false),
   });
 
   /**

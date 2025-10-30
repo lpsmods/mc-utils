@@ -16,6 +16,8 @@ export type UnitTestMap = Map<string, (ctx: CustomCommandOrigin, message?: strin
 export const unitTests: UnitTestMap = new Map();
 
 export class TestCommand {
+  private static registered: boolean = false;
+
   static options: CustomCommand = {
     name: "mcutils:test",
     description: "Runs a unit test",
@@ -34,7 +36,9 @@ export class TestCommand {
   }
 
   static register(registry: CustomCommandRegistry): void {
+    if (this.registered) return;
     registry.registerEnum("mcutils:units", [...unitTests.keys()]);
     registry.registerCommand(this.options, this.execute);
+    this.registered = true;
   }
 }

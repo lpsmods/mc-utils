@@ -1,8 +1,8 @@
 import { BlockComponentTickEvent, Block, CustomComponentParameters, BlockCustomComponent } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockBaseComponent, NeighborUpdateEvent } from "./base";
-import { MathUtils } from "../math";
-import { AddonUtils } from "../addon";
+import { MathUtils } from "../utils/math";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, number, object, string, Struct } from "superstruct";
 
 export interface RedstoneLampOptions {

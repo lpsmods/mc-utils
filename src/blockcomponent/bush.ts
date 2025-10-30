@@ -11,11 +11,11 @@ import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { ItemUtils } from "../item/utils";
 import { BlockUtils } from "../block/utils";
 import { Identifier } from "../identifier";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { BlockBaseComponent } from "./base";
 import { EntityInBlockTickEvent } from "../event";
-import { Hasher } from "../type";
 import { array, create, defaulted, object, optional, string, Struct } from "superstruct";
+import { Vector3Utils } from "@minecraft/math";
 
 export interface BushOptions {
   growth_state: keyof BlockStateSuperset;
@@ -95,7 +95,7 @@ export class BushComponent extends BlockBaseComponent implements BlockCustomComp
   }
 
   inBlockTick(event: EntityInBlockTickEvent, args: CustomComponentParameters): void {
-    const pos = Hasher.stringify(event.entity.location);
+    const pos = Vector3Utils.toString(event.entity.location);
     const lastPos = (event.entity.getDynamicProperty("mcutils:bush.lastPos") as string) ?? undefined;
     if (pos !== lastPos) {
       event.entity.setDynamicProperty("mcutils:bush.lastPos", pos);

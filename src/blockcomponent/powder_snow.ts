@@ -8,7 +8,7 @@ import {
 import { BlockBaseComponent, NearbyEntityBlockEvent } from "./base";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, object, optional, string, Struct } from "superstruct";
 import { EntityEnterBlockEvent, EntityInBlockTickEvent, EntityLeaveBlockEvent } from "../event";
 

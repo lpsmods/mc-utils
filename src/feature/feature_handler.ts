@@ -8,12 +8,11 @@ import {
   world,
 } from "@minecraft/server";
 import { EntityHandler } from "../entity/entity_handler";
-import { Vector3Utils } from "@minecraft/math";
+import { VECTOR3_ZERO, Vector3Utils } from "@minecraft/math";
 import { ChunkEvents, PlayerChunkLoadEvent } from "../event/chunk";
 import { CustomFeature, CustomFeatureOptions } from "./feature";
 import { CustomFeatureRule, CustomFeatureRuleOptions, PlacementPass } from "./feature_rule";
-import { RandomUtils } from "../random";
-import { BIOME_MAP } from "../constants";
+import { RandomUtils } from "../utils/random";
 
 let initialized = false;
 
@@ -54,26 +53,14 @@ export class FeatureRuleCanPlaceEvent extends FeatureRulePlaceEvent {}
 export class FeatureHandler extends EntityHandler {
   static handles = new Set<FeatureHandler>();
   featurePropertyName: string;
-  biomeMap: { [key: string]: number };
-  biomeEntityId?: string;
-  biomePropertyName?: string;
   debug?: boolean;
 
   features = new Map<string, CustomFeature>();
   featureRules = new Map<string, CustomFeatureRule>();
 
-  constructor(
-    options: EntityQueryOptions,
-    featurePropertyName?: string,
-    biomeMap?: { [key: string]: number },
-    biomeEntityId?: string,
-    biomePropertyName?: string,
-  ) {
+  constructor(options: EntityQueryOptions, featurePropertyName?: string) {
     super(options);
     this.featurePropertyName = featurePropertyName ?? "mcutils:feature";
-    this.biomeMap = biomeMap ?? BIOME_MAP;
-    this.biomeEntityId = biomeEntityId;
-    this.biomePropertyName = biomePropertyName;
     this.onSpawn = this.onSpawn.bind(this);
 
     FeatureHandler.handles.add(this);
@@ -90,7 +77,7 @@ export class FeatureHandler extends EntityHandler {
    * The size of the structure.
    */
   getSize(): Vector3 {
-    return { x: 0, y: 0, z: 0 };
+    return VECTOR3_ZERO;
   }
 
   // FEATURE
@@ -187,7 +174,7 @@ export class FeatureHandler extends EntityHandler {
 
 // TODO: replace with /mcutils:custom-place command.
 function scriptEventReceive(event: ScriptEventCommandMessageAfterEvent): void {
-  const pos = event.sourceEntity?.location ?? event.sourceBlock?.location ?? { x: 0, y: 0, z: 0 };
+  const pos = event.sourceEntity?.location ?? event.sourceBlock?.location ?? VECTOR3_ZERO;
   const dimension = event.sourceEntity?.dimension ?? event.sourceBlock?.dimension ?? world.getDimension("overworld");
   switch (event.id) {
     case "mcutils:place_feature":

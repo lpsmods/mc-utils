@@ -1,3 +1,7 @@
+/**
+ * Generic error functions.
+ */
+
 import { LocationInUnloadedChunkError, LocationOutOfWorldBoundariesError } from "@minecraft/server";
 
 export class ErrorUtils {

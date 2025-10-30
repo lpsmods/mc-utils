@@ -8,7 +8,7 @@ import {
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { getInteractSound } from "../utils";
 import { BlockBaseComponent } from "./base";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, object, string, Struct } from "superstruct";
 
 export interface SlabOptions {

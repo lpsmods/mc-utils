@@ -5,22 +5,15 @@ import {
   BlockComponentOnPlaceEvent,
   CustomComponentParameters,
   Entity,
-  BlockComponentPlayerPlaceBeforeEvent,
-  BlockComponentEntityFallOnEvent,
-  BlockComponentPlayerBreakEvent,
-  BlockComponentPlayerInteractEvent,
-  BlockComponentRandomTickEvent,
-  BlockComponentStepOffEvent,
-  BlockComponentStepOnEvent,
   Vector3,
-  BlockCustomComponent,
 } from "@minecraft/server";
-import { WorldUtils } from "../world/utils";
 import { Hasher } from "../type";
 import { BlockUtils } from "../block/utils";
 import { BlockEvent } from "../event/block";
 import { Struct, object } from "superstruct";
 import { EntityEnterBlockEvent, EntityInBlockTickEvent, EntityLeaveBlockEvent } from "../event";
+import { VECTOR3_ZERO } from "@minecraft/math";
+import { DirectionUtils } from "../utils/direction";
 
 export class NeighborUpdateEvent extends BlockEvent {
   constructor(block: Block, sourceBlock: Block, direction?: Direction) {
@@ -83,7 +76,7 @@ export abstract class BlockBaseComponent {
 
   basePlace(event: BlockComponentOnPlaceEvent, args: CustomComponentParameters): void {
     for (const direction in Direction) {
-      const sourceBlock = event.block.offset(WorldUtils.dir2Offset(direction));
+      const sourceBlock = event.block.offset(DirectionUtils.toOffset(direction));
       if (!sourceBlock) continue;
       const updateEvent = new NeighborUpdateEvent(event.block, sourceBlock, direction as Direction);
       if (this.onNeighborUpdate) this.onNeighborUpdate(updateEvent, args);
@@ -144,7 +137,7 @@ export abstract class BlockBaseComponent {
   neighborTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
     const direction = BlockUtils.getNeighborUpdate(event);
     if (!direction) return;
-    const updateBlock = event.block.offset(WorldUtils.dir2Offset(direction));
+    const updateBlock = event.block.offset(DirectionUtils.toOffset(direction));
     if (!updateBlock) return;
     if (this.onNeighborUpdate)
       this.onNeighborUpdate(new NeighborUpdateEvent(event.block, updateBlock, direction), args);
@@ -156,7 +149,7 @@ export abstract class BlockBaseComponent {
   }
 
   spawnParticle(block: Block, effectName: string, location?: Vector3) {
-    const loc = location ?? { x: 0, y: 0, z: 0 };
+    const loc = location ?? VECTOR3_ZERO;
     const pos = {
       x: block.location.x + 0.5 + loc.x / 16,
       y: block.location.y + loc.y / 16,

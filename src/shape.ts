@@ -1,7 +1,8 @@
 import { BlockPermutation, Vector3 } from "@minecraft/server";
-import { MathUtils } from "./math";
+import { MathUtils } from "./utils/math";
 import { Font, Fonts } from "./font";
 import { Drawer } from "./drawer";
+import { VECTOR3_ZERO } from "@minecraft/math";
 
 export abstract class Shape {
   static readonly shapeId: string;
@@ -9,7 +10,7 @@ export abstract class Shape {
   drawer?: Drawer = undefined;
 
   location: Vector3;
-  rotation: Vector3 = { x: 0, y: 0, z: 0 };
+  rotation: Vector3 = VECTOR3_ZERO;
   origin?: Vector3;
 
   // TODO: Only implemented for some shapes.

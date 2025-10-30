@@ -10,10 +10,9 @@ import {
   world,
 } from "@minecraft/server";
 import { FeatureHandler, FeaturePlaceEvent } from "./feature_handler";
-import { Hasher } from "../type";
-import { RandomUtils } from "../random";
-import { Vector3Utils } from "@minecraft/math";
-import { ErrorUtils } from "../error";
+import { RandomUtils } from "../utils/random";
+import { VECTOR3_ZERO, Vector3Utils } from "@minecraft/math";
+import { ErrorUtils } from "../utils/error";
 import { BlockUtils } from "../block/utils";
 import { REPLACEABLE_BLOCKS } from "../constants";
 
@@ -99,7 +98,7 @@ export class CustomFeature {
   debug(event: FeaturePlaceEvent): void {
     if (!this.options.debug) return;
     event.dimension.setBlockType(event.location, "lime_stained_glass");
-    console.log(`Generated feature '${this.id}' at ${Hasher.stringify(event.location)}`);
+    console.log(`Generated feature '${this.id}' at ${Vector3Utils.toString(event.location)}`);
   }
 
   /**
@@ -145,7 +144,7 @@ export class StructureTemplate extends CustomFeature {
   }
 
   getSize(): Vector3 {
-    if (!this.structure) return { x: 0, y: 0, z: 0 };
+    if (!this.structure) return VECTOR3_ZERO;
     return this.structure.size;
   }
 

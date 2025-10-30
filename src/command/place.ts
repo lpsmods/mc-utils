@@ -4,6 +4,8 @@ import { CustomCommand, CustomCommandOrigin, CustomCommandRegistry, CustomComman
 // featurerule
 
 export class PlaceCommand {
+  private static registered: boolean = false;
+
   static options: CustomCommand = {
     name: "mcutils:custom-place",
     description: "Places a custom feature, or feature rule in the world.",
@@ -17,6 +19,8 @@ export class PlaceCommand {
   }
 
   static register(registry: CustomCommandRegistry): void {
+    if (this.registered) return;
     registry.registerCommand(this.options, this.execute);
+    this.registered = true;
   }
 }

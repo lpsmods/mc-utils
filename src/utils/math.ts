@@ -1,4 +1,8 @@
-import { Vector3Utils } from "@minecraft/math";
+/**
+ * Generic math functions.
+ */
+
+import { VECTOR3_ZERO, Vector3Utils } from "@minecraft/math";
 import { BlockVolume, Entity, Vector3 } from "@minecraft/server";
 
 export class MathUtils {
@@ -40,19 +44,6 @@ export class MathUtils {
    */
   static inRange(value: number, min: number, max: number): boolean {
     return min <= value && max >= value;
-  }
-
-  /**
-   * Calculate the distance between two locations
-   * @param {Vector3} location1
-   * @param {Vector3} location2
-   * @returns
-   */
-  static distanceFromPoints(location1: Vector3, location2: Vector3): number {
-    const e = location2.x - location1.x;
-    const o = location2.y - location1.y;
-    const r = location2.z - location1.z;
-    return Math.floor(Math.sqrt(e * e + o * o + r * r));
   }
 
   /**
@@ -142,7 +133,7 @@ export class MathUtils {
   /**
    * @deprecated use Vector3Utils.add instead.
    */
-  static vecOffset(pos: Vector3, offset: Vector3 = { x: 0, y: 0, z: 0 }) {
+  static vecOffset(pos: Vector3, offset: Vector3 = VECTOR3_ZERO) {
     return Vector3Utils.add(pos, offset);
   }
 

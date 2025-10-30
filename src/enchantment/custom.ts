@@ -13,7 +13,7 @@ import {
 import { Registry } from "../registry";
 import { VersionedDataStorage } from "../data";
 import { ItemEvent, ItemEvents, ItemHoldEvent, ItemHoldTickEvent, ItemReleaseHoldEvent } from "../event";
-import { TextUtils } from "../text";
+import { TextUtils } from "../utils/text";
 import { defaulted, min, number, object, string, Struct } from "superstruct";
 
 let initialized = false;
@@ -64,9 +64,9 @@ export class CustomEnchantmentUtils {
    * @param {ItemStack} itemStack
    * @param {string} enchantmentType Custom enchantment id.
    * @param {number} level The enchantment level.
-   * @returns {ItemStack} The enchanted item stack.
+   * @returns {ItemStack|undefined} The enchanted item stack.
    */
-  static add(itemStack: ItemStack, enchantmentType: string, level?: number): ItemStack {
+  static add(itemStack: ItemStack, enchantmentType: string, level?: number): ItemStack | undefined {
     if (this.has(itemStack, enchantmentType)) throw new Error(`Item already has enchantment "${enchantmentType}"`);
     const enchant = customEnchantmentRegistry.get(enchantmentType);
     if (!enchant) return itemStack;
@@ -76,7 +76,7 @@ export class CustomEnchantmentUtils {
     enchants.push(instance);
     const event = new ItemCustomEnchantEvent(itemStack, instance);
     if (enchant?.onEnchant) enchant.onEnchant(event);
-    if (event.cancel) return itemStack;
+    if (event.cancel) return undefined;
     const store = this.getStorage(itemStack);
     store.set("enchantments", enchants);
 

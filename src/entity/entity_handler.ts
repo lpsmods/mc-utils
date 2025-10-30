@@ -14,7 +14,7 @@ import {
   PlayerInteractWithEntityBeforeEvent,
 } from "@minecraft/server";
 
-import { RandomUtils } from "../random";
+import { RandomUtils } from "../utils/random";
 import {
   EntityDismountEvent,
   EntityEvents,

@@ -8,7 +8,7 @@ import {
 import { LRUCache } from "../cache";
 import { Identifier } from "../identifier";
 import { ItemUtils } from "../item/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, object, optional, string, Struct } from "superstruct";
 import { isBlock } from "../validation";
 

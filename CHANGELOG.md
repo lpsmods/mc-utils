@@ -4,6 +4,93 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6] (Pre-release) - 10/30/2025
+
+### General
+
+- Updated for @minecraft/server 2.3.0
+- Removed pottable item component and potted flower block component. (Use `minecraft:flower_pottable` block component)
+- Chunk.isLoaded now uses isChunkLoaded
+- All instances of Hasher.stringify(Vector3) and Hasher.parseVec3 now use Vector3Utils.toString and Vector3Utils.fromString
+
+### Components
+
+- Added FoodComponent
+- Changed CakeComponent
+  - Now plays the burp sound.
+  - Added saturation_modifier option.
+
+### Fixes
+
+- DataUtils.load how returns the JSON instead of the store value.
+
+### API
+
+- Added ScreenEvents
+- Added ScreenEventSource
+- Added ScreenEventOptions
+- Added ScreenEvent
+- Added OpenScreenEvent
+- Added CloseScreenEvent
+- Removed Biome
+- Removed BIOME_MAP
+- Removed PottableOptions
+- Removed PottableComponent
+- Added DirectionUtils
+- Removed constant UP
+- Removed constant DOWN
+- Removed constant NORTH
+- Removed constant EAST
+- Removed constant SOUTH
+- Removed constant WEST
+- Added constant BLACK
+- Added constant WHITE
+- Added constant RED
+- Added constant GREEN
+- Added constant BLUE
+- Added GuideBookEntity
+- Added GuideBookEntityOptions
+- Added GuideBookEntityEvent
+- Added TurnPageEntityEvent
+- Added DataEvent
+- Added ReadDataEvent
+- Added WriteDataEvent
+- Added DeleteDataEvent
+- Added ReadDataEventSignal
+- Added WriteDataEventSignal
+- Added DeleteDataEventSignal
+- Added DataStorageEvents
+- Changed PlayerUtils
+  - Added function eat
+  - Added function canEat
+- Changed FeatureHandler
+  - Removed parameter biomeMap
+  - Removed parameter biomeEntityId
+  - Removed parameter biomePropertyName
+- Changed WorldUtils
+  - Removed function biome2Name
+  - Removed function getBiome
+  - Removed function rot2dir
+  - Removed function num2dir
+  - Removed function rotateYCounterclockwise
+  - Removed function relDir
+  - Removed function getOpposite
+  - Removed function dir2Axis
+  - Removed function dir2Offset
+  - Removed function dir2Rot
+  - Removed function offsetFromDirection
+- Changed MathUtils
+  - Removed function distanceFromPoints
+- Changed DataStorage
+  - Added function pop
+  - Added function push
+  - Added function filter
+  - Added function some
+  - Added function every
+  - Added function find
+  - Added function onRead
+  - Added function onWrite
+
 ## [0.0.5] (Pre-release) - 10/9/2025
 
 ### General

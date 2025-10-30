@@ -10,7 +10,7 @@ import {
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { deepCopy } from "../utils";
 import { BlockUtils } from "../block/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, number, object, string, Struct } from "superstruct";
 import { entityFilter } from "../validation";
 import { BlockBaseComponent } from "./base";

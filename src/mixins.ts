@@ -1,22 +1,17 @@
-import { ItemStack, Block, ScoreboardObjective, Vector3, Player, Dimension, Entity } from "@minecraft/server";
+import { ItemStack, Block, ScoreboardObjective, Vector3, Player, Entity } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { DataStorage } from "./data/data_storage";
 import { PlayerUtils, ArmorSet, ArmorSetEvent } from "./entity/player_utils";
 import { ItemUtils } from "./item/utils";
 import { WorldUtils } from "./world/utils";
 import { BlockUtils } from "./block/utils";
-import { Biome } from "./biome/biome";
-import { MolangUtils } from "./molang";
-import { TextUtils } from "./text";
+import { MolangUtils } from "./utils/molang";
+import { TextUtils } from "./utils/text";
 
 declare module "@minecraft/server" {
   interface ItemStack {
     startCooldown(player: Player): void;
     executeMolang(expression: string): unknown;
-  }
-
-  interface Dimension {
-    getBiome(location: Vector3, entityId?: string, propertyName?: string): Biome | undefined;
   }
 
   interface ScoreboardObjective {
@@ -217,10 +212,6 @@ Entity.prototype.executeMolang = function (expression) {
 
 Player.prototype.applyArmor = function (armorSet, condition) {
   PlayerUtils.applyArmor(this, armorSet, condition);
-};
-
-Dimension.prototype.getBiome = function (location, entityId, propertyName) {
-  return WorldUtils.getBiome(this, location, entityId, propertyName);
 };
 
 ScoreboardObjective.prototype.tryGetScore = function (name, defaultValue) {

@@ -1,4 +1,4 @@
-import { Dimension, Entity, Player, system, world } from "@minecraft/server";
+import { Dimension, Player, system, world } from "@minecraft/server";
 import { EventSignal } from "./utils";
 import { Chunk } from "../chunk/base";
 import { PlayerUtils } from "../entity/player_utils";

@@ -7,7 +7,7 @@ import {
 import { Identifier } from "../identifier";
 import { BlockUtils } from "../block/utils";
 import { Oxidization } from "../constants";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, object, optional, Struct } from "superstruct";
 import { isBlock } from "../validation";
 

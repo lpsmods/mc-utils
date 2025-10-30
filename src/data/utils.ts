@@ -17,7 +17,7 @@ import { PropertyValue } from "../constants";
 import { Typing, TypingTypes } from "../type";
 import { Chunk } from "../world";
 import { ModalForm, ModalFormHandler, PageButton, PagedActionForm, PageData, Pages } from "../ui";
-import { TextUtils } from "../text";
+import { TextUtils } from "../utils/text";
 
 /**
  * Objects that have dynamic property methods.
@@ -108,7 +108,7 @@ export abstract class DataUtils {
     if (typeof value !== "string") return value;
     try {
       const data = JSON.parse(value);
-      if (!data.type) return value;
+      if (!data.type) return data;
       return this.loadJson(data);
     } catch (err) {
       return value;

@@ -1,6 +1,6 @@
 import { StartupEvent, system } from "@minecraft/server";
 import "./mixins";
-import { AddonUtils } from "./addon";
+import { AddonUtils } from "./utils/addon";
 
 export const VERSION = "1.0.0";
 

@@ -1,7 +1,7 @@
 import { ItemUseOnEvent, Block, CustomComponentParameters, ItemCustomComponent } from "@minecraft/server";
 import { ToolComponent } from "./tool";
 import { offsetVolume } from "../utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { array, create, defaulted, number, object, string, Struct } from "superstruct";
 import { isBlock } from "../validation";
 

@@ -3,7 +3,7 @@
  */
 
 import { RawMessage } from "@minecraft/server";
-import { ChatColor } from "./constants";
+import { ChatColor } from "../constants";
 
 export interface RenderJsonOptions {
   indent?: number;

@@ -9,18 +9,16 @@ import {
   BlockType,
   Direction,
   GameMode,
-  MolangVariableMap,
   Player,
   Vector3,
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
-import { MathUtils } from "../math";
-import { WorldUtils } from "../world/utils";
+import { MathUtils } from "../utils/math";
 import { Oxidization } from "../constants";
 import { Identifier } from "../identifier";
-import { Hasher } from "../type";
 import { Vector3Utils } from "@minecraft/math";
 import { CustomTags } from "../registry";
+import { DirectionUtils } from "../utils/direction";
 
 export enum ExposedDirection {
   Above = "above",
@@ -138,7 +136,7 @@ export abstract class BlockUtils {
     for (let i = 0; i < perms.length; i++) {
       if (cached[i] != perms[i]) {
         BlockUtils.CACHE[key] = perms;
-        return WorldUtils.num2dir(i);
+        return DirectionUtils.fromNumber(i);
       }
     }
     return undefined;
@@ -216,21 +214,21 @@ export abstract class BlockUtils {
    * @returns {Vector3[]}
    */
   static getExposedBlocks(positions: Vector3[], direction: ExposedDirection = ExposedDirection.Above) {
-    const posSet = new Set(positions.map((p) => Hasher.stringify(p)));
+    const posSet = new Set(positions.map((p) => Vector3Utils.toString(p)));
 
     return positions.filter((p) => {
       if (direction === "above") {
-        return !posSet.has(Hasher.stringify(Vector3Utils.add(p, { x: 0, y: 1, z: 0 })));
+        return !posSet.has(Vector3Utils.toString(Vector3Utils.add(p, { x: 0, y: 1, z: 0 })));
       }
       if (direction === "below") {
-        return !posSet.has(Hasher.stringify(Vector3Utils.add(p, { x: 0, y: -1, z: 0 })));
+        return !posSet.has(Vector3Utils.toString(Vector3Utils.add(p, { x: 0, y: -1, z: 0 })));
       }
       if (direction === "side") {
         const sides = [
-          Hasher.stringify(Vector3Utils.add(p, { x: 1, y: 0, z: 0 })),
-          Hasher.stringify(Vector3Utils.add(p, { x: -1, y: 0, z: 0 })),
-          Hasher.stringify(Vector3Utils.add(p, { x: 0, y: 0, z: 1 })),
-          Hasher.stringify(Vector3Utils.add(p, { x: 0, y: 0, z: -1 })),
+          Vector3Utils.toString(Vector3Utils.add(p, { x: 1, y: 0, z: 0 })),
+          Vector3Utils.toString(Vector3Utils.add(p, { x: -1, y: 0, z: 0 })),
+          Vector3Utils.toString(Vector3Utils.add(p, { x: 0, y: 0, z: 1 })),
+          Vector3Utils.toString(Vector3Utils.add(p, { x: 0, y: 0, z: -1 })),
         ];
         return sides.some((sideKey) => !posSet.has(sideKey));
       }

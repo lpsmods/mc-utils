@@ -14,10 +14,10 @@ import {
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockBaseComponent } from "./base";
 import { BlockUtils } from "../block/utils";
-import { WorldUtils } from "../world/utils";
-import { Vector3Utils } from "@minecraft/math";
-import { AddonUtils } from "../addon";
+import { VECTOR3_ZERO, Vector3Utils } from "@minecraft/math";
+import { AddonUtils } from "../utils/addon";
 import { array, boolean, create, defaulted, object, optional, string, Struct } from "superstruct";
+import { DirectionUtils } from "../utils/direction";
 
 export interface MultiblockOptions {
   part_state: keyof BlockStateSuperset;
@@ -38,12 +38,12 @@ export class Part {
   }
 
   isBase(): boolean {
-    return Vector3Utils.equals({ x: 0, y: 0, z: 0 }, this.offset);
+    return Vector3Utils.equals(VECTOR3_ZERO, this.offset);
   }
 
   fromDir(direction: Direction): Vector3 {
     if (!this.relative || this.isBase()) return this.offset;
-    return WorldUtils.offsetFromDirection(this.offset, direction);
+    return DirectionUtils.offsetFromDirection(this.offset, direction);
   }
 
   static parse(value: string): Part | undefined {
@@ -177,7 +177,7 @@ export class MultiblockComponent extends BlockBaseComponent implements BlockCust
     let offset: Vector3 = { x: dx, y: dy, z: dz };
     if (options.direction_state) {
       const dir = permutation.getState(options.direction_state) as Direction;
-      offset = WorldUtils.offsetFromDirection(offset, dir);
+      offset = DirectionUtils.offsetFromDirection(offset, dir);
     }
     const blk = dimension.getBlock(location);
     if (!blk) return;

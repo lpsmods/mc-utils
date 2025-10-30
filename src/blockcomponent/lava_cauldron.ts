@@ -7,7 +7,7 @@ import {
   BlockCustomComponent,
 } from "@minecraft/server";
 import { ItemUtils } from "../item/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { array, create, defaulted, object, string, Struct } from "superstruct";
 import { isBlock } from "../validation";
 

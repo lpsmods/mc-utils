@@ -1,6 +1,6 @@
 import { BlockVolume } from "@minecraft/server";
 import { ChunkEvents } from "./chunk";
-import { RandomUtils } from "../random";
+import { RandomUtils } from "../utils/random";
 import { COLORS } from "../constants";
 
 export default () => {

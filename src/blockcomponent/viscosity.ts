@@ -1,6 +1,6 @@
 import { BlockComponentTickEvent, BlockCustomComponent, CustomComponentParameters } from "@minecraft/server";
 import { BlockBaseComponent } from "./base";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { MAX_EFFECT } from "../constants";
 import { create, number, object, Struct } from "superstruct";
 import { EntityEnterBlockEvent, EntityLeaveBlockEvent } from "../event";

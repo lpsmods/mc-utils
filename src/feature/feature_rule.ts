@@ -1,4 +1,3 @@
-import { WorldUtils } from "../world/utils";
 import { FeatureHandler, FeatureRuleCanPlaceEvent, FeatureRulePlaceEvent } from "./feature_handler";
 import { Vector3Utils } from "@minecraft/math";
 import { REPLACEABLE_BLOCKS } from "../constants";
@@ -115,16 +114,10 @@ export class CustomFeatureRule {
 
     // Biome restriction
     if (this.options.biomes) {
-      const biome = WorldUtils.getBiome(
-        dim,
-        loc,
-        this.handler.biomeEntityId,
-        this.handler.biomePropertyName,
-        this.handler.biomeMap,
-      );
+      const biome = dim.getBiome(loc);
       if (!biome) return false;
       if (!BiomeUtils.matchAny(biome, this.options.biomes)) {
-        if (this.handler.debug) console.warn(`${this.id} | Can't place in ${biome.typeId}`);
+        if (this.handler.debug) console.warn(`${this.id} | Can't place in ${biome.id}`);
         return false;
       }
     }

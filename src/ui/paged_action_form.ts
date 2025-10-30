@@ -1,7 +1,7 @@
-import { CommandPermissionLevel, Player, RawMessage, world } from "@minecraft/server";
+import { Player, RawMessage, world } from "@minecraft/server";
 import { ActionButton, ActionForm, ActionFormEvent, ActionFormHandler } from "./action_form";
 import { deepCopy } from "../utils";
-import { ValidationError, ValidationIssue } from "../error";
+import { ValidationError, ValidationIssue } from "../utils/error";
 import { PlayerSettings } from "../settings";
 import { DataUtils } from "../data";
 

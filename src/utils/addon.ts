@@ -1,3 +1,7 @@
+/**
+ * Generic addon functions.
+ */
+
 import { BlockType, BlockTypes, EntityType, EntityTypes, ItemType, ItemTypes } from "@minecraft/server";
 
 export abstract class AddonUtils {

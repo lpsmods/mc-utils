@@ -9,7 +9,7 @@ import {
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { ItemUtils } from "../item/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { array, create, defaulted, number, object, string, Struct } from "superstruct";
 import { isBlock } from "../validation";
 

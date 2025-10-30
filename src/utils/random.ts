@@ -1,3 +1,7 @@
+/**
+ * Generic random functions.
+ */
+
 import { BlockVolume, Vector3 } from "@minecraft/server";
 import { MathUtils } from "./math";
 

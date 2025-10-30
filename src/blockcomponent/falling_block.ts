@@ -8,7 +8,7 @@ import {
 } from "@minecraft/server";
 import { BlockBaseComponent, NeighborUpdateEvent } from "./base";
 import { FallingBlockEvent, FallingBlockHandler } from "../entity/falling_block_handler";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, object, Struct } from "superstruct";
 import { isEntity } from "../validation";
 

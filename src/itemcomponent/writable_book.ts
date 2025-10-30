@@ -8,8 +8,8 @@ import {
 } from "@minecraft/server";
 import { ActionForm, ActionFormEvent, ActionFormHandler } from "../ui/action_form";
 import { ModalForm, ModalFormHandler } from "../ui/modal_form";
-import { TextUtils } from "../text";
-import { AddonUtils } from "../addon";
+import { TextUtils } from "../utils/text";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, number, object, Struct } from "superstruct";
 
 export interface WritableBookOptions {

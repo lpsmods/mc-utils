@@ -9,12 +9,12 @@ import {
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockBaseComponent } from "./base";
 import { clampNumber, Vector3Utils } from "@minecraft/math";
-import { RandomUtils } from "../random";
+import { RandomUtils } from "../utils/random";
 import { ItemUtils } from "../item/utils";
 import { BlockUtils } from "../block/utils";
 import { CropComponent, CropOptions } from "./crop";
 import { SaplingComponent, SaplingOptions } from "./sapling";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { array, create, defaulted, number, object, string, Struct } from "superstruct";
 
 export interface FertilizableOptions {

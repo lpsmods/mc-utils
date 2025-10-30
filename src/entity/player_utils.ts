@@ -2,9 +2,9 @@
  * Generic player functions.
  */
 
-import { Block, EquipmentSlot, ItemStack, Player, system, Vector2, Vector3, world } from "@minecraft/server";
+import { Block, EquipmentSlot, GameMode, ItemStack, Player, system, Vector2, Vector3 } from "@minecraft/server";
 import { Chunk } from "../chunk/base";
-import { MathUtils } from "../math";
+import { clampNumber } from "@minecraft/math";
 
 export class ArmorSetEvent {
   constructor(player: Player, itemStack: ItemStack, equipmentSlot: EquipmentSlot, beforeItemStack?: ItemStack) {
@@ -196,5 +196,42 @@ export class PlayerUtils {
         system.clearRun(runId);
       }
     });
+  }
+
+  /**
+   * Whether or not the player can eat.
+   * @param {Player} player
+   * @returns {boolean}
+   */
+  static canEat(player: Player): boolean {
+    if (player.getGameMode() === GameMode.Creative) return true;
+    const hunger = player.getComponent("player.hunger");
+    return !hunger || hunger.currentValue < hunger.effectiveMax;
+  }
+
+  /**
+   * Gives the player nutrition like they ate.
+   * @param {Player} player
+   * @param {number} nutrition
+   * @param {boolean|string} sound
+   */
+  static eat(
+    player: Player,
+    nutrition: number = 0,
+    saturationModifier: number = 0,
+    sound: boolean | string = true,
+  ): void {
+    const hunger = player.getComponent("player.hunger");
+    if (nutrition && hunger) {
+      hunger.setCurrentValue(clampNumber(hunger.currentValue + nutrition, hunger.effectiveMin, hunger.effectiveMax));
+    }
+
+    const sat = player.getComponent("player.saturation");
+    if (sat && saturationModifier) {
+      const a = nutrition * saturationModifier * 2;
+      sat.setCurrentValue(clampNumber(sat.currentValue + a, sat.effectiveMin, sat.effectiveMax));
+    }
+
+    if (sound) player.dimension.playSound(typeof sound === "string" ? sound : "random.burp", player.location);
   }
 }

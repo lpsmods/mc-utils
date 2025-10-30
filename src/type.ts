@@ -9,12 +9,10 @@ import {
   Container,
   Dimension,
   DimensionType,
-  EasingType,
   EffectType,
   EnchantmentType,
   Entity,
   EntityType,
-  FluidType,
   ItemStack,
   ItemType,
   Vector2,
@@ -23,6 +21,7 @@ import {
   world,
 } from "@minecraft/server";
 import { Chunk } from "./chunk/base";
+import { VECTOR2_ZERO, VECTOR3_ZERO } from "@minecraft/math";
 
 export enum TypingTypes {
   Container = "container",
@@ -91,7 +90,7 @@ export class Typing {
 
 export class Hasher {
   static parseVec3(value: string): Vector3 {
-    if (!value) return { x: 0, y: 0, z: 0 };
+    if (!value) return VECTOR3_ZERO;
     const points = value.split(",");
     const x = +points[0];
     const y = +points[1];
@@ -100,7 +99,7 @@ export class Hasher {
   }
 
   static parseVec2(value: string): Vector2 {
-    if (!value) return { x: 0, y: 0 };
+    if (!value) return VECTOR2_ZERO;
     const points = value.split(",");
     const x = +points[0];
     const y = +points[1];

@@ -2,7 +2,6 @@ import {
   BlockComponentPlayerInteractEvent,
   BlockPermutation,
   Block,
-  EquipmentSlot,
   ItemStack,
   CustomComponentParameters,
   BlockComponentTickEvent,
@@ -11,12 +10,12 @@ import {
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { CANDLES, COLORS } from "../constants";
-import { TextUtils } from "../text";
+import { TextUtils } from "../utils/text";
 import { ItemUtils } from "../item/utils";
 import { BlockBaseComponent } from "./base";
 import { Vector3Utils } from "@minecraft/math";
 import { Identifier } from "../identifier";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, object, optional, string, Struct } from "superstruct";
 import { isBlock, isItem, vec3 } from "../validation";
 

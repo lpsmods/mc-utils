@@ -1,9 +1,9 @@
 import { BlockComponentPlayerInteractEvent, BlockCustomComponent, EquipmentSlot } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { SlabComponent, SlabOptions } from "./slab";
-import { WorldUtils } from "../world/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { assign, defaulted, object, string } from "superstruct";
+import { DirectionUtils } from "../utils/direction";
 
 export interface VerticalSlabOptions extends SlabOptions {
   direction_state: keyof BlockStateSuperset;
@@ -37,7 +37,7 @@ export class VerticalSlabComponent extends SlabComponent implements BlockCustomC
     return (
       !state.getState(options.double_state) &&
       stack.typeId === event.block.getItemStack()?.typeId &&
-      WorldUtils.getOpposite(dir) == event.face
+      DirectionUtils.getOpposite(dir) == event.face
     );
   }
 }

@@ -13,7 +13,7 @@ import { EventSignal } from "./utils";
 import { forAllDimensions } from "../utils";
 import { Vector3Utils } from "@minecraft/math";
 import { Hasher } from "../type";
-import { ErrorUtils } from "../error";
+import { ErrorUtils } from "../utils/error";
 import { ChunkUtils } from "../chunk";
 
 export abstract class EntityEvent {
@@ -275,13 +275,14 @@ function mountTick(event: EntityTickEvent): void {
 function movedTick(event: EntityTickEvent): void {
   const dim = event.entity.dimension;
   const value = (event.entity.getDynamicProperty("mcutils:prev_location") as string) ?? "0,0,0";
-  const prevPos = Hasher.parseVec3(value);
+  const prevPos = Vector3Utils.fromString(value);
+  if (!prevPos) return;
   const pos = event.entity.location;
   pos.x = Math.round(pos.x * 100) / 100;
   pos.y = Math.round(pos.y * 100) / 100;
   pos.z = Math.round(pos.z * 100) / 100;
   if (Vector3Utils.equals(prevPos, pos)) return;
-  event.entity.setDynamicProperty("mcutils:prev_location", Hasher.stringify(pos));
+  event.entity.setDynamicProperty("mcutils:prev_location", Vector3Utils.toString(pos));
   const movedEvent = new EntityMovedEvent(event.entity, prevPos);
   EntityEvents.moved.apply(movedEvent);
 

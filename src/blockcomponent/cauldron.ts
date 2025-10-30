@@ -8,7 +8,7 @@ import {
 } from "@minecraft/server";
 import { Parser } from "../parser";
 import { ItemUtils } from "../item/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { array, create, object, string, Struct } from "superstruct";
 
 export interface CauldronOptions {

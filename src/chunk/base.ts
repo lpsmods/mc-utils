@@ -13,7 +13,7 @@ import { ParticleDrawer } from "../drawer";
 import { BoxShape } from "../shape";
 import { DataStorage, VersionedDataStorage } from "../data/data_storage";
 import { Hasher } from "../type";
-import { Random } from "../random";
+import { Random } from "../utils/random";
 import { WorldUtils } from "../world/utils";
 import { Vector3Utils } from "@minecraft/math";
 
@@ -192,11 +192,7 @@ export class Chunk {
    * @returns {boolean}
    */
   isLoaded(): boolean {
-    try {
-      return this.dimension.getBlock(this.from) !== undefined && this.dimension.getBlock(this.to) !== undefined;
-    } catch {
-      return false;
-    }
+    return this.dimension.isChunkLoaded(this.getCenter());
   }
 
   // forceLoad(name?: string): string {
@@ -272,7 +268,6 @@ export class Chunk {
   getBlockVolume(): BlockVolume {
     return new BlockVolume(this.from, this.to);
   }
-
 
   // show(): void {
   //   // @ts-ignore

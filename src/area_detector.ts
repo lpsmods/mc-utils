@@ -1,10 +1,11 @@
 import { BlockVolume, Direction, Entity, Vector3, world } from "@minecraft/server";
 import { Ticking } from "./ticking";
-import { MathUtils } from "./math";
+import { MathUtils } from "./utils/math";
 import { AreaEnterEvent, AreaEvents, AreaLeaveEvent, AreaTickEvent } from "./event/area";
 import { Vector3Utils } from "@minecraft/math";
-import { Chunk, ChunkVolume, WorldUtils } from "./world";
+import { Chunk, ChunkVolume } from "./world";
 import { ChunkUtils } from "./chunk";
+import { DirectionUtils } from "./utils/direction";
 
 // import * as debug from "@minecraft/debug-utilities";
 
@@ -474,7 +475,7 @@ export class GatewayAreaDetector extends AreaDetector {
       }
 
       const bl2 = this.gateways.some((gateway) => {
-        const offset = WorldUtils.dir2Offset(gateway.direction);
+        const offset = DirectionUtils.toOffset(gateway.direction);
         const exitFrom = Vector3Utils.subtract(gateway.from, offset);
         const exitTo = Vector3Utils.subtract(gateway.to, offset);
         return MathUtils.isInRect(pos, exitFrom, exitTo);

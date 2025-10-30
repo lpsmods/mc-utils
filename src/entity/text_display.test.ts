@@ -1,4 +1,4 @@
-import { TextDisplayHandler } from "./text_display_handler";
+import { TextDisplayHandler } from "./text_display";
 
 class TextDisplay extends TextDisplayHandler {
   constructor() {

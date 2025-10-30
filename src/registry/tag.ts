@@ -144,3 +144,14 @@ CustomTags.blocks.register(
   "banner",
   COLORS.map((color) => `${color}_banner`),
 );
+CustomTags.blocks.register("copper_chests", [
+  "copper_chest",
+  "exposed_copper_chest",
+  "weathered_copper_chest",
+  "oxidized_copper_chest",
+  "waxed_copper_chest",
+  "waxed_exposed_copper_chest",
+  "waxed_weathered_copper_chest",
+  "waxed_oxidized_copper_chest",
+]);
+CustomTags.blocks.register("anvil", ["anvil", "chipped_anvil", "damaged_anvil"]);

@@ -12,7 +12,7 @@ import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
 import { ItemUtils } from "../item/utils";
 import { BlockBaseComponent } from "./base";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { array, create, defaulted, number, object, optional, string, Struct } from "superstruct";
 import { isItem, vec3 } from "../validation";
 

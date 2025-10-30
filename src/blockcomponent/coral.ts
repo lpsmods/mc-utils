@@ -2,7 +2,7 @@ import { Block, BlockComponentTickEvent, BlockCustomComponent, CustomComponentPa
 import { LRUCache } from "../cache";
 import { Identifier } from "../identifier";
 import { BlockUtils } from "../block/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, number, object, optional, Struct } from "superstruct";
 import { isBlock } from "../validation";
 

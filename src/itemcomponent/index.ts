@@ -4,7 +4,6 @@ export * from "./flint_and_steel";
 export * from "./guide_book";
 export * from "./hoe";
 export * from "./info_book";
-export * from "./pottable";
 export * from "./shovel";
 export * from "./tool";
 export * from "./writable_book";

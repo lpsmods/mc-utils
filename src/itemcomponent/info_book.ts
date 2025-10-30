@@ -6,7 +6,7 @@ import {
   ItemCustomComponent,
 } from "@minecraft/server";
 import { ItemBaseComponent } from "./base";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { boolean, create, defaulted, number, object, optional, string, Struct } from "superstruct";
 import {
   CustomPage,

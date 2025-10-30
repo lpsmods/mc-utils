@@ -9,6 +9,8 @@ import {
 import { customEffectRegistry, CustomEffectUtils } from "../effect";
 
 export class CustomEffectCommand {
+  private static registered: boolean = false;
+
   static options: CustomCommand = {
     name: "mcutils:custom-effect",
     description: "Add or remove custom status effects.",
@@ -69,8 +71,10 @@ export class CustomEffectCommand {
   }
 
   static register(registry: CustomCommandRegistry): void {
+    if (this.registered) return;
     registry.registerEnum("mcutils:custom_effect_operation", ["clear", "give"]);
     registry.registerEnum("mcutils:custom_effect", [...customEffectRegistry.keys()]);
     registry.registerCommand(this.options, this.execute.bind(this));
+    this.registered = true;
   }
 }

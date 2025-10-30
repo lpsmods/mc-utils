@@ -1,9 +1,9 @@
 import { BlockComponentRandomTickEvent, BlockCustomComponent, CustomComponentParameters } from "@minecraft/server";
-import { RandomUtils } from "../random";
+import { RandomUtils } from "../utils/random";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockBaseComponent } from "./base";
 import { clampNumber } from "@minecraft/math";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, number, object, string, Struct } from "superstruct";
 
 export interface CropOptions {

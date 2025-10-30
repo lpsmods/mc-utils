@@ -1,6 +1,6 @@
-import { Direction, Entity, EntityQueryOptions, ItemLockMode, Player, Vector3 } from "@minecraft/server";
-import { WorldUtils } from "../world";
+import { Direction, Entity, EntityQueryOptions, ItemLockMode, Vector3 } from "@minecraft/server";
 import { forAllDimensions } from "../utils";
+import { DirectionUtils } from "../utils/direction";
 
 export abstract class EntityUtils {
   /**
@@ -26,7 +26,7 @@ export abstract class EntityUtils {
    * @returns {Direction}
    */
   static getFacingDirection(entity: Entity): Direction {
-    return WorldUtils.rot2dir(entity.getRotation());
+    return DirectionUtils.rot2dir(entity.getRotation());
   }
 
   /**

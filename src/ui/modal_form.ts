@@ -1,7 +1,7 @@
 import { Player, RawMessage, world } from "@minecraft/server";
 import { ModalFormData } from "@minecraft/server-ui";
 import { DataStorage } from "../data/data_storage";
-import { TextUtils } from "../text";
+import { TextUtils } from "../utils/text";
 
 function t(text: string | RawMessage): string | RawMessage {
   if (typeof text !== "string") return text;

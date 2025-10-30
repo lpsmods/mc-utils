@@ -11,11 +11,12 @@ import {
 import { DataUtils, DynamicObject } from "./utils";
 import { UnitTestMap } from "../command/test";
 import { ChunkUtils } from "../chunk";
+import { VECTOR3_ZERO } from "@minecraft/math";
 
 function data() {
   const dim = world.getDimension("overworld");
   const entity = world.getAllPlayers()[0];
-  const chunk = ChunkUtils.pos2Chunk(dim, { x: 0, y: 0, z: 0 });
+  const chunk = ChunkUtils.pos2Chunk(dim, VECTOR3_ZERO);
   const block = dim.getBlock(entity.location);
   const data1 = {
     block_permutation: block?.permutation,

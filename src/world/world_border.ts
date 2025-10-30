@@ -8,8 +8,8 @@ import {
   PlayerPlaceBlockAfterEvent,
 } from "@minecraft/server";
 import { Ticking } from "../ticking.js";
-import { Vector3Utils } from "@minecraft/math";
-import { MathUtils } from "../math.js";
+import { VECTOR2_ZERO, Vector3Utils } from "@minecraft/math";
+import { MathUtils } from "../utils/math.js";
 
 export interface WorldBorderOptions {
   canBreakBlocks?: boolean;
@@ -25,7 +25,7 @@ export class WorldBorder extends Ticking {
 
   constructor(center?: Vector2, width?: number, depth?: number, options?: WorldBorderOptions, dimension?: Dimension) {
     super();
-    this.center = center ?? { x: 0, y: 0 };
+    this.center = center ?? VECTOR2_ZERO;
     this.width = width ?? 29999984;
     this.depth = depth ?? 29999984;
     this.dimension = dimension ?? world.getDimension("overworld");

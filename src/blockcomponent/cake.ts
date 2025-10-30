@@ -6,9 +6,9 @@ import {
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { ItemUtils } from "../item/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { array, create, defaulted, number, object, string, Struct } from "superstruct";
-import { clampNumber } from "@minecraft/math";
+import { PlayerUtils } from "../entity";
 
 export class CakeInteraction {
   readonly item: string;
@@ -33,10 +33,10 @@ export interface CakeOptions {
   slice_state: keyof BlockStateSuperset;
   max_slices: number;
   nutrition: number;
+  saturation_modifier: number;
   interactions: string[];
 }
 
-// TODO: Check players hunger.
 export class CakeComponent implements BlockCustomComponent {
   static readonly componentId = AddonUtils.makeId("cake");
   struct: Struct<any, any> = object({
@@ -44,6 +44,7 @@ export class CakeComponent implements BlockCustomComponent {
     max_slices: defaulted(number(), 6),
     interactions: defaulted(array(string()), []),
     nutrition: defaulted(number(), 2),
+    saturation_modifier: defaulted(number(), 0),
   });
 
   SLICES = 6;
@@ -80,12 +81,8 @@ export class CakeComponent implements BlockCustomComponent {
 
   eat(event: BlockComponentPlayerInteractEvent, options: CakeOptions): void {
     if (!event.player) return;
-    const hunger = event.player.getComponent("player.hunger");
-    if (hunger) {
-      hunger.setCurrentValue(
-        clampNumber(hunger.currentValue + options.nutrition, hunger.effectiveMin, hunger.effectiveMax),
-      );
-    }
+    if (!PlayerUtils.canEat(event.player)) return;
+    PlayerUtils.eat(event.player, options.nutrition, options.saturation_modifier);
     var slice = event.block.permutation.getState(options.slice_state) as number;
     if (slice === options.max_slices) {
       return event.dimension.setBlockType(event.block.location, "air");

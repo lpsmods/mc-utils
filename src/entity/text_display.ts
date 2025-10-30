@@ -8,7 +8,7 @@ import {
 import { ModalFormData, ActionFormData } from "@minecraft/server-ui";
 import { EntityHandler } from "./entity_handler";
 import { Vector3Utils } from "@minecraft/math";
-import { TextUtils } from "../text";
+import { TextUtils } from "../utils/text";
 
 export class TextDisplayHandler extends EntityHandler {
   constructor(options: EntityQueryOptions) {

@@ -1,5 +1,5 @@
-import { Dimension, Entity, ItemStack, Vector3, world } from "@minecraft/server";
-import { RandomUtils } from "../random";
+import { Dimension, Entity, ItemStack, Vector3 } from "@minecraft/server";
+import { RandomUtils } from "../utils/random";
 
 export abstract class LootTableHandler {
   static all: Map<string, LootTableHandler> = new Map<string, LootTableHandler>();

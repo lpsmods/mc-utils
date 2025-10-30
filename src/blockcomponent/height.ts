@@ -7,7 +7,7 @@ import {
 } from "@minecraft/server";
 import { getInteractSound } from "../utils";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, number, object, string, Struct } from "superstruct";
 
 export interface HeightOptions {

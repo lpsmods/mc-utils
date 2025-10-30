@@ -9,9 +9,10 @@ import { Identifier } from "../identifier";
 import { BlockUtils } from "../block/utils";
 import { Oxidization } from "../constants";
 import { ItemUtils } from "../item/utils";
-import { AddonUtils } from "../addon";
+import { AddonUtils } from "../utils/addon";
 import { create, defaulted, object, optional, string, Struct } from "superstruct";
 import { isBlock } from "../validation";
+import { VECTOR3_ZERO } from "@minecraft/math";
 
 export interface ScrapeOxidizationOptions {
   block?: string;
@@ -60,7 +61,7 @@ export class ScrapeOxidizationComponent implements BlockCustomComponent {
     this.convertBlock(event.block, options);
     const variables = new MolangVariableMap();
     variables.setColorRGB("color", { red: 0, green: 0, blue: 0 });
-    variables.setVector3("direction", { x: 0, y: 0, z: 0 });
+    variables.setVector3("direction", VECTOR3_ZERO);
     event.block.dimension.spawnParticle(
       options.particle_effect ?? "minecraft:wax_particle",
       event.block.location,
