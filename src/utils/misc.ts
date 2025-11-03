@@ -1,5 +1,5 @@
 import { system, Block, Vector3, Dimension, DimensionTypes, world } from "@minecraft/server";
-import { LRUCache } from "./cache";
+import { LRUCache } from "../cache";
 
 const soundCache = new LRUCache<string, string>();
 /**

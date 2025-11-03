@@ -1,6 +1,6 @@
 {
   "name": "@lpsmods/mc-utils",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "author": "legopitstop",
   "license": "MIT",
   "description": "Utilities for making Minecraft: Bedrock Edition scripts",

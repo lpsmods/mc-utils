@@ -23,7 +23,6 @@ export * from "./cache";
 export * from "./main";
 export * from "./mixins";
 export * from "./type";
-export * from "./utils";
 export * from "./settings";
 export * from "./area_detector";
 export * from "./drawer";
