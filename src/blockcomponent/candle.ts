@@ -14,7 +14,7 @@ import { ItemUtils } from "../item/utils";
 import { BlockBaseComponent } from "./base";
 import { AddonUtils } from "../utils/addon";
 import { array, create, defaulted, number, object, optional, string, Struct } from "superstruct";
-import { isItem, vec3 } from "../validation";
+import { isItem } from "../validation";
 
 export interface CandleOptions {
   candles_state: keyof BlockStateSuperset;
