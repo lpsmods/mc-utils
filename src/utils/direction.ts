@@ -56,11 +56,40 @@ export abstract class DirectionUtils {
   }
 
   /**
+   * Converts a weirdo direction number to a direction.
+   * @param {number} num
+   * @returns {Direction}
+   */
+  static fromWeirdo(num: number): Direction {
+    switch (num) {
+      case 0:
+        return Direction.East;
+      case 1:
+        return Direction.West;
+      case 2:
+        return Direction.South;
+      case 3:
+        return Direction.North;
+      default:
+        return Direction.North;
+    }
+  }
+
+  /**
    * Rotates the Y direction counterclockwise.
    * @param {string} dir
    * @returns {Direction}
    */
-  static rotateYCounterclockwise(dir: string | undefined): Direction {
+  static rotateYCounterclockwise(dir: string | undefined): Direction | string {
+    return this.getOpposite(this.rotateY(dir));
+  }
+
+  /**
+   * Rotates the Y direction clockwise.
+   * @param {string} dir
+   * @returns {Direction}
+   */
+  static rotateY(dir: string | undefined): Direction {
     if (!dir) {
       return Direction.North;
     }
@@ -108,7 +137,7 @@ export abstract class DirectionUtils {
     if (!dir) {
       return Direction.North;
     }
-    if (typeof dir == "number") dir = DirectionUtils.fromNumber(dir);
+    if (typeof dir === "number") dir = DirectionUtils.fromNumber(dir);
     switch (dir.toLowerCase()) {
       case "north":
         return Direction.South;
@@ -120,10 +149,12 @@ export abstract class DirectionUtils {
         return Direction.East;
       case "top":
         return "bottom";
+      case "up":
       case "above":
         return Direction.Down;
       case "bottom":
         return "top";
+      case "down":
       case "below":
         return Direction.Up;
       default:
@@ -148,6 +179,8 @@ export abstract class DirectionUtils {
       case "east":
       case "west":
         return "z";
+      case "up":
+      case "down":
       case "top":
       case "bottom":
         return "y";
@@ -224,9 +257,10 @@ export abstract class DirectionUtils {
    * @param direction Cardinal direction (north, south, east, west)
    * @returns Offset in world space
    */
-  static offsetFromDirection(local: Vector3, direction: Direction): Vector3 {
+  static offsetFromDirection(local: Partial<Vector3>, direction: Direction | string): Vector3 {
     let forward: Vector3;
     let left: Vector3;
+
     const up: Vector3 = { x: 0, y: 1, z: 0 };
 
     switch (direction.toLowerCase()) {
@@ -251,9 +285,9 @@ export abstract class DirectionUtils {
     }
 
     return {
-      x: local.x * left.x + local.y * up.x + local.z * forward.x,
-      y: local.x * left.y + local.y * up.y + local.z * forward.y,
-      z: local.x * left.z + local.y * up.z + local.z * forward.z,
+      x: (local.x ?? 0) * left.x + (local.y ?? 0) * up.x + (local.z ?? 0) * forward.x,
+      y: (local.x ?? 0) * left.y + (local.y ?? 0) * up.y + (local.z ?? 0) * forward.y,
+      z: (local.x ?? 0) * left.z + (local.y ?? 0) * up.z + (local.z ?? 0) * forward.z,
     };
   }
 }

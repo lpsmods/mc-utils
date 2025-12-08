@@ -13,6 +13,7 @@ import {
 
 export type Id =
   | string
+  | String
   | Identifier
   | Block
   | BlockPermutation
@@ -82,8 +83,23 @@ export class Identifier {
     return this;
   }
 
-  static parse(value: Id): Identifier {
-    if (!value) return new Identifier("minecraft", "unknown");
+  static isId(value: Id): boolean {
+    if (typeof value === "string") return value.includes(":");
+    if (value instanceof BlockPermutation) return true;
+    if (value instanceof Block) return true;
+    if (value instanceof ItemStack) return true;
+    if (value instanceof Entity) return true;
+    if (value instanceof BiomeType) return true;
+    if (value instanceof BlockType) return true;
+    if (value instanceof ItemType) return true;
+    if (value instanceof EntityType) return true;
+    if (value instanceof EffectType) return true;
+    if (value instanceof EnchantmentType) return true;
+    if (value instanceof Identifier) return true;
+    return false;
+  }
+
+  static parseObject(value: Id): Identifier {
     if (value instanceof BlockPermutation) return Identifier.parse(value.type.id);
     if (value instanceof Block) return Identifier.parse(value.typeId);
     if (value instanceof ItemStack) return Identifier.parse(value.typeId);
@@ -95,7 +111,13 @@ export class Identifier {
     if (value instanceof EffectType) return Identifier.parse(value.getName());
     if (value instanceof EnchantmentType) return Identifier.parse(value.id);
     if (value instanceof Identifier) return value;
-    let parts = value.split(":");
+    return new Identifier("minecraft", "unknown");
+  }
+
+  static parse(value: Id): Identifier {
+    if (!value) return new Identifier("minecraft", "unknown");
+    if (typeof value === "object") return this.parseObject(value);
+    let parts = value.toString().split(":");
     let namespace = "minecraft";
     let path = "";
     if (parts.length >= 2) {

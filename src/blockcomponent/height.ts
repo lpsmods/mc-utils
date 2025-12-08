@@ -8,11 +8,13 @@ import {
 import { getInteractSound } from "../utils";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { AddonUtils } from "../utils/addon";
-import { create, defaulted, number, object, string, Struct } from "superstruct";
+import { create, defaulted, number, object, optional, string, Struct } from "superstruct";
+import { ItemUtils } from "../item";
 
 export interface HeightOptions {
   layers_state: keyof BlockStateSuperset;
   max_layers: number;
+  sound_event?: string;
 }
 
 export class HeightComponent implements BlockCustomComponent {
@@ -20,6 +22,7 @@ export class HeightComponent implements BlockCustomComponent {
   struct: Struct<any, any> = object({
     layers_state: defaulted(string(), "mcutils:layers"),
     max_layers: defaulted(number(), 8),
+    sound_event: optional(string()),
   });
 
   /**
@@ -54,8 +57,10 @@ export class HeightComponent implements BlockCustomComponent {
     const layers = state.getState(options.layers_state) as number;
     const newLayers = layers + 1;
     if (this.canBeIncreased(event, options)) {
-      event.player.dimension.playSound(getInteractSound(event.block), event.block.location);
+      const soundId = options.sound_event ? options.sound_event : getInteractSound(event.block);
+      event.player.dimension.playSound(soundId, event.block.location);
       event.block.setPermutation(state.withState(options.layers_state, newLayers));
+      if (event.player) ItemUtils.decrementStack(event.player);
     }
   }
 }

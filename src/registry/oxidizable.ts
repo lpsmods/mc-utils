@@ -6,12 +6,33 @@ import { BlockUtils } from "../block";
 let initialized = false;
 
 export interface OxidizableOptions {
+  /**
+   * The oxidized block. (like exposed_copper)
+   */
   block: BlockType | string;
-  sound_event?: string;
+  soundEvent?: string;
   onConvert?: (block: Block, event: ItemUseAfterEvent) => void;
 }
 
 export class OxidizableBlocksRegistry extends Registry<OxidizableOptions> {
+  /**
+   * Register a new oxidizable block interaction.
+   *
+   * Handles oxidizing (random tick) and scrape oxidization (axe).
+   *
+   * @param {BlockType|string} input The unoxidized block. (like copper_block)
+   * @param {OxidizableOptions} options
+   * @returns {OxidizableOptions}
+   *
+   * @example oxidizable.ts
+   * ```typescript
+   * import { oxidizableBlocks } from "@lpsmods/mc-utils";
+   *
+   * oxidizableBlocks.register("copper_block", {block: "exposed_copper"});
+   * oxidizableBlocks.register("exposed_copper", {block: "weathered_copper"});
+   * oxidizableBlocks.register("weathered_copper", {block: "oxidized_copper"});
+   * ```
+   */
   register(input: BlockType | string, options: OxidizableOptions): OxidizableOptions | undefined {
     if (!initialized) init();
     const id = input instanceof BlockType ? input.id : input;
@@ -28,11 +49,16 @@ export class OxidizableBlocksRegistry extends Registry<OxidizableOptions> {
   }
 }
 
+/**
+ * Default oxidizable block registry.
+ */
 export const oxidizableBlocks = new OxidizableBlocksRegistry();
 
+// TODO: Add oxidizable
 function init(): void {
   initialized = true;
 
+  // TODO: Invert
   world.beforeEvents.itemUse.subscribe((event) => {
     if (!event.itemStack || !ItemUtils.matches(event.itemStack, "#is_axe")) return;
     const source = event.source.getBlockFromViewDirection({ maxDistance: 6 })?.block;
@@ -41,8 +67,9 @@ function init(): void {
     if (!options) return;
     system.run(() => {
       if (options.onConvert) options.onConvert(source, event);
-      source.dimension.playSound(options.sound_event ?? "scrape", source.location);
+      source.dimension.playSound(options.soundEvent ?? "scrape", source.location);
       BlockUtils.setType(source, options.block);
+      // TODO: Particle
     });
   });
 }

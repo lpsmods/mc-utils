@@ -71,7 +71,7 @@ export class MathUtils {
 
   /**
    * Whether or not the entity is in a rectangle.
-   * @param {Entity|Vector} origin
+   * @param {Entity|Vector3} origin
    * @param {Vector3} from
    * @param {Vector3} to
    * @returns {boolean}

@@ -9,6 +9,7 @@ import { ModalFormData, ActionFormData } from "@minecraft/server-ui";
 import { EntityHandler } from "./entity_handler";
 import { Vector3Utils } from "@minecraft/math";
 import { TextUtils } from "../utils/text";
+import { Icon } from "../ui";
 
 export class TextDisplayHandler extends EntityHandler {
   constructor(options: EntityQueryOptions) {
@@ -30,10 +31,10 @@ export class TextDisplayHandler extends EntityHandler {
   show(event: PlayerInteractWithEntityAfterEvent): void {
     const ui = new ActionFormData();
     ui.title("Text Display");
-    ui.button("Rename", "textures/items/name_tag.png");
-    ui.button("Center", "textures/ui/down_arrow.png");
-    ui.button("§cLock", "textures/ui/lock_color.png");
-    ui.button("§cRemove", "textures/ui/icon_trash.png");
+    ui.button("Rename", Icon.NameTag);
+    ui.button("Center", Icon.DownArrow);
+    ui.button("§cLock", Icon.LockColor);
+    ui.button("§cRemove", Icon.Trash);
     ui.show(event.player).then((res) => {
       switch (res.selection) {
         case 0:

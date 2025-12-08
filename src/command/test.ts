@@ -13,10 +13,10 @@ import {
 
 export type UnitTestMap = Map<string, (ctx: CustomCommandOrigin, message?: string) => void>;
 
-export const unitTests: UnitTestMap = new Map();
-
 export class TestCommand {
   private static registered: boolean = false;
+
+  static unitTests: UnitTestMap = new Map();
 
   static options: CustomCommand = {
     name: "mcutils:test",
@@ -27,7 +27,7 @@ export class TestCommand {
   };
 
   static execute(ctx: CustomCommandOrigin, unit: string, message?: string): CustomCommandResult | undefined {
-    const func = unitTests.get(unit);
+    const func = TestCommand.unitTests.get(unit);
     if (!func) return { status: 0, message: `§c'${unit}' is not a valid unit test!` };
     system.run(() => {
       func(ctx, message);
@@ -37,7 +37,7 @@ export class TestCommand {
 
   static register(registry: CustomCommandRegistry): void {
     if (this.registered) return;
-    registry.registerEnum("mcutils:units", [...unitTests.keys()]);
+    registry.registerEnum("mcutils:units", [...TestCommand.unitTests.keys()]);
     registry.registerCommand(this.options, this.execute);
     this.registered = true;
   }

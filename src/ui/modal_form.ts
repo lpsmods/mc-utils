@@ -41,32 +41,51 @@ export class ModalFormOnSubmit extends ModalFormEvent {
   readonly formResult: FormResult;
 }
 
-export interface ModalOption {
-  label: string | RawMessage;
-  placeholder?: string | RawMessage;
+export type TextOption = {
+  type: "text";
+  label: string;
+  condition?: (event: ModalFormEvent) => boolean;
+  tooltip?: string;
+  value?: string;
+  placeholder?: string;
+};
 
-  type?: "text" | "dropdown" | "slider" | "toggle";
-  value?: string | boolean | number;
+export type DropdownOption = {
+  type: "dropdown";
+  label: string;
+  values: string[] | { [key: string]: string | RawMessage };
+  condition?: (event: ModalFormEvent) => boolean;
+  value?: number | string;
+  tooltip?: string;
+};
+
+export type SliderOption = {
+  type: "slider";
+  label: string;
+  condition?: (event: ModalFormEvent) => boolean;
+  tooltip?: string;
+  value?: number;
+  step?: number;
   min?: number;
   max?: number;
-  step?: number;
-  options?: string[];
-  tooltip?: string | RawMessage;
+};
 
-  /**
-   * Condition to add this option to the menu.
-   * @param {ActionFormEvent} event
-   * @returns {boolean} When true it will show this option.
-   */
+export type ToggleOption = {
+  type: "toggle";
+  label: string;
   condition?: (event: ModalFormEvent) => boolean;
-}
+  tooltip?: string;
+  value?: boolean;
+};
+
+export type ModalOptions = TextOption | DropdownOption | SliderOption | ToggleOption;
 
 export interface ModalForm {
   title?: string | RawMessage;
   body?: string | RawMessage;
   submitLabel?: string;
 
-  options: { [key: string]: ModalOption };
+  options: { [key: string]: ModalOptions };
 
   /**
    * Function to call when the UI is shown.
@@ -108,21 +127,43 @@ export class ModalFormHandler {
     this.store = new DataStorage(`mcutils:form_${this.id}`);
   }
 
-  #buildText(ui: ModalFormData, option: ModalOption): void {
+  private buildText(ui: ModalFormData, option: TextOption): void {
     ui.textField(t(option.label), t(option.placeholder ?? ""), {
       defaultValue: option.value?.toString(),
       tooltip: option.tooltip ? t(option.tooltip) : undefined,
     });
   }
 
-  #buildDropdown(ui: ModalFormData, option: ModalOption): void {
-    ui.dropdown(t(option.label), option.options ?? ["unset"], {
-      defaultValueIndex: (option.value as number) ?? 0,
+  private buildDropdown(ui: ModalFormData, option: DropdownOption): void {
+    let items: Array<RawMessage | string> = ["unset"];
+    let lookup: string[] = ["unset"];
+    if (option.values) {
+      if (Array.isArray(option.values)) {
+        items = option.values;
+        lookup = option.values;
+      } else {
+        // Object
+        items = Object.values(option.values);
+        lookup = Object.keys(option.values);
+      }
+    }
+
+    let index: number = 0;
+    if (option.value) {
+      if (typeof option?.value === "number") {
+        index = option.value as number;
+      } else {
+        index = lookup.indexOf(option.value);
+      }
+    }
+
+    ui.dropdown(t(option.label), items, {
+      defaultValueIndex: index,
       tooltip: option.tooltip ? t(option.tooltip) : undefined,
     });
   }
 
-  #buildSlider(ui: ModalFormData, option: ModalOption): void {
+  private buildSlider(ui: ModalFormData, option: SliderOption): void {
     ui.slider(t(option.label), option.min ?? 0, option.max ?? 100, {
       valueStep: option.step ?? 1,
       defaultValue: (option.value as number) ?? 0,
@@ -130,28 +171,27 @@ export class ModalFormHandler {
     });
   }
 
-  #buildToggle(ui: ModalFormData, option: ModalOption): void {
+  private buildToggle(ui: ModalFormData, option: ToggleOption): void {
     ui.toggle(t(option.label), {
       defaultValue: (option.value as boolean) ?? false,
       tooltip: option.tooltip ? t(option.tooltip) : undefined,
     });
   }
 
-  #buildOptions(ui: ModalFormData, option: ModalOption): void {
+  private buildOption(ui: ModalFormData, option: ModalOptions): void {
     switch (option.type ?? "text") {
       case "text":
-        return this.#buildText(ui, option);
+        return this.buildText(ui, option as TextOption);
       case "dropdown":
-        return this.#buildDropdown(ui, option);
+        return this.buildDropdown(ui, option as DropdownOption);
       case "slider":
-        return this.#buildSlider(ui, option);
+        return this.buildSlider(ui, option as SliderOption);
       case "toggle":
-        return this.#buildToggle(ui, option);
+        return this.buildToggle(ui, option as ToggleOption);
     }
   }
 
-  #build(ui: ModalFormData, event: ModalFormEvent): string[] {
-    // Build
+  private build(ui: ModalFormData, event: ModalFormEvent): string[] {
     if (this.form.title) {
       ui.title(t(this.form.title));
     }
@@ -165,7 +205,7 @@ export class ModalFormHandler {
         const option = this.form.options[k];
         if (option.condition && !option.condition(event)) continue;
         keys.push(k);
-        this.#buildOptions(ui, option);
+        this.buildOption(ui, option);
       }
     }
     return keys;
@@ -184,7 +224,7 @@ export class ModalFormHandler {
     if (this.form.onShow) this.form.onShow(showEvent);
     if (showEvent.cancel) return false;
 
-    const keys = this.#build(ui, event);
+    const keys = this.build(ui, event);
 
     // Show
     const res = ui.show(player);

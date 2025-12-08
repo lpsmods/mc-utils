@@ -1,17 +1,28 @@
-import { UnitTestMap } from "../command/test";
+import { describe, expect, it } from "vitest";
 import { MolangUtils } from "./molang";
+import { ItemStack, world } from "@minecraft/server";
+import { VECTOR3_ZERO } from "@minecraft/math";
 
-export default (units: UnitTestMap) => {
-  units.set("block_molang", (ctx, message) => {
-    const block = ctx.sourceBlock ?? ctx.sourceEntity?.dimension.getBlock(ctx.sourceEntity.location)?.below();
-    if (!block) return;
-    let bRes = MolangUtils.block(block, message ?? "'worked'");
-    console.warn(bRes);
+describe("Molang Utils", () => {
+  const dim = world.getDimension("overworld");
+  const block = dim.getBlock(VECTOR3_ZERO);
+  if (!block) throw new Error("Block not found!");
+  const entity = world.getEntity("1");
+  if (!entity) throw new Error("Entity not found!");
+  const item = new ItemStack("paper");
+
+  it("Eval simple block molang", () => {
+    const expr = "5 + 5";
+    expect(MolangUtils.block(block, expr)).toBe(10);
   });
-  units.set("entity_molang", (ctx, message) => {
-    const entity = ctx.sourceEntity;
-    if (!entity) return;
-    let eRes = MolangUtils.entity(entity, message ?? "'worked'");
-    console.warn(eRes);
+
+  it("Eval simple entity molang", () => {
+    const expr = "5 + 5";
+    expect(MolangUtils.entity(entity, expr)).toBe(10);
   });
-};
+
+  it("Eval simple item molang", () => {
+    const expr = "5 + 5";
+    expect(MolangUtils.item(item, expr)).toBe(10);
+  });
+});

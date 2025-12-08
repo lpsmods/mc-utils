@@ -6,12 +6,32 @@ import { BlockUtils } from "../block";
 let initialized = false;
 
 export interface StrippableOptions {
+  /**
+   * The stripped block. (like stripped_oak_log)
+   */
   block: BlockType | string;
-  sound_event?: string;
+  soundEvent?: string;
   onConvert?: (block: Block, event: ItemUseAfterEvent) => void;
 }
 
 export class StrippableBlockRegistry extends Registry<StrippableOptions> {
+  /**
+   * Register a new strippable block interaction.
+   *
+   * Handles stripping (axe).
+   *
+   * @param {BlockType|string} input The unstripped block. (like oak_log)
+   * @param {StrippableOptions} options
+   * @returns {StrippableOptions}
+   *
+   * @example strippable.ts
+   * ```typescript
+   * import { strippableBlocks } from "@lpsmods/mc-utils";
+   *
+   * strippableBlocks.register("oak_log", {block: "stripped_oak_log"});
+   * strippableBlocks.register("oak_wood", {block: "stripped_oak_wood"});
+   * ```
+   */
   register(input: BlockType | string, options: StrippableOptions): StrippableOptions | undefined {
     if (!initialized) init();
     const id = input instanceof BlockType ? input.id : input;
@@ -28,6 +48,9 @@ export class StrippableBlockRegistry extends Registry<StrippableOptions> {
   }
 }
 
+/**
+ * Default strippable block registry.
+ */
 export const strippableBlocks = new StrippableBlockRegistry();
 
 function init(): void {
@@ -41,7 +64,7 @@ function init(): void {
     if (!options) return;
     system.run(() => {
       if (options.onConvert) options.onConvert(source, event);
-      source.dimension.playSound(options.sound_event ?? "use.wood", source.location);
+      source.dimension.playSound(options.soundEvent ?? "use.wood", source.location);
       BlockUtils.setType(source, options.block);
     });
   });

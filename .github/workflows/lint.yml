@@ -12,6 +12,6 @@ jobs:
       - name: Install modules
         run: npm ci
       - name: Run ESLint
-        run: npx eslint .
+        run: npm run lint
       - name: Run build
         run: npm run build

@@ -1,18 +1,31 @@
 import { Player } from "@minecraft/server";
 import { DataStorage } from "./data";
 
+export interface CooldownData {
+  started: number;
+  cooldownTicks: number;
+}
+
 export class CooldownManager {
   private static getStorage(player: Player) {
     return new DataStorage("mcutils:cooldown_manager", player);
   }
 
+  static getCooldown(player: Player, cooldownCategory: string): CooldownData | undefined {
+    const cooldown = this.getStorage(player).get(cooldownCategory);
+    if (!cooldown) return;
+    return cooldown;
+  }
+
   static getTicks(player: Player, cooldownCategory: string): number {
-    const cooldown = this.getStorage(player).get(cooldownCategory, {});
+    const cooldown = this.getCooldown(player, cooldownCategory);
+    if (!cooldown) return 0;
     return cooldown.cooldownTicks;
   }
 
   static getTicksRemaining(player: Player, cooldownCategory: string): number {
-    const cooldown = this.getStorage(player).get(cooldownCategory, {});
+    const cooldown = this.getCooldown(player, cooldownCategory);
+    if (!cooldown) return 0;
     const now = new Date().getTime() / 50;
     const elapsed = now - cooldown.started;
     const res = Math.max(cooldown.cooldownTicks - elapsed, 0);

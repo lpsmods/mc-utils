@@ -77,11 +77,11 @@ export class Settings {
       const tooltip = prop.description;
       switch (prop.type) {
         case "string":
-          form.options[k] = { label, tooltip, type: "text", value: this.get(k) as string };
           if (prop.values) {
-            form.options[k].type = "dropdown";
-            form.options[k].options = prop.values;
+            form.options[k] = { label, tooltip, type: "dropdown", values: prop.values, value: this.get(k) as number };
+            break;
           }
+          form.options[k] = { label, tooltip, type: "text", value: this.get(k) as string };
           break;
         case "number":
           form.options[k] = {

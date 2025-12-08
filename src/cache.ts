@@ -17,7 +17,7 @@ export class LRUCache<K, V> {
     this.cache = new Map<K, V>();
     this.options = options ?? {};
     if (this.options.maxSize === undefined) {
-      this.options.maxSize = this.#defaultSize();
+      this.options.maxSize = this.defaultSize();
     }
 
     if (this.options.maxSize <= 0) {
@@ -25,7 +25,7 @@ export class LRUCache<K, V> {
     }
   }
 
-  #defaultSize(): number {
+  private defaultSize(): number {
     switch (system.serverSystemInfo.memoryTier) {
       case MemoryTier.SuperLow:
         return 128;
@@ -71,7 +71,7 @@ export class LRUCache<K, V> {
     if (this.cache.has(key)) {
       // Remove the existing key to update its position
       this.cache.delete(key);
-    } else if (this.cache.size >= (this.options.maxSize ?? this.#defaultSize())) {
+    } else if (this.cache.size >= (this.options.maxSize ?? this.defaultSize())) {
       // Remove the least recently used entry (first key in the Map)
       const oldestKey = this.cache.keys().next().value;
       if (oldestKey) this.cache.delete(oldestKey);

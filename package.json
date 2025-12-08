@@ -1,6 +1,6 @@
 {
   "name": "@lpsmods/mc-utils",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "author": "legopitstop",
   "license": "MIT",
   "description": "Utilities for making Minecraft: Bedrock Edition scripts",
@@ -8,9 +8,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "copy": "xcopy \"src\" \"%UserProfile%\\Documents\\GitHub\\Minecraft\\mcutils-example\\scripts\\mc-utils\" /s /y /I",
-    "rebuild": "npm run copy && echo Done!",
-    "dev": "chokidar \"src/**/*\" -c \"npm run rebuild\" -d",
+    "test": "npx vitest run",
     "lint": "eslint ."
   },
   "homepage": "https://docs.lpsmods.dev/@lpsmods/mc-utils",
@@ -30,19 +28,26 @@
     "scripting"
   ],
   "devDependencies": {
+    "@minecraft/core-build-tasks": "^5.5.0",
     "@typescript-eslint/eslint-plugin": "8.46.2",
     "chokidar-cli": "3.0.0",
     "eslint": "^9.38.0",
     "eslint-plugin-minecraft-linting": "2.0.10",
     "eslint-plugin-unused-imports": "^4.3.0",
-    "glob": "11.0.3",
-    "prettier": "3.6.2",
-    "typescript": "5.9.3"
+    "glob": "^11.1.0",
+    "path": "^0.12.7",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "typescript": "5.9.3",
+    "vitest": "^4.0.7"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@minecraft/math": "2.2.11",
     "@minecraft/server": "2.3.0",
-    "@minecraft/server-ui": "2.0.0",
+    "@minecraft/server-ui": "2.0.0"
+  },
+  "dependencies": {
+    "@bedrock-oss/add-on-registry": "^1.0.10",
     "esbuild": "0.25.11",
     "molang": "2.0.1",
     "superstruct": "2.0.2"

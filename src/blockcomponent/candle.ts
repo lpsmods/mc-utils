@@ -57,7 +57,7 @@ export class CandleComponent extends BlockBaseComponent implements BlockCustomCo
     max_candles: defaulted(number(), 4),
     item: optional(isItem),
     flame_particle: defaulted(string(), "minecraft:candle_flame_particle"),
-    flame_positions: defaulted(array(vec3), [0, 0, 0]),
+    flame_positions: defaulted(array(string()), [0, 0, 0]),
   });
 
   /**

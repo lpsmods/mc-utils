@@ -29,6 +29,12 @@ export interface ArmorSet {
   offhand?: ItemStack;
 }
 
+export interface PlayerEatOptions {
+  nutrition?: number;
+  saturationModifier?: number;
+  soundId?: boolean | string;
+}
+
 export class PlayerUtils {
   /**
    * Get all loaded chunks by the player.
@@ -212,26 +218,24 @@ export class PlayerUtils {
   /**
    * Gives the player nutrition like they ate.
    * @param {Player} player
-   * @param {number} nutrition
-   * @param {boolean|string} sound
+   * @param {PlayerEatOptions} options
    */
-  static eat(
-    player: Player,
-    nutrition: number = 0,
-    saturationModifier: number = 0,
-    sound: boolean | string = true,
-  ): void {
+  static eat(player: Player, options: PlayerEatOptions): void {
     const hunger = player.getComponent("player.hunger");
-    if (nutrition && hunger) {
-      hunger.setCurrentValue(clampNumber(hunger.currentValue + nutrition, hunger.effectiveMin, hunger.effectiveMax));
+    if (options.nutrition && hunger) {
+      hunger.setCurrentValue(
+        clampNumber(hunger.currentValue + options.nutrition, hunger.effectiveMin, hunger.effectiveMax),
+      );
     }
-
     const sat = player.getComponent("player.saturation");
-    if (sat && saturationModifier) {
-      const a = nutrition * saturationModifier * 2;
+    if (sat && options.saturationModifier) {
+      const a = (options.nutrition ?? 0) * options.saturationModifier * 2;
       sat.setCurrentValue(clampNumber(sat.currentValue + a, sat.effectiveMin, sat.effectiveMax));
     }
-
-    if (sound) player.dimension.playSound(typeof sound === "string" ? sound : "random.burp", player.location);
+    if (options.soundId)
+      player.dimension.playSound(
+        typeof options.soundId === "string" ? options.soundId : "random.burp",
+        player.location,
+      );
   }
 }

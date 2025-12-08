@@ -10,8 +10,11 @@ import {
   Vector3,
 } from "@minecraft/server";
 import { ErrorUtils } from "../utils/error";
+import { MathUtils } from "../utils";
 
 export abstract class WorldUtils {
+  static MAX_DISTANCE = 8388608; // When player starts to phase through blocks.
+
   /**
    * The world seed. (Returns 0)
    * @returns {number}
@@ -115,5 +118,20 @@ export abstract class WorldUtils {
       dimension.fillBlocks(chunk, block, options);
       yield;
     }
+  }
+
+  /**
+   * Whether or not the location is valid.
+   * @param {Dimension} dimension
+   * @param {Vector3} location
+   * @returns {boolean}
+   */
+  static isValidPos(dimension: Dimension, location: Vector3): boolean {
+    const { x, y, z } = location;
+    const horizontal = WorldUtils.MAX_DISTANCE;
+    if (!MathUtils.inRange(y, dimension.heightRange.min, dimension.heightRange.max)) return false;
+    if (!MathUtils.inRange(x, -horizontal, horizontal)) return false;
+    if (!MathUtils.inRange(z, -horizontal, horizontal)) return false;
+    return true;
   }
 }

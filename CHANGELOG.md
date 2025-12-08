@@ -4,6 +4,75 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.8] - (Pre-release) - 12/8/2025
+
+### General
+
+### Fixes
+
+- DirectionUtils.getOpposite now correctly converts "up" and "down"
+- Cooldown manager no longer returns NaN for categories that don't exist.
+- Fixed stairs not using the correct shape.
+- CandleComponent correctly validates the flame positions.
+
+### Components
+
+- Removed strippable
+- Removed scrape_wax
+- Removed scrape_oxidization
+- Removed waxable
+- Removed waxable
+- Changed slab
+  - Added `sound_event` option.
+  - Making a double slab now removes an item from the players hand.
+- Changed height
+  - Added `sound_event` option.
+  - Adding a layer now removes an item from the players hand.
+- Changed food
+  - Added `sound_event` option.
+
+### API
+
+- Added constant isUuid4
+- Added class ConditionUtils
+- Added enum Icon
+- Added enum Emoji
+- Added enum InputKey
+- Removed type ModalOption
+- Added type TextOption
+- Added type DropdownOption
+- Added type SliderOption
+- Added type ToggleOption
+- Added ModalOptions
+- Changed TextUtils
+  - Added stripFormat
+- Removed ScrapeWaxOptions
+- Removed ScrapeWaxComponent
+- Removed ScrapeOxidizationOptions
+- Removed ScrapeOxidizationComponent
+- Removed WaxableOptions
+- Removed WaxableComponent
+- Removed OxidizableComponentOptions
+- Removed OxidizableComponent
+- Removed StrippableComponentOptions
+- Removed StrippableComponent
+- Added TextKey
+- Added CommandMessage
+- Changed CustomCommandUtils
+  - Added function error
+  - Added function info
+- Changed WorldUtils
+  - Added function isValidPos
+  - Added const MAX_DISTANCE
+- Changed Identifier
+  - Added static function isId
+
+## [0.0.7] (Pre-release) - 11/3/2025
+
+### Fix
+
+- Fixed missing imports from `./utils`.
+
 ## [0.0.6] (Pre-release) - 10/30/2025
 
 ### General

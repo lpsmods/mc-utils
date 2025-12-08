@@ -8,7 +8,6 @@ import {
 } from "@minecraft/server";
 import { BlockStateSuperset } from "@minecraft/vanilla-data";
 import { BlockUtils } from "../block/utils";
-import { TextUtils } from "../utils/text";
 import { AddonUtils } from "../utils/addon";
 import { create, defaulted, object, string, Struct } from "superstruct";
 import { DirectionUtils } from "../utils/direction";
@@ -37,54 +36,57 @@ export class StairsComponent extends BlockBaseComponent implements BlockCustomCo
   }
 
   isStairs(block: Block): boolean {
-    return block.hasTag("minecraft:stairs") || block.hasTag("stairs") || block.typeId.toString().endsWith("stairs");
+    return block.hasTag("minecraft:stairs") || block.hasTag("stairs") || block.typeId.endsWith("stairs");
   }
 
-  isDifferentOrientation(block: Block, dir: string, options: StairsOptions): boolean | undefined {
-    var blockState = block.offset(DirectionUtils.toOffset(dir));
-    if (!blockState) return;
+  private getFacing(block: Block, options: StairsOptions): string {
+    const states = block.permutation.getAllStates();
+    if ("weirdo_direction" in states) return DirectionUtils.fromWeirdo(states.weirdo_direction as number).toLowerCase();
+    return (states["minecraft:cardinal_direction"] as string).toLowerCase();
+  }
+
+  private getHalf(block: Block, options: StairsOptions): string {
+    const states = block.permutation.getAllStates();
+    if ("upside_down_bit" in states) return states.upside_down_bit ? "bottom" : "top";
+    return (states["minecraft:vertical_half"] as string).toLowerCase();
+  }
+
+  private isLeftTurn(a: string, b: string): boolean {
     return (
-      !this.isStairs(blockState) ||
-      !BlockUtils.matchState(block, blockState, options.direction_state) ||
-      !BlockUtils.matchState(block, blockState, options.half_state)
+      (a === "north" && b === "west") ||
+      (a === "west" && b === "south") ||
+      (a === "south" && b === "east") ||
+      (a === "east" && b === "north")
+    );
+  }
+
+  private isRightTurn(a: string, b: string): boolean {
+    return (
+      (a === "north" && b === "east") ||
+      (a === "east" && b === "south") ||
+      (a === "south" && b === "west") ||
+      (a === "west" && b === "north")
     );
   }
 
   getStairsShape(block: Block, options: StairsOptions): string {
-    var direction3;
-    var direction2;
-
-    // Back
-    var direction = block.permutation.getState(options.direction_state) as string;
-    var blockState = block.offset(DirectionUtils.toOffset(direction));
-    if (!blockState) return "straight";
-    if (
-      this.isStairs(blockState) &&
-      BlockUtils.matchState(block, blockState, options.half_state) &&
-      DirectionUtils.toAxis((direction2 = blockState.permutation.getState(options.direction_state) as string)) !=
-        DirectionUtils.toAxis(block.permutation.getState(options.direction_state) as string) &&
-      this.isDifferentOrientation(block, DirectionUtils.getOpposite(direction2), options)
-    ) {
-      if (TextUtils.titleCase(direction2) == DirectionUtils.rotateYCounterclockwise(direction)) {
-        return "inner_right";
-      }
-      return "inner_left";
+    const facing = this.getFacing(block, options);
+    const forwardOffset = DirectionUtils.offsetFromDirection({ z: 1 }, facing);
+    const forward = block.offset(forwardOffset);
+    const forwardFacing = forward && this.isStairs(forward) ? this.getFacing(forward, options) : null;
+    if (forward && forwardFacing) {
+      const forwardHalf = this.getHalf(forward, options);
+      if (this.isLeftTurn(facing, forwardFacing)) return forwardHalf == "bottom" ? "inner_left" : "inner_right";
+      if (this.isRightTurn(facing, forwardFacing)) return forwardHalf == "bottom" ? "inner_right" : "inner_left";
     }
 
-    // Front
-    var blockState2 = block.offset(DirectionUtils.toOffset(DirectionUtils.getOpposite(direction)));
-    if (!blockState2) return "straight";
-    if (
-      this.isStairs(blockState2) &&
-      BlockUtils.matchState(block, blockState2, options.half_state) &&
-      DirectionUtils.toAxis((direction3 = blockState2.permutation.getState(options.direction_state) as string)) !=
-        DirectionUtils.toAxis(block.permutation.getState(options.direction_state) as string) &&
-      this.isDifferentOrientation(block, direction3, options)
-    ) {
-      if (TextUtils.titleCase(direction3) == DirectionUtils.rotateYCounterclockwise(direction)) {
-        return "outer_right";
-      }
-      return "outer_left";
+    const backwardOffset = DirectionUtils.offsetFromDirection({ z: -1 }, facing);
+    const backward = block.offset(backwardOffset);
+    const backwardFacing = backward && this.isStairs(backward) ? this.getFacing(backward, options) : null;
+    if (backward && backwardFacing) {
+      const backwardHalf = this.getHalf(backward, options);
+      if (this.isLeftTurn(backwardFacing, facing)) return backwardHalf == "bottom" ? "outer_right" : "outer_left";
+      if (this.isRightTurn(backwardFacing, facing)) return backwardHalf == "bottom" ? "outer_left" : "outer_right";
     }
     return "straight";
   }
@@ -94,17 +96,17 @@ export class StairsComponent extends BlockBaseComponent implements BlockCustomCo
   onNeighborUpdate(event: NeighborUpdateEvent, args: CustomComponentParameters): void {
     const options = create(args.params, this.struct) as StairsOptions;
     const state = event.block.permutation;
-    var shape = this.getStairsShape(event.block, options); // e.block -> e.block.permutation
+    var shape = this.getStairsShape(event.block, options);
     if (state.getState(options.shape_state) != shape) {
       BlockUtils.setState(event.block, options.shape_state, shape);
     }
   }
 
   onPlace(event: BlockComponentOnPlaceEvent, args: CustomComponentParameters): void {
-    this.update(event.block, args);
+    this.basePlace(event, args);
   }
 
   onTick(event: BlockComponentTickEvent, args: CustomComponentParameters): void {
-    super.baseTick(event, args);
+    super.neighborTick(event, args);
   }
 }

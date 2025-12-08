@@ -1,4 +1,5 @@
 import { BiomeType } from "@minecraft/server";
+import { Identifier } from "../identifier";
 
 export abstract class BiomeUtils {
   /**
@@ -7,9 +8,8 @@ export abstract class BiomeUtils {
    * @param {string[]} biomePredicates An array of biome names. Prefix with "!" to ignore.
    * @returns {boolean} Whether or not the biome matched any of the biome names.
    */
-  static matchAny(biome: BiomeType, biomePredicates: string[]): boolean {
+  static matchAny(biome: BiomeType | string, biomePredicates: string[]): boolean {
     const items = [...new Set(biomePredicates)];
-    const biomeId = typeof biome === "string" ? biome : biome.id;
     return items.some((biomeName) => {
       return this.matches(biome, biomeName);
     });
@@ -21,11 +21,11 @@ export abstract class BiomeUtils {
    * @param biomePredicate A biome name. Prefix with "!" to ignore.
    * @returns {boolean}
    */
-  static matches(biome: BiomeType, biomePredicate: string): boolean {
-    const biomeId = typeof biome === "string" ? biome : biome.id;
-    if (biomeId.charAt(0) === "!") {
-      return biomeId !== biomePredicate.slice(1);
+  static matches(biome: BiomeType | string, biomePredicate: string): boolean {
+    const biomeId = Identifier.parse(typeof biome === "string" ? biome : biome.id);
+    if (biomePredicate.charAt(0) === "!") {
+      return !biomeId.equals(biomePredicate.slice(1));
     }
-    return biomeId === biomePredicate;
+    return biomeId.equals(biomePredicate);
   }
 }

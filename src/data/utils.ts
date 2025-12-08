@@ -16,7 +16,7 @@ import {
 import { PropertyValue } from "../constants";
 import { Typing, TypingTypes } from "../type";
 import { Chunk } from "../world";
-import { ModalForm, ModalFormHandler, PageButton, PagedActionForm, PageData, Pages } from "../ui";
+import { Icon, ModalForm, ModalFormHandler, PageButton, PagedActionForm, PageData, Pages } from "../ui";
 import { TextUtils } from "../utils/text";
 
 /**
@@ -188,7 +188,7 @@ export abstract class DataUtils {
    */
   static showInspector(object: DynamicObject, player: Player): void {
     const clearAction: PageButton = {
-      icon: "textures/ui/icon_trash.png",
+      icon: Icon.Trash,
       label: "§cDelete All",
       top_divider: true,
       onClick: (event) => {
@@ -204,7 +204,7 @@ export abstract class DataUtils {
       const buttons: PageButton[] = [];
 
       const deleteAction: PageButton = {
-        icon: "textures/ui/icon_trash.png",
+        icon: Icon.Trash,
         label: "§cDelete",
         onClick: (event) => {
           object.setDynamicProperty(k, undefined);
@@ -213,7 +213,7 @@ export abstract class DataUtils {
       };
 
       const editAction: PageButton = {
-        icon: "textures/ui/pencil_edit_icon.png",
+        icon: Icon.PencilEdit,
         label: "Edit",
         onClick: (event) => {
           const form: ModalForm = {
@@ -231,7 +231,7 @@ export abstract class DataUtils {
       };
 
       const renameAction: PageButton = {
-        icon: "textures/items/name_tag.png",
+        icon: Icon.NameTag,
         label: "Rename",
         onClick: (event) => {
           const form: ModalForm = {

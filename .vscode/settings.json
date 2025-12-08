@@ -18,6 +18,5 @@
     "titleBar.inactiveBackground": "#52a53599",
     "titleBar.inactiveForeground": "#e7e7e799"
   },
-  "peacock.color": "#52a535",
-  "cSpell.words": ["customplace", "endrod", "pottable", "shearable", "sittable", "Toggleable"]
+  "peacock.color": "#52a535"
 }

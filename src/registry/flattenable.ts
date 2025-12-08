@@ -6,12 +6,31 @@ import { BlockUtils } from "../block";
 let initialized = false;
 
 export interface FlattenableOptions {
+  /**
+   * The flattened block. (like grass_path)
+   */
   block: BlockType | string;
-  sound_event?: string;
+  soundEvent?: string;
   onConvert?: (block: Block, event: ItemUseAfterEvent) => void;
 }
 
 export class FlattenableBlockRegistry extends Registry<FlattenableOptions> {
+  /**
+   * Register a new flattenable block interaction.
+   *
+   * Handles flattening (shovel).
+   *
+   * @param {BlockType|string} input The unflattened block. (like dirt)
+   * @param {TillableBlockOptions} options
+   * @returns {TillableBlockOptions}
+   *
+   * @example flattenable.ts
+   * ```typescript
+   * import { flattenableBlocks } from "@lpsmods/mc-utils";
+   *
+   * flattenableBlocks.register("#dirt", {block: "grass_path"});
+   * ```
+   */
   register(input: BlockType | string, options: FlattenableOptions): FlattenableOptions | undefined {
     if (!initialized) init();
     const id = input instanceof BlockType ? input.id : input;
@@ -28,6 +47,9 @@ export class FlattenableBlockRegistry extends Registry<FlattenableOptions> {
   }
 }
 
+/**
+ * Default flattenable block registry.
+ */
 export const flattenableBlocks = new FlattenableBlockRegistry();
 
 function init(): void {
@@ -41,7 +63,7 @@ function init(): void {
     if (!options) return;
     system.run(() => {
       if (options.onConvert) options.onConvert(source, event);
-      source.dimension.playSound(options.sound_event ?? "use.grass", source.location);
+      source.dimension.playSound(options.soundEvent ?? "use.grass", source.location);
       BlockUtils.setType(source, options.block);
     });
   });

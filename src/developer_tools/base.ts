@@ -3,7 +3,7 @@ import { ChunkEvents, ChunkTickEvent, EntityTickEvent, PlayerChunkLoadEvent, Pla
 import { DataUtils } from "../data";
 import { ParticleDrawer } from "../drawer";
 import { PlayerHandler } from "../entity";
-import { ModalOption, ModalForm, ModalFormOnSubmit, ModalFormHandler } from "../ui";
+import { ModalOptions, ModalForm, ModalFormOnSubmit, ModalFormHandler } from "../ui";
 import { DevTool } from "./tools";
 
 let initialized = false;
@@ -44,7 +44,7 @@ export class DeveloperTools extends PlayerHandler {
 
   show(player: Player) {
     const config = this.readConfig(player);
-    const options: { [key: string]: ModalOption } = {};
+    const options: { [key: string]: ModalOptions } = {};
     for (const [id, tool] of DevTool.all.entries()) {
       options[id] = {
         type: "toggle",

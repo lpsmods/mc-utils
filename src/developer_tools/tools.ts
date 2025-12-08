@@ -1,5 +1,5 @@
 import { Vector3Utils } from "@minecraft/math";
-import { Player } from "@minecraft/server";
+import { Block, Player } from "@minecraft/server";
 import { EntityTickEvent, PlayerChunkLoadEvent, PlayerChunkUnloadEvent, ChunkTickEvent } from "../event";
 import { Identifier } from "../identifier";
 import { Hasher } from "../type";
@@ -35,14 +35,14 @@ export abstract class DevTool {
   onDisable?(player: Player): void;
 }
 
-export class ChunkDataTool extends DevTool {
+export class ChunkDataTool2 extends DevTool {
   static readonly toolId = "chunk_data";
 
   // @ts-ignore:
   shapes = new Map<string, debug.DebugText>();
 
   constructor() {
-    super(ChunkDataTool.toolId, {
+    super(ChunkDataTool2.toolId, {
       name: "Show Chunk Data",
       description: "Displays chunk data. like; position, and dimension.",
     });
@@ -80,14 +80,14 @@ export class ChunkDataTool extends DevTool {
   }
 }
 
-export class BlockDataTool extends DevTool {
+export class BlockDataTool2 extends DevTool {
   static readonly toolId = "block_data";
   // @ts-ignore:
   shapes = new Map<string, debug.DebugShape>();
   lastBlock = new Map<string, string>();
 
   constructor() {
-    super(BlockDataTool.toolId, {
+    super(BlockDataTool2.toolId, {
       name: "Show Block Data",
       description: "Displays the facing block data in the action bar.",
     });
@@ -138,6 +138,33 @@ export class BlockDataTool extends DevTool {
   }
 }
 
+export class BlockDataTool extends DevTool {
+  static readonly toolId = "block_data";
+
+  constructor() {
+    super(BlockDataTool.toolId, {
+      name: "Show Block Data",
+      description: "Displays the facing block data in the action bar.",
+    });
+  }
+
+  private showData(block: Block, player: Player): void {
+    const states = Object.entries(block.permutation.getAllStates())
+      .map((v) => `${v[0]}: ${v[1]}`)
+      .join("\n ");
+    const dimId = Identifier.parse(block.dimension.id).path;
+    const text = `§lBlock Data§r\n${dimId}\n${block.x}, ${block.y}, ${block.z}\n${states}`;
+    player.onScreenDisplay.setActionBar(text);
+  }
+
+  onTick(event: EntityTickEvent): void {
+    if (!(event.entity instanceof Player)) return;
+    const ray = event.entity.getBlockFromViewDirection({ maxDistance: 7 });
+    if (!ray?.block) return;
+    this.showData(ray.block, event.entity);
+  }
+}
+
 export class PlayerDataTool extends DevTool {
   static readonly toolId = "player_data";
 
@@ -162,6 +189,6 @@ export class PlayerDataTool extends DevTool {
 }
 
 // Initialize tools
-// new ChunkDataTool();
-// new BlockDataTool();
+// new ChunkDataTool2();
+new BlockDataTool();
 new PlayerDataTool();

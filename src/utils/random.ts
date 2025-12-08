@@ -28,8 +28,7 @@ export class Random {
     }
 
     if ((bound & -bound) === bound) {
-      // Power of two
-      return Math.floor((bound * this.next(31)) / (1 << 31));
+      return Math.floor((bound * this.next(31)) / 0x80000000);
     }
 
     let bits: number, val: number;

@@ -4,6 +4,7 @@ import { deepCopy } from "../utils";
 import { ValidationError, ValidationIssue } from "../utils/error";
 import { PlayerSettings } from "../settings";
 import { DataUtils } from "../data";
+import { Icon } from "./icons";
 
 export interface PageButton extends ActionButton {
   pageId?: string;
@@ -132,7 +133,7 @@ export class PlayerSettingsPage extends CustomPage {
   getButton(event: PagedActionFormEvent): ActionButton {
     return {
       label: "Player Settings",
-      icon: "textures/ui/icon_setting.png",
+      icon: Icon.Setting,
       onClick: (clickEvent) => {
         this.show(event);
       },
@@ -249,7 +250,7 @@ export class PlayerSettingsPage extends CustomPage {
 //   getButton(event: InfoBookEvent): PageButton {
 //     return {
 //       label: "controller.buttonTip.enterSearch",
-//       icon: "textures/ui/magnifyingGlass.png",
+//       icon: Icon.MagnifyingGlass,
 //       onClick: (clickEvent) => {
 //         this.show(event);
 //       },
@@ -467,7 +468,7 @@ export class PagedActionForm {
       if (!form.buttons) form.buttons = [];
       form.buttons.push({
         label: event.options.back_button.label ?? "#gui.back",
-        icon: event.options.back_button.icon ?? "textures/ui/arrowLeft.png",
+        icon: event.options.back_button.icon ?? Icon.ArrowLeft,
         top_margin: event.options.back_button.top_margin ?? 1,
         bottom_margin: event.options.back_button.bottom_margin,
         top_divider: event.options.back_button.top_divider ?? true,

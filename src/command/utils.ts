@@ -9,6 +9,16 @@ import {
   world,
 } from "@minecraft/server";
 
+/**
+ * Generic command text translations.
+ */
+export enum CommandMessage {
+  TargetNotPlayer = "commands.generic.targetNotPlayer",
+  PlayerNotFound = "commands.generic.player.notFound",
+  EntityNotFound = "commands.generic.entity.notFound",
+  EntityDifferentDimension = "commands.generic.entity.differentDimension",
+}
+
 export class CustomCommandUtils {
   static getSource(ctx: CustomCommandOrigin): Entity | Block | undefined {
     switch (ctx.sourceType) {
@@ -69,5 +79,13 @@ export class CustomCommandUtils {
       console.error(err);
       return { status: 1, message: "commands.generic.exception" };
     }
+  }
+
+  static error(msg?: string): CustomCommandResult {
+    return { status: 1, message: msg };
+  }
+
+  static info(msg?: string): CustomCommandResult {
+    return { status: 0, message: msg };
   }
 }

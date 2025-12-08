@@ -6,12 +6,31 @@ import { BlockUtils } from "../block";
 let initialized = false;
 
 export interface TillableBlockOptions {
+  /**
+   * The tilled block. (like farmland)
+   */
   block: BlockType | string;
-  sound_event?: string;
+  soundEvent?: string;
   onConvert?: (block: Block, event: ItemUseAfterEvent) => void;
 }
 
 export class TillableBlockRegistry extends Registry<TillableBlockOptions> {
+  /**
+   * Register a new tillable block interaction.
+   *
+   * Handles tilling (hoe).
+   *
+   * @param {BlockType|string} input The untilled block. (like dirt)
+   * @param {TillableBlockOptions} options
+   * @returns {TillableBlockOptions}
+   *
+   * @example tillable.ts
+   * ```typescript
+   * import { tillableBlocks } from "@lpsmods/mc-utils";
+   *
+   * tillableBlocks.register("#dirt", {block: "farmland"});
+   * ```
+   */
   register(input: BlockType | string, options: TillableBlockOptions): TillableBlockOptions | undefined {
     if (!initialized) init();
     const id = input instanceof BlockType ? input.id : input;
@@ -28,6 +47,9 @@ export class TillableBlockRegistry extends Registry<TillableBlockOptions> {
   }
 }
 
+/**
+ * Default tillable block registry.
+ */
 export const tillableBlocks = new TillableBlockRegistry();
 
 function init(): void {
@@ -41,7 +63,7 @@ function init(): void {
     if (!options) return;
     system.run(() => {
       if (options.onConvert) options.onConvert(source, event);
-      source.dimension.playSound(options.sound_event ?? "use.gravel", source.location);
+      source.dimension.playSound(options.soundEvent ?? "use.gravel", source.location);
       BlockUtils.setType(source, options.block);
     });
   });

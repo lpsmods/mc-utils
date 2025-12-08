@@ -82,7 +82,7 @@ export class CakeComponent implements BlockCustomComponent {
   eat(event: BlockComponentPlayerInteractEvent, options: CakeOptions): void {
     if (!event.player) return;
     if (!PlayerUtils.canEat(event.player)) return;
-    PlayerUtils.eat(event.player, options.nutrition, options.saturation_modifier);
+    PlayerUtils.eat(event.player, { nutrition: options.nutrition, saturationModifier: options.saturation_modifier });
     var slice = event.block.permutation.getState(options.slice_state) as number;
     if (slice === options.max_slices) {
       return event.dimension.setBlockType(event.block.location, "air");
