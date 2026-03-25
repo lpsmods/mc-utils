@@ -38,7 +38,7 @@
     "glob": "^11.1.0",
     "path": "^0.12.7",
     "ts-node": "^10.9.2",
-    "typescript": "^6.0.2",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.7"
   },
   "peerDependencies": {
@@ -46,7 +46,7 @@
     "@minecraft/vanilla-data": "^1.21.131"
   },
   "dependencies": {
-    "@lpsmods/mc-utils": "^1.0.0",
-    "@lpsmods/mc-common": "^0.0.3"
+    "@lpsmods/mc-common": "^0.0.3",
+    "@lpsmods/mc-utils": "^1.0.0"
   }
 }
