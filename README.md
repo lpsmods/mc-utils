@@ -1,6 +1,6 @@
 # mc-utils
 
-A collection of packages to help create Minecraft Bedrock add-ns!
+A collection of packages to help create Minecraft Bedrock add-ons!
 
 ## Packages
 
