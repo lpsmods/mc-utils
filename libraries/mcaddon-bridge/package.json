@@ -1,0 +1,53 @@
+{
+  "name": "@lpsmods/mcaddon-bridge",
+  "version": "0.0.2",
+  "author": "legopitstop",
+  "license": "MIT",
+  "description": "A package to communicate between Minecraft Add-Ons.",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "npx vitest run",
+    "lint": "eslint ."
+  },
+  "homepage": "https://docs.lpsmods.dev/@lpsmods/mcaddon-bridge",
+  "funding": "https://github.com/sponsors/legopitstop",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lpsmods/mc-utils"
+  },
+  "bugs": {
+    "url": "https://github.com/lpsmods/mc-utils/issues"
+  },
+  "keywords": [
+    "minecraft",
+    "bedrock",
+    "utils",
+    "addons",
+    "scripting",
+    "api"
+  ],
+  "devDependencies": {
+    "@lpsmods/minecraft-server-mock": "^0.0.1",
+    "@lpsmods/minecraft-server-ui-mock": "^0.0.1",
+    "@minecraft/core-build-tasks": "^5.5.0",
+    "@types/pako": "^2.0.4",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "eslint": "^9.38.0",
+    "eslint-plugin-minecraft-linting": "^2.0.12",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "glob": "^11.1.0",
+    "path": "^0.12.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2",
+    "vitest": "^4.0.7"
+  },
+  "peerDependencies": {
+    "@minecraft/server": "^2.6.0",
+    "@minecraft/server-ui": "^2.0.0"
+  },
+  "dependencies": {
+    "@minecraft/math": "^2.4.0"
+  }
+}

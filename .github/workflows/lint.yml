@@ -1,17 +1,23 @@
 name: Lint
 description: Lint and build the project to check for errors.
 on:
-  - pull_request
-  - push
+  push:
+  pull_request:
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
       - name: Install modules
         run: npm ci
-      - name: Run ESLint
-        run: npm run lint
-      - name: Run build
-        run: npm run build
+
+      - name: Run ESLint in all workspaces
+        run: npm run lint --workspaces

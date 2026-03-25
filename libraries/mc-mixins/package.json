@@ -1,0 +1,52 @@
+{
+  "name": "@lpsmods/mc-mixins",
+  "version": "0.0.1",
+  "author": "legopitstop",
+  "license": "MIT",
+  "description": "Adds @lpsmods/mc-utils functions to native objects.",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "npx vitest run",
+    "lint": "eslint ."
+  },
+  "homepage": "https://docs.lpsmods.dev/@lpsmods/mc-mixins",
+  "funding": "https://github.com/sponsors/legopitstop",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lpsmods/mc-utils"
+  },
+  "bugs": {
+    "url": "https://github.com/lpsmods/mc-utils/issues"
+  },
+  "keywords": [
+    "minecraft",
+    "bedrock",
+    "utils",
+    "addons",
+    "scripting",
+    "api"
+  ],
+  "devDependencies": {
+    "@minecraft/core-build-tasks": "^5.5.0",
+    "@types/pako": "^2.0.4",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "eslint": "^9.38.0",
+    "eslint-plugin-minecraft-linting": "^2.0.12",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "glob": "^11.1.0",
+    "path": "^0.12.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2",
+    "vitest": "^4.0.7"
+  },
+  "peerDependencies": {
+    "@minecraft/server": "^2.6.0",
+    "@minecraft/vanilla-data": "^1.21.131"
+  },
+  "dependencies": {
+    "@lpsmods/mc-utils": "^1.0.0",
+    "@lpsmods/mc-common": "^0.0.3"
+  }
+}
