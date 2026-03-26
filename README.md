@@ -1,12 +1,1 @@
-# mc-utils
-
-A collection of packages to help create Minecraft Bedrock add-ons!
-
-## Packages
-
-- @lpsmods/mc-common
-- @lpsmods/mc-dev
-- @lpsmods/mc-mixins
-- @lpsmods/mc-superstruct
-- @lpsmods/mc-utils
-- @lpsmods/mcaddon-bridge
+Moved to [lpsmods/minecraft-scripting-libraries](https://github.com/lpsmods/minecraft-scripting-libraries/tree/main/libraries/mc-utils)
